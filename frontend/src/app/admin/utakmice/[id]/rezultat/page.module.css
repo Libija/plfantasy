@@ -1,0 +1,135 @@
+.container {
+  padding: 20px;
+}
+
+.header {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-bottom: 30px;
+}
+
+.backBtn {
+  color: #1976d2;
+  font-weight: 600;
+  align-self: flex-start;
+}
+
+.pageTitle {
+  color: #1976d2;
+  font-weight: 700;
+}
+
+.matchCard {
+  border-radius: 16px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+}
+
+.matchContent {
+  padding: 40px;
+  text-align: center;
+}
+
+.matchInfo {
+  margin-bottom: 40px;
+}
+
+.roundInfo {
+  color: #1976d2;
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+
+.venue {
+  color: #757575;
+}
+
+.teamsContainer {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 40px;
+  margin-bottom: 40px;
+}
+
+.team {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  flex: 1;
+  max-width: 200px;
+}
+
+.teamLogo {
+  width: 80px;
+  height: 80px;
+  border: 3px solid #1976d2;
+}
+
+.teamName {
+  font-weight: 700;
+  color: #212121;
+  text-align: center;
+}
+
+.scoreContainer {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.scoreInput {
+  width: 80px;
+}
+
+.scoreInput input {
+  text-align: center;
+  font-size: 2rem;
+  font-weight: 700;
+  color: #1976d2;
+}
+
+.scoreSeparator {
+  font-weight: 700;
+  color: #1976d2;
+}
+
+.actions {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+}
+
+.saveBtn {
+  font-weight: 600;
+  padding: 16px 32px;
+  font-size: 1.1rem;
+}
+
+.nextStep {
+  color: #757575;
+  font-style: italic;
+}
+
+@media (max-width: 768px) {
+  .matchContent {
+    padding: 20px;
+  }
+
+  .teamsContainer {
+    flex-direction: column;
+    gap: 20px;
+  }
+
+  .teamLogo {
+    width: 60px;
+    height: 60px;
+  }
+
+  .scoreContainer {
+    order: -1;
+    margin-bottom: 20px;
+  }
+}

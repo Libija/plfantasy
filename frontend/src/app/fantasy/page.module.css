@@ -1,0 +1,237 @@
+.container {
+  padding: 20px;
+}
+
+.header {
+  text-align: center;
+  margin-bottom: 30px;
+}
+
+.pageTitle {
+  color: #1976d2;
+  font-weight: 700;
+  margin-bottom: 10px;
+}
+
+.pageSubtitle {
+  color: #757575;
+  font-weight: 400;
+}
+
+.userCard {
+  margin-bottom: 30px;
+  border-radius: 16px;
+  background: linear-gradient(135deg, #1976d2 0%, #1565c0 100%);
+  color: white;
+}
+
+.userContent {
+  padding: 30px;
+}
+
+.userHeader {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  margin-bottom: 30px;
+}
+
+.userAvatar {
+  width: 80px;
+  height: 80px;
+  border: 3px solid rgba(255, 255, 255, 0.3);
+}
+
+.userInfo {
+  flex: 1;
+}
+
+.userName {
+  font-weight: 700;
+  margin-bottom: 5px;
+}
+
+.teamName {
+  opacity: 0.9;
+  font-weight: 500;
+}
+
+.manageTeamBtn {
+  background-color: rgba(255, 255, 255, 0.2);
+  color: white;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  font-weight: 600;
+}
+
+.manageTeamBtn:hover {
+  background-color: rgba(255, 255, 255, 0.3);
+}
+
+.statsGrid {
+  margin-bottom: 20px;
+}
+
+.statCard {
+  text-align: center;
+  padding: 20px;
+  background-color: rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  backdrop-filter: blur(10px);
+}
+
+.statValue {
+  font-weight: 700;
+  margin-bottom: 5px;
+}
+
+.statLabel {
+  opacity: 0.8;
+  font-weight: 500;
+}
+
+.progressSection {
+  margin-top: 20px;
+}
+
+.progressLabel {
+  margin-bottom: 8px;
+  opacity: 0.9;
+}
+
+.progressBar {
+  height: 8px;
+  border-radius: 4px;
+  background-color: rgba(255, 255, 255, 0.2);
+}
+
+.leaguesCard,
+.sidebarCard {
+  margin-bottom: 20px;
+  border-radius: 12px;
+}
+
+.sectionTitle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 16px;
+  color: #1976d2;
+  font-weight: 600;
+}
+
+.sectionIcon {
+  font-size: 1.5rem;
+}
+
+.leaguesList,
+.playersList,
+.transfersList {
+  padding: 0;
+}
+
+.leagueItem,
+.playerItem,
+.transferItem {
+  padding: 12px 0;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.leagueItem:last-child,
+.playerItem:last-child,
+.transferItem:last-child {
+  border-bottom: none;
+}
+
+.leagueName {
+  font-weight: 600;
+  color: #212121;
+}
+
+.leagueInfo {
+  color: #757575;
+}
+
+.positionChip {
+  font-weight: 600;
+}
+
+.joinLeagueBtn {
+  margin-top: 16px;
+  font-weight: 600;
+}
+
+.playerAvatar {
+  width: 40px;
+  height: 40px;
+}
+
+.playerName {
+  font-weight: 600;
+  color: #212121;
+}
+
+.playerInfo {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.positionTag {
+  background-color: #1976d2;
+  color: white;
+  font-weight: 600;
+  font-size: 0.7rem;
+}
+
+.playerStats {
+  text-align: right;
+}
+
+.playerPoints {
+  font-weight: 600;
+  color: #4caf50;
+}
+
+.playerPrice {
+  color: #757575;
+}
+
+.transferInfo {
+  width: 100%;
+}
+
+.transferIn {
+  color: #4caf50;
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+
+.transferOut {
+  color: #f44336;
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+
+.transferCost {
+  color: #757575;
+}
+
+@media (max-width: 768px) {
+  .userHeader {
+    flex-direction: column;
+    text-align: center;
+  }
+
+  .userAvatar {
+    width: 60px;
+    height: 60px;
+  }
+
+  .statsGrid {
+    margin-bottom: 15px;
+  }
+
+  .statCard {
+    padding: 15px;
+  }
+}

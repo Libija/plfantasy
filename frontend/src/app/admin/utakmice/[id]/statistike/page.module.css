@@ -1,0 +1,131 @@
+.container {
+  padding: 2rem 0;
+  min-height: 100vh;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 2rem;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.backBtn {
+  color: #666;
+  text-transform: none;
+}
+
+.pageTitle {
+  flex: 1;
+  text-align: center;
+  color: #1976d2;
+  font-weight: 600;
+}
+
+.saveBtn {
+  background: linear-gradient(45deg, #4caf50, #45a049);
+  color: white;
+  text-transform: none;
+  padding: 0.75rem 1.5rem;
+  border-radius: 8px;
+  font-weight: 600;
+}
+
+.saveBtn:hover {
+  background: linear-gradient(45deg, #45a049, #4caf50);
+}
+
+/* Match Info Card */
+.matchCard {
+  margin-bottom: 2rem;
+  background: linear-gradient(135deg, #1976d2 0%, #1565c0 100%);
+  color: white;
+}
+
+.matchInfo {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 3rem;
+  padding: 1rem;
+}
+
+.team {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  min-width: 150px;
+}
+
+.teamLogo {
+  width: 60px;
+  height: 60px;
+  border: 3px solid rgba(255, 255, 255, 0.3);
+}
+
+.vsSection {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0 2rem;
+}
+
+.vsText {
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.9);
+}
+
+/* Statistics Form */
+.statsCard {
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+}
+
+.sectionTitle {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 2rem;
+  color: #1976d2;
+  font-weight: 600;
+}
+
+.sectionIcon {
+  color: #1976d2;
+}
+
+.statsForm {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.statRow {
+  display: grid;
+  grid-template-columns: 1fr 2fr 1fr;
+  align-items: center;
+  gap: 2rem;
+  padding: 1rem;
+  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+  border-radius: 12px;
+  border: 1px solid #e0e0e0;
+  transition: all 0.3s ease;
+}
+
+.statRow:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.statInputs {
+  display: flex;
+  justify-content: center;
+}
+
+.statInput {
+  width: 100px;

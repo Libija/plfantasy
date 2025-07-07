@@ -1,0 +1,479 @@
+.container {
+  padding: 20px 0;
+  min-height: 100vh;
+  background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 30px;
+  padding: 0 20px;
+}
+
+.pageTitle {
+  color: white;
+  font-weight: 700;
+}
+
+.teamStats {
+  display: flex;
+  gap: 15px;
+}
+
+.statChip {
+  font-weight: 600;
+}
+
+.pitchCard {
+  background: linear-gradient(45deg, #2e7d32, #4caf50);
+  border-radius: 15px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+}
+
+.pitchContent {
+  padding: 30px;
+  position: relative;
+}
+
+.formationSelector {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  z-index: 10;
+}
+
+.pitch {
+  background: linear-gradient(90deg, #2e7d32 0%, #4caf50 50%, #2e7d32 100%);
+  border-radius: 10px;
+  padding: 40px 20px;
+  position: relative;
+  min-height: 600px;
+  border: 3px solid white;
+  overflow: hidden;
+}
+
+.fieldLines {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  pointer-events: none;
+}
+
+.centerCircle {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 120px;
+  height: 120px;
+  border: 2px solid rgba(255, 255, 255, 0.8);
+  border-radius: 50%;
+}
+
+.centerLine {
+  position: absolute;
+  top: 50%;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: rgba(255, 255, 255, 0.8);
+}
+
+.penaltyArea {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 200px;
+  height: 80px;
+  border: 2px solid rgba(255, 255, 255, 0.8);
+}
+
+.topPenalty {
+  top: 0;
+  border-bottom: none;
+}
+
+.bottomPenalty {
+  bottom: 0;
+  border-top: none;
+}
+
+.goalArea {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 100px;
+  height: 40px;
+  border: 2px solid rgba(255, 255, 255, 0.8);
+}
+
+.topGoal {
+  top: 0;
+  border-bottom: none;
+}
+
+.bottomGoal {
+  bottom: 0;
+  border-top: none;
+}
+
+.goalkeepers {
+  position: absolute;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  justify-content: center;
+}
+
+.defenders {
+  position: absolute;
+  bottom: 150px;
+  left: 0;
+  right: 0;
+  display: flex;
+  justify-content: space-around;
+  padding: 0 40px;
+}
+
+.midfielders {
+  position: absolute;
+  bottom: 300px;
+  left: 0;
+  right: 0;
+  display: flex;
+  justify-content: space-around;
+  padding: 0 60px;
+}
+
+.forwards {
+  position: absolute;
+  bottom: 450px;
+  left: 0;
+  right: 0;
+  display: flex;
+  justify-content: space-around;
+  padding: 0 120px;
+}
+
+.playerCard {
+  background: rgba(255, 255, 255, 0.95);
+  border-radius: 12px;
+  padding: 12px 8px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  min-width: 80px;
+  border: 2px solid transparent;
+}
+
+.playerCard:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+  background: rgba(255, 255, 255, 1);
+}
+
+.selectedPlayer {
+  border: 2px solid #ff9800;
+  background: rgba(255, 152, 0, 0.1);
+}
+
+.playerAvatar {
+  width: 40px;
+  height: 40px;
+  margin: 0 auto 8px;
+  border: 2px solid #1976d2;
+}
+
+.playerName {
+  display: block;
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 4px;
+}
+
+.playerPoints {
+  display: block;
+  color: #4caf50;
+  font-weight: 700;
+  margin-bottom: 2px;
+}
+
+.playerPrice {
+  display: block;
+  color: #666;
+  font-size: 0.7rem;
+}
+
+.bench {
+  margin-top: 40px;
+  padding: 20px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+}
+
+.benchTitle {
+  color: white;
+  text-align: center;
+  margin-bottom: 15px;
+  font-weight: 600;
+}
+
+.benchPlayers {
+  display: flex;
+  justify-content: center;
+  gap: 15px;
+  flex-wrap: wrap;
+}
+
+.benchPlayer {
+  background: rgba(255, 255, 255, 0.9);
+  border-radius: 8px;
+  padding: 10px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  min-width: 70px;
+  border: 2px solid transparent;
+}
+
+.benchPlayer:hover {
+  background: rgba(255, 255, 255, 1);
+  transform: translateY(-2px);
+}
+
+.benchAvatar {
+  width: 30px;
+  height: 30px;
+  margin: 0 auto 5px;
+}
+
+.playerInfoCard {
+  margin-bottom: 20px;
+  border-radius: 15px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+}
+
+.playerInfoHeader {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  margin-bottom: 20px;
+}
+
+.playerInfoAvatar {
+  width: 60px;
+  height: 60px;
+  border: 3px solid #1976d2;
+}
+
+.playerInfoName {
+  font-weight: 700;
+  color: #333;
+}
+
+.playerInfoTeam {
+  color: #666;
+  font-weight: 500;
+}
+
+.playerStats {
+  margin-bottom: 20px;
+}
+
+.statRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 0;
+  border-bottom: 1px solid #eee;
+}
+
+.statValue {
+  font-weight: 600;
+  color: #1976d2;
+}
+
+.formSection {
+  margin-bottom: 20px;
+}
+
+.formTitle {
+  font-weight: 600;
+  margin-bottom: 10px;
+  color: #333;
+}
+
+.formBars {
+  display: flex;
+  gap: 8px;
+  align-items: end;
+  height: 60px;
+}
+
+.formBar {
+  flex: 1;
+  position: relative;
+  background: #eee;
+  border-radius: 4px;
+  height: 100%;
+  display: flex;
+  align-items: end;
+  justify-content: center;
+  padding-bottom: 2px;
+}
+
+.formBarFill {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  border-radius: 4px;
+  transition: height 0.3s ease;
+}
+
+.transferBtn {
+  background: linear-gradient(45deg, #ff9800, #f57c00);
+  font-weight: 600;
+}
+
+.removeBtn {
+  margin-top: 10px;
+  border-color: #f44336;
+  color: #f44336;
+}
+
+.removeBtn:hover {
+  background-color: rgba(244, 67, 54, 0.1);
+}
+
+.actionsCard {
+  border-radius: 15px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+}
+
+.sectionTitle {
+  font-weight: 700;
+  margin-bottom: 15px;
+  color: #333;
+}
+
+.actionButtons {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.actionBtn {
+  font-weight: 600;
+}
+
+.modalHeader {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.transferIcon {
+  color: #ff9800;
+}
+
+.modalFilters {
+  display: flex;
+  gap: 15px;
+  margin-bottom: 20px;
+  align-items: center;
+}
+
+.searchField {
+  flex: 1;
+}
+
+.filterSelect {
+  min-width: 150px;
+}
+
+.searchIcon {
+  color: #666;
+  margin-right: 8px;
+}
+
+.playersList {
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+.playerItem {
+  border-radius: 8px;
+  margin-bottom: 8px;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.playerItem:hover {
+  background-color: rgba(25, 118, 210, 0.1);
+}
+
+.playerInfo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.positionChip {
+  background-color: #e3f2fd;
+  color: #1976d2;
+  font-weight: 600;
+}
+
+.playerStats {
+  text-align: right;
+}
+
+@media (max-width: 768px) {
+  .header {
+    flex-direction: column;
+    gap: 15px;
+    text-align: center;
+  }
+
+  .teamStats {
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  .pitch {
+    min-height: 500px;
+    padding: 30px 15px;
+  }
+
+  .defenders,
+  .midfielders,
+  .forwards {
+    padding: 0 20px;
+  }
+
+  .playerCard {
+    min-width: 70px;
+    padding: 10px 6px;
+  }
+
+  .playerAvatar {
+    width: 35px;
+    height: 35px;
+  }
+
+  .benchPlayers {
+    gap: 10px;
+  }
+
+  .modalFilters {
+    flex-direction: column;
+    align-items: stretch;
+  }
+}

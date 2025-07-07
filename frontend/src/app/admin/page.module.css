@@ -1,0 +1,242 @@
+.adminLayout {
+  min-height: 100vh;
+  background-color: #f5f5f5;
+}
+
+.appBar {
+  background: linear-gradient(135deg, #1976d2 0%, #42a5f5 100%) !important;
+  box-shadow: 0 4px 20px rgba(25, 118, 210, 0.3) !important;
+}
+
+.title {
+  flex-grow: 1;
+  font-weight: 600 !important;
+}
+
+.headerActions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.userMenu .menuIcon {
+  margin-right: 0.5rem;
+  font-size: 1.2rem;
+}
+
+.container {
+  padding-top: 100px !important;
+  padding-bottom: 2rem !important;
+}
+
+.header {
+  text-align: center;
+  margin-bottom: 3rem;
+}
+
+.pageTitle {
+  font-weight: 700;
+  color: #1976d2;
+  margin-bottom: 0.5rem !important;
+}
+
+.pageSubtitle {
+  color: #666;
+  font-weight: 400;
+}
+
+.statsGrid {
+  margin-bottom: 3rem !important;
+}
+
+.statCard {
+  border-radius: 16px !important;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08) !important;
+  transition: all 0.3s ease !important;
+  border: none !important;
+}
+
+.statCard:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12) !important;
+}
+
+.statContent {
+  text-align: center;
+  padding: 1.5rem !important;
+}
+
+.statIcon {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 1rem;
+  color: white;
+}
+
+.statIcon svg {
+  font-size: 1.8rem;
+}
+
+.statNumber {
+  font-weight: 700 !important;
+  color: #333;
+  margin-bottom: 0.5rem !important;
+}
+
+.statLabel {
+  color: #666;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.actionsCard,
+.managementCard,
+.activityCard {
+  border-radius: 16px !important;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08) !important;
+  margin-bottom: 2rem !important;
+  border: none !important;
+}
+
+.sectionTitle {
+  font-weight: 600 !important;
+  color: #333;
+  margin-bottom: 1.5rem !important;
+}
+
+.actionCard {
+  border-radius: 12px !important;
+  transition: all 0.3s ease !important;
+  cursor: pointer;
+  text-decoration: none;
+  color: inherit;
+}
+
+.actionCard:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 25px rgba(0, 0, 0, 0.15) !important;
+}
+
+.actionContent {
+  text-align: center;
+  padding: 1.5rem !important;
+}
+
+.actionIcon {
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 1rem;
+  color: white;
+}
+
+.actionIcon svg {
+  font-size: 1.5rem;
+}
+
+.actionTitle {
+  font-weight: 600 !important;
+  color: #333;
+  margin-bottom: 0.5rem !important;
+  font-size: 1rem !important;
+}
+
+.actionDescription {
+  color: #666;
+  font-size: 0.875rem;
+}
+
+.managementBtn {
+  padding: 12px 16px !important;
+  text-transform: none !important;
+  font-weight: 500 !important;
+  border-radius: 8px !important;
+  transition: all 0.3s ease !important;
+}
+
+.managementBtn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 15px rgba(25, 118, 210, 0.2);
+}
+
+.activityList {
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+.activityItem {
+  border-radius: 8px !important;
+  margin-bottom: 0.5rem !important;
+  transition: background-color 0.3s ease !important;
+}
+
+.activityItem:hover {
+  background-color: #f8f9fa !important;
+}
+
+.activityIcon {
+  width: 40px !important;
+  height: 40px !important;
+}
+
+.activityIcon svg {
+  font-size: 1.2rem;
+}
+
+.activityAction {
+  font-weight: 500 !important;
+  color: #333;
+}
+
+.activityDetails {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.activityTitle {
+  color: #666 !important;
+  font-weight: 500 !important;
+}
+
+.activityTime {
+  color: #999 !important;
+}
+
+.viewAllBtn {
+  margin-top: 1rem !important;
+  text-transform: none !important;
+  font-weight: 500 !important;
+  border-radius: 8px !important;
+}
+
+@media (max-width: 960px) {
+  .container {
+    padding-top: 80px !important;
+  }
+
+  .statsGrid {
+    margin-bottom: 2rem !important;
+  }
+
+  .statContent {
+    padding: 1rem !important;
+  }
+
+  .statIcon {
+    width: 50px;
+    height: 50px;
+  }
+
+  .statNumber {
+    font-size: 1.5rem !important;
+  }
+}

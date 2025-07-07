@@ -1,0 +1,232 @@
+.container {
+  padding: 20px 0;
+  min-height: 100vh;
+  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 32px;
+  padding: 0 16px;
+}
+
+.pageTitle {
+  color: #333;
+  font-weight: 700;
+}
+
+.headerActions {
+  display: flex;
+  gap: 12px;
+}
+
+.primaryBtn {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border-radius: 12px;
+  padding: 10px 20px;
+  font-weight: 600;
+  box-shadow: 0 4px 16px rgba(102, 126, 234, 0.3);
+}
+
+.primaryBtn:hover {
+  background: linear-gradient(135deg, #5a6fd8 0%, #6a4190 100%);
+  box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+}
+
+.secondaryBtn {
+  border: 2px solid #667eea;
+  color: #667eea;
+  border-radius: 12px;
+  padding: 8px 18px;
+  font-weight: 600;
+}
+
+.secondaryBtn:hover {
+  background: rgba(102, 126, 234, 0.1);
+  border-color: #5a6fd8;
+}
+
+.sectionCard {
+  border-radius: 16px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+  background: white;
+  height: 100%;
+}
+
+.sectionTitle {
+  margin-bottom: 20px;
+  color: #333;
+  font-weight: 700;
+  border-bottom: 3px solid #667eea;
+  padding-bottom: 8px;
+}
+
+.roundsList {
+  padding: 0;
+}
+
+.roundItem {
+  margin-bottom: 16px;
+  padding: 16px;
+  background: #f8f9fa;
+  border-radius: 12px;
+  border-left: 4px solid #667eea;
+}
+
+.roundContent {
+  width: 100%;
+}
+
+.roundHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.roundNumber {
+  color: #333;
+  font-weight: 700;
+}
+
+.roundDates {
+  color: #666;
+  margin-bottom: 4px;
+}
+
+.matchesCount {
+  color: #888;
+  font-size: 0.9rem;
+}
+
+.matchesList {
+  padding: 0;
+}
+
+.matchItem {
+  margin-bottom: 20px;
+  padding: 20px;
+  background: #f8f9fa;
+  border-radius: 12px;
+  border-left: 4px solid #4caf50;
+}
+
+.matchContent {
+  width: 100%;
+}
+
+.matchHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.matchRound {
+  color: #666;
+  font-weight: 600;
+}
+
+.matchTeams {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+  gap: 12px;
+}
+
+.team {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+}
+
+.teamLogo {
+  width: 32px;
+  height: 32px;
+}
+
+.teamName {
+  font-weight: 600;
+  color: #333;
+}
+
+.vs {
+  color: #667eea;
+  font-weight: 700;
+  flex: 0 0 auto;
+}
+
+.matchDetails {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.matchInfo {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.infoIcon {
+  color: #667eea;
+  font-size: 1.2rem;
+}
+
+.dialogForm {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding-top: 16px;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .header {
+    flex-direction: column;
+    gap: 16px;
+    align-items: stretch;
+  }
+
+  .headerActions {
+    justify-content: center;
+  }
+
+  .matchTeams {
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .team {
+    justify-content: center;
+  }
+
+  .vs {
+    transform: rotate(90deg);
+  }
+}
+
+@media (max-width: 480px) {
+  .container {
+    padding: 10px 0;
+  }
+
+  .sectionCard {
+    margin: 0 8px 16px 8px;
+  }
+
+  .headerActions {
+    flex-direction: column;
+    width: 100%;
+  }
+
+  .primaryBtn,
+  .secondaryBtn {
+    width: 100%;
+  }
+}
