@@ -1,0 +1,137 @@
+.container {
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 2rem 1rem;
+}
+
+.title {
+  font-size: 2.5rem;
+  margin-bottom: 0.5rem;
+  color: #ffffff;
+  text-align: center;
+}
+
+.subtitle {
+  color: #b8c1ec;
+  text-align: center;
+  margin-bottom: 2rem;
+}
+
+.clubsGrid {
+  display: grid;
+  grid-template-columns: repeat(1, 1fr);
+  gap: 1.5rem;
+}
+
+.clubCard {
+  display: flex;
+  background-color: #1a1a2e;
+  border-radius: 8px;
+  overflow: hidden;
+  transition: transform 0.3s;
+  text-decoration: none;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.clubCard:hover {
+  transform: translateY(-5px);
+}
+
+.clubLogo {
+  width: 120px;
+  height: 120px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #16213e;
+  padding: 1rem;
+}
+
+.logoPlaceholder {
+  width: 80px;
+  height: 80px;
+  background-color: #4361ee;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 2rem;
+  font-weight: 700;
+}
+
+.clubInfo {
+  flex: 1;
+  padding: 1.5rem;
+}
+
+.clubName {
+  font-size: 1.2rem;
+  color: #ffffff;
+  margin: 0 0 0.25rem 0;
+}
+
+.clubCity {
+  color: #6c7293;
+  font-size: 0.9rem;
+  margin-bottom: 1rem;
+}
+
+.clubDetails {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.75rem;
+}
+
+.detailItem {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.detailLabel {
+  font-size: 0.8rem;
+  color: #6c7293;
+}
+
+.detailValue {
+  font-size: 0.9rem;
+  color: #b8c1ec;
+}
+
+/* Responsive */
+@media (min-width: 768px) {
+  .clubsGrid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (min-width: 992px) {
+  .clubsGrid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+
+  .clubCard {
+    flex-direction: column;
+  }
+
+  .clubLogo {
+    width: 100%;
+    height: 150px;
+  }
+}
+
+@media (max-width: 576px) {
+  .title {
+    font-size: 2rem;
+  }
+
+  .subtitle {
+    font-size: 0.9rem;
+  }
+
+  .clubDetails {
+    grid-template-columns: 1fr;
+  }
+}

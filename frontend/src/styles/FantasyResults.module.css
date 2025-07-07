@@ -1,0 +1,407 @@
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 2rem;
+}
+
+.pageHeader {
+  display: flex;
+  align-items: center;
+  gap: 2rem;
+  margin-bottom: 2rem;
+}
+
+.backButton {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1rem;
+  background: #f8f9fa;
+  color: #495057;
+  text-decoration: none;
+  border-radius: 8px;
+  transition: all 0.2s ease;
+}
+
+.backButton:hover {
+  background: #e9ecef;
+  transform: translateY(-1px);
+}
+
+.title {
+  font-size: 2.5rem;
+  font-weight: bold;
+  color: #2c3e50;
+  margin: 0;
+}
+
+.controls {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2rem;
+  padding: 1.5rem;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+.roundSelector {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.roundSelector label {
+  font-weight: 500;
+  color: #2c3e50;
+}
+
+.roundSelect {
+  padding: 0.75rem 1rem;
+  border: 1px solid #dee2e6;
+  border-radius: 8px;
+  font-size: 1rem;
+  background: white;
+  cursor: pointer;
+}
+
+.viewModeSelector {
+  display: flex;
+  background: #f8f9fa;
+  border-radius: 8px;
+  padding: 0.25rem;
+}
+
+.viewModeButton {
+  padding: 0.75rem 1.5rem;
+  background: transparent;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-weight: 500;
+  color: #6c757d;
+}
+
+.viewModeButton.active {
+  background: white;
+  color: #667eea;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.myTeamSection {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+.teamSummary {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 1.5rem;
+}
+
+.summaryCard {
+  background: white;
+  border-radius: 12px;
+  padding: 2rem;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+}
+
+.summaryIcon {
+  width: 60px;
+  height: 60px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+  color: white;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.summaryContent h3 {
+  margin: 0 0 0.5rem 0;
+  font-size: 1rem;
+  color: #6c757d;
+  font-weight: 500;
+}
+
+.summaryValue {
+  font-size: 2.5rem;
+  font-weight: bold;
+  color: #2c3e50;
+  margin: 0;
+}
+
+.summarySubtext {
+  font-size: 0.9rem;
+  color: #95a5a6;
+}
+
+.playersResults {
+  background: white;
+  border-radius: 12px;
+  padding: 2rem;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+.sectionTitle {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: #2c3e50;
+  margin-bottom: 1.5rem;
+}
+
+.resultsTable {
+  display: flex;
+  flex-direction: column;
+}
+
+.tableHeader {
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr 1fr 1fr 1fr;
+  gap: 1rem;
+  padding: 1rem;
+  background: #f8f9fa;
+  border-radius: 8px;
+  margin-bottom: 0.5rem;
+}
+
+.headerCell {
+  font-weight: 600;
+  color: #495057;
+  font-size: 0.9rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.tableRow {
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr 1fr 1fr 1fr;
+  gap: 1rem;
+  padding: 1rem;
+  border-bottom: 1px solid #f1f3f4;
+  align-items: center;
+  transition: background-color 0.2s ease;
+}
+
+.tableRow:hover {
+  background: #f8f9fa;
+}
+
+.tableCell {
+  display: flex;
+  align-items: center;
+}
+
+.playerInfo {
+  display: flex;
+  flex-direction: column;
+}
+
+.playerName {
+  font-weight: 500;
+  color: #2c3e50;
+}
+
+.position {
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  color: white;
+  font-size: 0.8rem;
+  font-weight: 500;
+  text-align: center;
+}
+
+.status {
+  font-size: 1.2rem;
+}
+
+.points {
+  font-weight: bold;
+  font-size: 1.1rem;
+  color: #2c3e50;
+}
+
+.points.highPoints {
+  color: #28a745;
+}
+
+.points.lowPoints {
+  color: #dc3545;
+}
+
+.price {
+  color: #6c757d;
+  font-weight: 500;
+}
+
+.allPlayersSection {
+  background: white;
+  border-radius: 12px;
+  padding: 2rem;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+.performersGrid {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.performerCard {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  padding: 1.5rem;
+  background: #f8f9fa;
+  border-radius: 8px;
+  transition: all 0.2s ease;
+}
+
+.performerCard:hover {
+  background: #e9ecef;
+  transform: translateY(-1px);
+}
+
+.performerRank {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  font-size: 1.1rem;
+}
+
+.performerInfo {
+  flex: 1;
+}
+
+.performerName {
+  font-weight: 600;
+  color: #2c3e50;
+  margin-bottom: 0.25rem;
+}
+
+.performerTeam {
+  color: #6c757d;
+  font-size: 0.9rem;
+  margin-bottom: 0.25rem;
+}
+
+.performerReason {
+  color: #495057;
+  font-size: 0.85rem;
+}
+
+.performerStats {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.performerPosition {
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  color: white;
+  font-size: 0.8rem;
+  font-weight: 500;
+}
+
+.performerPoints {
+  font-size: 1.5rem;
+  font-weight: bold;
+  color: #2c3e50;
+}
+
+.roundNavigation {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 2rem;
+  margin-top: 2rem;
+  padding: 1.5rem;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+.navButton {
+  padding: 0.75rem 1.5rem;
+  background: #667eea;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-weight: 500;
+}
+
+.navButton:hover:not(:disabled) {
+  background: #5a67d8;
+  transform: translateY(-1px);
+}
+
+.navButton:disabled {
+  background: #e9ecef;
+  color: #6c757d;
+  cursor: not-allowed;
+}
+
+.currentRound {
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: #2c3e50;
+}
+
+@media (max-width: 768px) {
+  .container {
+    padding: 1rem;
+  }
+
+  .controls {
+    flex-direction: column;
+    gap: 1rem;
+    align-items: stretch;
+  }
+
+  .teamSummary {
+    grid-template-columns: 1fr;
+  }
+
+  .tableHeader,
+  .tableRow {
+    grid-template-columns: 1fr;
+    gap: 0.5rem;
+  }
+
+  .headerCell {
+    display: none;
+  }
+
+  .tableCell {
+    justify-content: space-between;
+    padding: 0.5rem 0;
+  }
+
+  .tableCell:before {
+    content: attr(data-label);
+    font-weight: 600;
+    color: #6c757d;
+    font-size: 0.8rem;
+  }
+
+  .roundNavigation {
+    flex-direction: column;
+    gap: 1rem;
+  }
+}

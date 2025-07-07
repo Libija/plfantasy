@@ -1,0 +1,318 @@
+.container {
+  width: 100%;
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 2rem 1rem;
+  background-color: #f8f9fa;
+  min-height: 100vh;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2rem;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.backButton {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: #6c757d;
+  text-decoration: none;
+  transition: color 0.3s;
+}
+
+.backButton:hover {
+  color: #495057;
+}
+
+.headerContent {
+  display: flex;
+  align-items: center;
+  gap: 2rem;
+  flex: 1;
+}
+
+.title {
+  font-size: 2rem;
+  color: #333;
+  margin: 0;
+}
+
+.headerActions {
+  display: flex;
+  gap: 1rem;
+}
+
+.actionButton {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: #007bff;
+  color: white;
+  padding: 0.75rem 1.5rem;
+  border-radius: 8px;
+  text-decoration: none;
+  border: none;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+.actionButton:hover {
+  background: #0056b3;
+}
+
+.actionButton:first-child {
+  background: #17a2b8;
+}
+
+.actionButton:first-child:hover {
+  background: #138496;
+}
+
+.tabs {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 2rem;
+  background: white;
+  border-radius: 8px;
+  padding: 0.5rem;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.tabButton {
+  flex: 1;
+  background: transparent;
+  border: none;
+  padding: 0.75rem 1.5rem;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.3s;
+  font-weight: 500;
+}
+
+.tabButton.active {
+  background: #007bff;
+  color: white;
+}
+
+.roundSelector {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 2rem;
+  background: white;
+  padding: 1rem;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.roundSelector label {
+  font-weight: 600;
+  color: #495057;
+}
+
+.roundSelect {
+  padding: 0.5rem;
+  border: 1px solid #ced4da;
+  border-radius: 4px;
+  font-size: 1rem;
+}
+
+.matchesList {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.matchCard {
+  background: white;
+  border-radius: 8px;
+  padding: 1.5rem;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  transition: transform 0.3s;
+}
+
+.matchCard:hover {
+  transform: translateY(-2px);
+}
+
+.matchHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid #dee2e6;
+}
+
+.matchRound {
+  font-weight: 600;
+  color: #007bff;
+}
+
+.matchDate {
+  color: #6c757d;
+  font-size: 0.9rem;
+}
+
+.matchStatus {
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  font-size: 0.8rem;
+  font-weight: 500;
+}
+
+.matchStatus.završena {
+  background: #d4edda;
+  color: #155724;
+}
+
+.matchStatus.zakazana {
+  background: #fff3cd;
+  color: #856404;
+}
+
+.matchTeams {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1.5rem;
+}
+
+.teamHome,
+.teamAway {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex: 1;
+}
+
+.teamHome {
+  justify-content: flex-end;
+}
+
+.teamAway {
+  justify-content: flex-start;
+}
+
+.teamName {
+  font-weight: 600;
+  color: #333;
+  font-size: 1.1rem;
+}
+
+.score {
+  background: #007bff;
+  color: white;
+  padding: 0.5rem 0.75rem;
+  border-radius: 4px;
+  font-weight: 700;
+  min-width: 2rem;
+  text-align: center;
+}
+
+.matchInfo {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 0 1.5rem;
+}
+
+.vs {
+  font-weight: 700;
+  color: #007bff;
+  margin-bottom: 0.5rem;
+  font-size: 1.2rem;
+}
+
+.separator {
+  font-weight: 700;
+  color: #007bff;
+  margin: 0 1rem;
+  font-size: 1.2rem;
+}
+
+.stadium {
+  font-size: 0.8rem;
+  color: #6c757d;
+}
+
+.matchActions {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.actionButton {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  text-decoration: none;
+  font-size: 0.9rem;
+  transition: all 0.3s;
+  flex: 1;
+  justify-content: center;
+}
+
+.actionButton.completed {
+  background: #28a745;
+  color: white;
+}
+
+.actionButton.completed:hover {
+  background: #218838;
+}
+
+.actionButton.pending {
+  background: #ffc107;
+  color: #212529;
+}
+
+.actionButton.pending:hover {
+  background: #e0a800;
+}
+
+.actionButton:not(.completed):not(.pending) {
+  background: #007bff;
+  color: white;
+}
+
+.actionButton:not(.completed):not(.pending):hover {
+  background: #0056b3;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .matchHeader {
+    flex-direction: column;
+    gap: 0.5rem;
+    align-items: flex-start;
+  }
+
+  .matchTeams {
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .teamHome,
+  .teamAway {
+    justify-content: center;
+    width: 100%;
+  }
+
+  .matchInfo {
+    margin: 1rem 0;
+  }
+
+  .matchActions {
+    flex-direction: column;
+  }
+}
