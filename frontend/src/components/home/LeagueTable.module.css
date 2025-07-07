@@ -1,0 +1,102 @@
+.tableCard {
+  margin-bottom: 20px;
+}
+
+.cardContent {
+  padding: 20px;
+}
+
+.cardTitle {
+  margin-bottom: 16px;
+  color: #1976d2;
+  font-weight: 600;
+}
+
+.tableContainer {
+  margin-bottom: 16px;
+}
+
+.headerCell {
+  font-weight: 600;
+  color: #1976d2;
+  padding: 8px 4px;
+  font-size: 0.75rem;
+}
+
+.tableRow {
+  transition: background-color 0.2s ease;
+}
+
+.tableRow:hover {
+  background-color: #f5f5f5;
+}
+
+.positionCell {
+  width: 30px;
+  padding: 8px 4px;
+  font-weight: 600;
+  text-align: center;
+  border-left: 3px solid transparent;
+}
+
+.champions {
+  border-left-color: #4caf50;
+  background-color: rgba(76, 175, 80, 0.1);
+}
+
+.europa {
+  border-left-color: #ff9800;
+  background-color: rgba(255, 152, 0, 0.1);
+}
+
+.relegation {
+  border-left-color: #f44336;
+  background-color: rgba(244, 67, 54, 0.1);
+}
+
+.teamCell {
+  padding: 8px 4px;
+}
+
+.teamInfo {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.teamLogo {
+  width: 20px;
+  height: 20px;
+}
+
+.teamName {
+  font-weight: 500;
+  font-size: 0.8rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100px;
+}
+
+.statCell {
+  padding: 8px 4px;
+  font-size: 0.75rem;
+  min-width: 25px;
+}
+
+.pointsCell {
+  padding: 8px 4px;
+  font-size: 0.8rem;
+  color: #1976d2;
+}
+
+.cardFooter {
+  text-align: center;
+  border-top: 1px solid #e0e0e0;
+  padding-top: 12px;
+}
+
+.viewMoreBtn {
+  font-weight: 600;
+  font-size: 0.8rem;
+}

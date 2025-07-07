@@ -1,0 +1,185 @@
+.container {
+  padding: 20px;
+}
+
+.backButton {
+  margin-bottom: 20px;
+}
+
+.backBtn {
+  color: #1976d2;
+  font-weight: 600;
+}
+
+.articleCard {
+  margin-bottom: 40px;
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.articleImage {
+  object-fit: cover;
+}
+
+.articleContent {
+  padding: 30px;
+}
+
+.articleHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.tags {
+  display: flex;
+  gap: 8px;
+}
+
+.categoryChip {
+  font-weight: 600;
+}
+
+.clubChip {
+  font-weight: 500;
+}
+
+.shareBtn {
+  color: #1976d2;
+  font-weight: 600;
+}
+
+.articleTitle {
+  font-weight: 700;
+  color: #212121;
+  margin-bottom: 20px;
+  line-height: 1.2;
+}
+
+.articleMeta {
+  margin-bottom: 20px;
+}
+
+.authorInfo {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.authorAvatar {
+  width: 48px;
+  height: 48px;
+}
+
+.authorName {
+  font-weight: 600;
+  color: #1976d2;
+  margin-bottom: 4px;
+}
+
+.metaStats {
+  display: flex;
+  gap: 16px;
+}
+
+.metaItem {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  color: #757575;
+}
+
+.divider {
+  margin: 20px 0;
+}
+
+.articleBody {
+  font-size: 1.1rem;
+  line-height: 1.7;
+  color: #212121;
+  margin-bottom: 30px;
+}
+
+.articleBody p {
+  margin-bottom: 16px;
+}
+
+.articleTags {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.tagsLabel {
+  font-weight: 600;
+  color: #757575;
+}
+
+.tagsList {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.tag {
+  font-size: 0.75rem;
+}
+
+.relatedNews {
+  margin-top: 40px;
+}
+
+.relatedTitle {
+  color: #1976d2;
+  font-weight: 600;
+  margin-bottom: 20px;
+}
+
+.relatedGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 20px;
+}
+
+.relatedCard {
+  display: flex;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.relatedContent {
+  padding: 16px;
+  flex: 1;
+}
+
+.relatedNewsTitle {
+  font-weight: 600;
+  margin-bottom: 8px;
+  line-height: 1.3;
+}
+
+.relatedDate {
+  color: #757575;
+}
+
+@media (max-width: 768px) {
+  .articleContent {
+    padding: 20px;
+  }
+
+  .articleTitle {
+    font-size: 1.8rem;
+  }
+
+  .articleHeader {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+
+  .relatedCard {
+    flex-direction: column;
+  }
+}

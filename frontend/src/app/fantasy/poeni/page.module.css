@@ -1,0 +1,206 @@
+.container {
+  padding: 20px;
+}
+
+.header {
+  text-align: center;
+  margin-bottom: 30px;
+}
+
+.pageTitle {
+  color: #1976d2;
+  font-weight: 700;
+  margin-bottom: 10px;
+}
+
+.pageSubtitle {
+  color: #757575;
+  font-weight: 400;
+}
+
+.statsCard,
+.historyCard {
+  border-radius: 12px;
+  height: fit-content;
+}
+
+.sectionTitle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #1976d2;
+  font-weight: 600;
+  margin-bottom: 20px;
+}
+
+.sectionIcon {
+  font-size: 1.5rem;
+}
+
+.statsList {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.statItem {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 0;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.statItem:last-child {
+  border-bottom: none;
+}
+
+.statValue {
+  font-weight: 700;
+  color: #1976d2;
+}
+
+.historyHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.gameweekSelect {
+  min-width: 120px;
+}
+
+.gameweeksList {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.gameweekCard {
+  border-radius: 8px;
+  border-left: 4px solid #1976d2;
+}
+
+.gameweekHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.gameweekInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.gameweekTitle {
+  font-weight: 700;
+  color: #212121;
+}
+
+.gameweekStats {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.pointsChip {
+  font-weight: 600;
+}
+
+.rankChip {
+  font-weight: 600;
+}
+
+.captainInfo {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+}
+
+.captainLabel {
+  color: #757575;
+}
+
+.captainName {
+  font-weight: 600;
+  color: #212121;
+}
+
+.captainPoints {
+  color: #4caf50;
+  font-weight: 600;
+}
+
+.playersTable {
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.playerRow {
+  transition: background-color 0.2s ease;
+}
+
+.playerRow:hover {
+  background-color: #f5f5f5;
+}
+
+.playerInfo {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.playerAvatar {
+  width: 32px;
+  height: 32px;
+  background-color: #1976d2;
+}
+
+.playerName {
+  font-weight: 600;
+  color: #212121;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.captainBadge {
+  background-color: #ffeb3b;
+  color: #212121;
+  font-weight: 700;
+  font-size: 0.7rem;
+  height: 20px;
+  min-width: 20px;
+}
+
+.playerPoints {
+  font-weight: 600;
+}
+
+@media (max-width: 768px) {
+  .historyHeader {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .gameweekHeader {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .captainInfo {
+    align-items: flex-start;
+  }
+
+  .gameweekStats {
+    justify-content: flex-start;
+  }
+}

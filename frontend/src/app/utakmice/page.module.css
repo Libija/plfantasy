@@ -1,0 +1,174 @@
+.container {
+  padding: 20px;
+}
+
+.header {
+  text-align: center;
+  margin-bottom: 30px;
+}
+
+.pageTitle {
+  color: #1976d2;
+  font-weight: 700;
+  margin-bottom: 10px;
+}
+
+.pageSubtitle {
+  color: #757575;
+  font-weight: 400;
+}
+
+.tabsContainer {
+  margin-bottom: 30px;
+}
+
+.tabs {
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.matchesContainer {
+  margin-bottom: 40px;
+}
+
+.roundHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 30px;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.roundTitle {
+  color: #1976d2;
+  font-weight: 600;
+}
+
+.allResultsBtn {
+  font-weight: 600;
+}
+
+.matchCard {
+  border-radius: 12px;
+  height: 100%;
+}
+
+.matchContent {
+  padding: 24px;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.matchHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.roundChip {
+  background-color: #1976d2;
+  color: white;
+  font-weight: 600;
+}
+
+.statusChip {
+  font-weight: 600;
+}
+
+.teamsContainer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20px;
+}
+
+.team {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+}
+
+.teamLogo {
+  width: 48px;
+  height: 48px;
+}
+
+.teamName {
+  font-weight: 600;
+  text-align: center;
+  color: #212121;
+}
+
+.scoreContainer {
+  flex: 0 0 auto;
+  margin: 0 20px;
+}
+
+.score {
+  font-weight: 700;
+  color: #1976d2;
+  text-align: center;
+}
+
+.vsContainer {
+  flex: 0 0 auto;
+  margin: 0 20px;
+}
+
+.vsText {
+  color: #757575;
+  font-weight: 600;
+}
+
+.divider {
+  margin: 16px 0;
+}
+
+.matchDetails {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 20px;
+}
+
+.detailItem {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.detailIcon {
+  color: #1976d2;
+}
+
+.detailsBtn,
+.previewBtn {
+  margin-top: auto;
+  font-weight: 600;
+}
+
+@media (max-width: 768px) {
+  .roundHeader {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .teamsContainer {
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .scoreContainer,
+  .vsContainer {
+    margin: 0;
+  }
+
+  .teamLogo {
+    width: 40px;
+    height: 40px;
+  }
+}

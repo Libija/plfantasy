@@ -1,0 +1,121 @@
+.container {
+  padding: 20px;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 30px;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.pageTitle {
+  color: #1976d2;
+  font-weight: 700;
+}
+
+.addBtn {
+  font-weight: 600;
+  padding: 12px 24px;
+}
+
+.filtersCard,
+.tableCard {
+  border-radius: 12px;
+  margin-bottom: 20px;
+}
+
+.filters {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.searchField {
+  flex: 1;
+  min-width: 250px;
+}
+
+.searchIcon {
+  color: #757575;
+  margin-right: 8px;
+}
+
+.filterSelect {
+  min-width: 150px;
+}
+
+.headerCell {
+  font-weight: 600;
+  color: #1976d2;
+  background-color: #f5f5f5;
+}
+
+.tableRow {
+  transition: background-color 0.2s ease;
+}
+
+.tableRow:hover {
+  background-color: #f9f9f9;
+}
+
+.titleCell {
+  max-width: 300px;
+}
+
+.newsTitle {
+  font-weight: 600;
+  color: #212121;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.noClub {
+  color: #757575;
+}
+
+.views {
+  font-weight: 600;
+  color: #4caf50;
+}
+
+.actions {
+  display: flex;
+  gap: 4px;
+}
+
+.viewBtn {
+  color: #1976d2;
+}
+
+.editBtn {
+  color: #ff9800;
+}
+
+.deleteBtn {
+  color: #f44336;
+}
+
+@media (max-width: 768px) {
+  .header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .filters {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .searchField {
+    min-width: auto;
+  }
+
+  .titleCell {
+    max-width: 200px;
+  }
+}

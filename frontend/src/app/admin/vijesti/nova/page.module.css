@@ -1,0 +1,147 @@
+.container {
+  padding: 30px 0;
+  min-height: 100vh;
+  background-color: #f5f5f5;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 30px;
+  padding: 0 20px;
+}
+
+.backBtn {
+  color: #666;
+  font-weight: 500;
+}
+
+.pageTitle {
+  color: #333;
+  font-weight: 700;
+}
+
+.contentCard {
+  border-radius: 15px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+  margin-bottom: 20px;
+}
+
+.formFields {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.titleField {
+  font-size: 1.2rem;
+}
+
+.metaCard {
+  border-radius: 15px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+  margin-bottom: 20px;
+}
+
+.sectionTitle {
+  font-weight: 700;
+  margin-bottom: 20px;
+  color: #333;
+}
+
+.metaFields {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.tagsSection {
+  margin-top: 10px;
+}
+
+.tagsLabel {
+  font-weight: 600;
+  margin-bottom: 10px;
+  color: #333;
+}
+
+.tagsInput {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 15px;
+}
+
+.tagsList {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.tag {
+  background-color: #e3f2fd;
+  color: #1976d2;
+}
+
+.imageUploadSection {
+  margin-top: 20px;
+}
+
+.uploadLabel {
+  font-weight: 600;
+  margin-bottom: 10px;
+  color: #333;
+}
+
+.imageUpload {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.uploadBtn {
+  border-color: #1976d2;
+  color: #1976d2;
+  font-weight: 600;
+}
+
+.imagePreview {
+  display: flex;
+  justify-content: center;
+}
+
+.previewImage {
+  max-width: 200px;
+  max-height: 150px;
+  object-fit: cover;
+  border: 2px solid #e0e0e0;
+  border-radius: 8px;
+}
+
+.actionsCard {
+  border-radius: 15px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+}
+
+.actionButtons {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.actionBtn {
+  font-weight: 600;
+  height: 45px;
+}
+
+@media (max-width: 768px) {
+  .header {
+    flex-direction: column;
+    gap: 15px;
+    text-align: center;
+  }
+
+  .tagsInput {
+    flex-direction: column;
+  }
+}
