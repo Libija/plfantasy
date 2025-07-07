@@ -1,0 +1,139 @@
+.newsSection {
+  background-color: #1a1a2e;
+  border-radius: 8px;
+  padding: 1.5rem;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.sectionHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 2px solid #2a2a3a;
+}
+
+.sectionHeader h2 {
+  font-size: 1.5rem;
+  color: #ffffff;
+  margin: 0;
+}
+
+.viewAll {
+  color: #4361ee;
+  text-decoration: none;
+  font-size: 0.9rem;
+  font-weight: 500;
+  transition: color 0.3s;
+}
+
+.viewAll:hover {
+  color: #3a56d4;
+  text-decoration: underline;
+}
+
+.newsGrid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1.5rem;
+}
+
+.newsCard {
+  background-color: #16213e;
+  border-radius: 8px;
+  overflow: hidden;
+  transition: transform 0.3s;
+}
+
+.newsCard:hover {
+  transform: translateY(-5px);
+}
+
+.imageContainer {
+  width: 100%;
+  height: 200px;
+  overflow: hidden;
+}
+
+.imagePlaceholder {
+  width: 100%;
+  height: 100%;
+  background-color: #2a2a3a;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+
+.placeholderText {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background-color: #4361ee;
+  color: white;
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  font-size: 0.8rem;
+  font-weight: 500;
+}
+
+.newsContent {
+  padding: 1.5rem;
+}
+
+.newsDate {
+  display: block;
+  color: #6c7293;
+  font-size: 0.8rem;
+  margin-bottom: 0.5rem;
+}
+
+.newsTitle {
+  font-size: 1.2rem;
+  margin-bottom: 0.75rem;
+}
+
+.newsTitle a {
+  color: #ffffff;
+  text-decoration: none;
+  transition: color 0.3s;
+}
+
+.newsTitle a:hover {
+  color: #4361ee;
+}
+
+.newsExcerpt {
+  color: #b8c1ec;
+  font-size: 0.9rem;
+  margin-bottom: 1rem;
+  line-height: 1.5;
+}
+
+.readMore {
+  display: inline-block;
+  color: #4361ee;
+  text-decoration: none;
+  font-size: 0.9rem;
+  font-weight: 500;
+  transition: color 0.3s;
+}
+
+.readMore:hover {
+  color: #3a56d4;
+  text-decoration: underline;
+}
+
+/* Responsive */
+@media (min-width: 768px) {
+  .newsGrid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (min-width: 992px) {
+  .newsGrid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}

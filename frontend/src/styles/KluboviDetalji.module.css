@@ -1,0 +1,402 @@
+.container {
+  width: 100%;
+  max-width: 1000px;
+  margin: 0 auto;
+  padding: 2rem 1rem;
+}
+
+.breadcrumbs {
+  margin-bottom: 2rem;
+  color: #6c7293;
+  font-size: 0.9rem;
+}
+
+.breadcrumbs a {
+  color: #4361ee;
+  text-decoration: none;
+  transition: color 0.3s;
+}
+
+.breadcrumbs a:hover {
+  color: #3a56d4;
+  text-decoration: underline;
+}
+
+.clubHeader {
+  display: flex;
+  align-items: center;
+  gap: 2rem;
+  background-color: #1a1a2e;
+  border-radius: 8px;
+  padding: 2rem;
+  margin-bottom: 1.5rem;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.clubLogo {
+  flex-shrink: 0;
+}
+
+.logoPlaceholder {
+  width: 120px;
+  height: 120px;
+  background-color: #4361ee;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 3rem;
+  font-weight: 700;
+}
+
+.clubInfo {
+  flex: 1;
+}
+
+.clubName {
+  font-size: 2rem;
+  color: #ffffff;
+  margin: 0 0 0.25rem 0;
+}
+
+.clubFullName {
+  color: #b8c1ec;
+  margin: 0 0 1.5rem 0;
+  font-size: 1.1rem;
+}
+
+.clubBasicInfo {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1rem;
+}
+
+.infoItem {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.infoLabel {
+  font-size: 0.8rem;
+  color: #6c7293;
+}
+
+.infoValue {
+  font-size: 1rem;
+  color: #e0e0e0;
+  font-weight: 500;
+}
+
+.tabs {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 1.5rem;
+  overflow-x: auto;
+  padding-bottom: 0.5rem;
+}
+
+.tabButton {
+  background-color: #1a1a2e;
+  color: #b8c1ec;
+  border: none;
+  border-radius: 4px;
+  padding: 0.75rem 1.5rem;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: background-color 0.3s, color 0.3s;
+  white-space: nowrap;
+}
+
+.tabButton:hover {
+  background-color: #2a2a3a;
+}
+
+.tabButton.active {
+  background-color: #4361ee;
+  color: white;
+}
+
+.clubContent {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1.5rem;
+}
+
+.aboutClub,
+.trophies,
+.squad,
+.matches {
+  background-color: #1a1a2e;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.sectionHeader {
+  padding: 1rem;
+  background-color: #16213e;
+  border-bottom: 1px solid #2a2a3a;
+}
+
+.sectionHeader h2 {
+  margin: 0;
+  font-size: 1.2rem;
+  color: #ffffff;
+}
+
+.aboutContent {
+  padding: 1.5rem;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1.5rem;
+}
+
+.description p {
+  color: #e0e0e0;
+  line-height: 1.6;
+  margin-bottom: 1rem;
+}
+
+.clubDetails {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1rem;
+}
+
+.detailItem {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.detailLabel {
+  font-size: 0.8rem;
+  color: #6c7293;
+}
+
+.detailValue {
+  font-size: 1rem;
+  color: #e0e0e0;
+}
+
+.trophiesContent {
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.trophyItem {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem;
+  background-color: #16213e;
+  border-radius: 4px;
+}
+
+.trophyIcon {
+  font-size: 2rem;
+}
+
+.trophyInfo {
+  flex: 1;
+}
+
+.trophyName {
+  font-size: 1.1rem;
+  color: #ffffff;
+  margin-bottom: 0.25rem;
+}
+
+.trophyCount {
+  font-size: 0.9rem;
+  color: #4361ee;
+  margin-left: 0.5rem;
+}
+
+.trophyYears {
+  font-size: 0.9rem;
+  color: #b8c1ec;
+}
+
+.squadContent {
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+.positionGroup h3 {
+  font-size: 1.1rem;
+  color: #ffffff;
+  margin: 0 0 1rem 0;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid #2a2a3a;
+}
+
+.playersList {
+  display: grid;
+  grid-template-columns: repeat(1, 1fr);
+  gap: 0.75rem;
+}
+
+.playerCard {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.75rem;
+  background-color: #16213e;
+  border-radius: 4px;
+  transition: transform 0.3s;
+}
+
+.playerCard:hover {
+  transform: translateY(-3px);
+}
+
+.playerNumber {
+  background-color: #4361ee;
+  color: white;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.9rem;
+  font-weight: 700;
+}
+
+.playerInfo {
+  flex: 1;
+}
+
+.playerName {
+  font-size: 1rem;
+  color: #ffffff;
+  margin-bottom: 0.25rem;
+}
+
+.playerDetails {
+  display: flex;
+  gap: 1rem;
+  font-size: 0.8rem;
+  color: #6c7293;
+}
+
+.matchesContent {
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+.matchesGroup h3 {
+  font-size: 1.1rem;
+  color: #ffffff;
+  margin: 0 0 1rem 0;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid #2a2a3a;
+}
+
+.matchesList {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.matchCard {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 1rem;
+  background-color: #16213e;
+  border-radius: 4px;
+  text-decoration: none;
+  transition: transform 0.3s;
+}
+
+.matchCard:hover {
+  transform: translateY(-3px);
+}
+
+.matchInfo {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.8rem;
+}
+
+.matchCompetition {
+  color: #4361ee;
+}
+
+.matchDate {
+  color: #6c7293;
+}
+
+.matchTeams {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.matchTeam {
+  font-size: 1rem;
+  color: #e0e0e0;
+}
+
+.homeTeam {
+  font-weight: 700;
+  color: #ffffff;
+}
+
+.matchScore,
+.matchVs {
+  font-weight: 700;
+  color: #4361ee;
+}
+
+/* Responsive */
+@media (min-width: 768px) {
+  .aboutContent {
+    grid-template-columns: 2fr 1fr;
+  }
+
+  .playersList {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .clubDetails {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 768px) {
+  .clubHeader {
+    flex-direction: column;
+    text-align: center;
+  }
+
+  .clubBasicInfo {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 576px) {
+  .clubBasicInfo {
+    grid-template-columns: 1fr;
+  }
+
+  .clubDetails {
+    grid-template-columns: 1fr;
+  }
+
+  .matchTeams {
+    flex-direction: column;
+    gap: 0.5rem;
+    align-items: center;
+  }
+}

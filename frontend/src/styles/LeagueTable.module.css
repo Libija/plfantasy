@@ -1,0 +1,95 @@
+.leagueTable {
+  background-color: #1a1a2e;
+  border-radius: 8px;
+  padding: 1.5rem;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.sectionHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 2px solid #2a2a3a;
+}
+
+.sectionHeader h2 {
+  font-size: 1.5rem;
+  color: #ffffff;
+  margin: 0;
+}
+
+.viewAll {
+  color: #4361ee;
+  text-decoration: none;
+  font-size: 0.9rem;
+  font-weight: 500;
+  transition: color 0.3s;
+}
+
+.viewAll:hover {
+  color: #3a56d4;
+  text-decoration: underline;
+}
+
+.tableContainer {
+  overflow-x: auto;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+
+.table th {
+  background-color: #16213e;
+  color: #ffffff;
+  text-align: left;
+  padding: 0.75rem;
+  font-weight: 600;
+}
+
+.tableRow {
+  border-bottom: 1px solid #2a2a3a;
+  transition: background-color 0.3s;
+}
+
+.tableRow:hover {
+  background-color: #16213e;
+}
+
+.tableRow td {
+  padding: 0.75rem;
+  color: #e0e0e0;
+}
+
+.positionCol {
+  width: 40px;
+  text-align: center;
+}
+
+.teamCol {
+  text-align: left;
+}
+
+.statsCol {
+  width: 60px;
+  text-align: center;
+}
+
+/* Top 4 teams (Champions League) */
+.tableRow:nth-child(-n + 4) .positionCol {
+  color: #4cc9f0;
+}
+
+/* 5-6th teams (Europa League) */
+.tableRow:nth-child(n + 5):nth-child(-n + 6) .positionCol {
+  color: #4361ee;
+}
+
+/* Bottom 2 teams (Relegation) */
+.tableRow:nth-last-child(-n + 2) .positionCol {
+  color: #f72585;
+}

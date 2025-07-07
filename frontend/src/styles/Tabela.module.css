@@ -1,0 +1,208 @@
+.container {
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 2rem 1rem;
+}
+
+.title {
+  font-size: 2.5rem;
+  margin-bottom: 0.5rem;
+  color: #ffffff;
+  text-align: center;
+}
+
+.subtitle {
+  color: #b8c1ec;
+  text-align: center;
+  margin-bottom: 2rem;
+}
+
+.tableContainer {
+  background-color: #1a1a2e;
+  border-radius: 8px;
+  padding: 1.5rem;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.tableHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.seasonSelector {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.seasonSelector label {
+  color: #b8c1ec;
+  font-size: 0.9rem;
+}
+
+.seasonSelect {
+  background-color: #16213e;
+  border: 1px solid #2a2a3a;
+  color: #ffffff;
+  padding: 0.5rem;
+  border-radius: 4px;
+  font-size: 0.9rem;
+  outline: none;
+}
+
+.tableInfo {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.infoItem {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.infoBox {
+  width: 12px;
+  height: 12px;
+  border-radius: 2px;
+}
+
+.infoText {
+  color: #b8c1ec;
+  font-size: 0.8rem;
+}
+
+.tableWrapper {
+  overflow-x: auto;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+  min-width: 800px;
+}
+
+.table th {
+  background-color: #16213e;
+  color: #ffffff;
+  text-align: center;
+  padding: 0.75rem;
+  font-weight: 600;
+  position: sticky;
+  top: 0;
+}
+
+.tableRow {
+  border-bottom: 1px solid #2a2a3a;
+  transition: background-color 0.3s;
+}
+
+.tableRow:hover {
+  background-color: #16213e;
+}
+
+.tableRow td {
+  padding: 0.75rem;
+  color: #e0e0e0;
+  text-align: center;
+}
+
+.positionCol {
+  width: 40px;
+  text-align: center;
+}
+
+.teamCol {
+  text-align: left;
+  padding-left: 1rem !important;
+  font-weight: 500;
+}
+
+.statsCol {
+  width: 50px;
+  text-align: center;
+}
+
+.pointsCol {
+  width: 60px;
+  text-align: center;
+  font-weight: 700;
+}
+
+.formCol {
+  width: 120px;
+  text-align: center;
+}
+
+.formContainer {
+  display: flex;
+  gap: 0.25rem;
+  justify-content: center;
+}
+
+.formBadge {
+  display: inline-block;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  font-size: 0.7rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.win {
+  background-color: #4cc9f0;
+  color: #16213e;
+}
+
+.draw {
+  background-color: #f8f9fa;
+  color: #16213e;
+}
+
+.loss {
+  background-color: #f72585;
+  color: #ffffff;
+}
+
+/* Top 4 teams (Champions League) */
+.tableRow:nth-child(-n + 4) .positionCol {
+  color: #4cc9f0;
+}
+
+/* 5-6th teams (Europa League) */
+.tableRow:nth-child(n + 5):nth-child(-n + 6) .positionCol {
+  color: #4361ee;
+}
+
+/* Bottom 2 teams (Relegation) */
+.tableRow:nth-last-child(-n + 2) .positionCol {
+  color: #f72585;
+}
+
+/* Responsive */
+@media (max-width: 992px) {
+  .tableHeader {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}
+
+@media (max-width: 768px) {
+  .title {
+    font-size: 2rem;
+  }
+
+  .subtitle {
+    font-size: 0.9rem;
+  }
+}
