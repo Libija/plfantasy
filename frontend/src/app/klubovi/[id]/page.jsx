@@ -6,10 +6,20 @@ import { useParams } from "next/navigation"
 import { useEffect, useState } from "react"
 import styles from "../../../styles/KluboviDetalji.module.css"
 
+const POSITION_LABELS = {
+  GK: "Golmani",
+  DEF: "Odbrana",
+  MID: "Vezni",
+  FWD: "Napad",
+};
+
+const POSITION_ORDER = ["GK", "DEF", "MID", "FWD"];
+
 export default function KluboviDetalji() {
   const params = useParams()
   const id = params.id
   const [club, setClub] = useState(null)
+  const [players, setPlayers] = useState([])
   const [error, setError] = useState("")
 
   // Hardkodirani podaci za prikaz (igraci, trofeji, utakmice)
@@ -136,9 +146,31 @@ export default function KluboviDetalji() {
     fetchClub()
   }, [id])
 
+  useEffect(() => {
+    if (!id) return
+    const fetchPlayers = async () => {
+      try {
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"
+        const res = await fetch(`${apiUrl}/admin/players?club_id=${id}`)
+        if (!res.ok) throw new Error()
+        const data = await res.json()
+        setPlayers(data)
+      } catch {
+        // Ne prikazuj error, samo pusti prazno
+      }
+    }
+    fetchPlayers()
+  }, [id])
+
   if (!id) return null
   if (error) return <div className={styles.container}><p style={{ color: "red" }}>{error}</p></div>
   if (!club) return <div className={styles.container}><p>Učitavanje...</p></div>
+
+  // Grupiraj igrače po pozicijama
+  const playersByPosition = POSITION_ORDER.reduce((acc, pos) => {
+    acc[pos] = players.filter((p) => p.position === pos)
+    return acc
+  }, {})
 
   return (
     <>
@@ -228,74 +260,27 @@ export default function KluboviDetalji() {
               <h2>Igrači</h2>
             </div>
             <div className={styles.squadContent}>
-              <div className={styles.positionGroup}>
-                <h3>Golmani</h3>
-                <div className={styles.playersList}>
-                  {hardcoded.squad.filter((player) => player.position === "Golman").map((player) => (
-                    <div key={player.number} className={styles.playerCard}>
-                      <div className={styles.playerNumber}>{player.number}</div>
-                      <div className={styles.playerInfo}>
-                        <div className={styles.playerName}>{player.name}</div>
-                        <div className={styles.playerDetails}>
-                          <span>{player.age} god.</span>
-                          <span>{player.nationality}</span>
+              {POSITION_ORDER.map((pos) =>
+                playersByPosition[pos] && playersByPosition[pos].length > 0 ? (
+                  <div className={styles.positionGroup} key={pos}>
+                    <h3>{POSITION_LABELS[pos]}</h3>
+                    <div className={styles.playersList}>
+                      {playersByPosition[pos].map((player) => (
+                        <div className={styles.playerCard} key={player.id}>
+                          <div className={styles.playerNumber}>{player.shirt_number || "-"}</div>
+                          <div className={styles.playerInfo}>
+                            <div className={styles.playerName}>{player.name}</div>
+                            <div className={styles.playerDetails}>
+                              <span>{player.nationality}</span>
+                              
+                            </div>
+                          </div>
                         </div>
-                      </div>
+                      ))}
                     </div>
-                  ))}
-                </div>
-              </div>
-              <div className={styles.positionGroup}>
-                <h3>Odbrana</h3>
-                <div className={styles.playersList}>
-                  {hardcoded.squad.filter((player) => player.position === "Odbrana").map((player) => (
-                    <div key={player.number} className={styles.playerCard}>
-                      <div className={styles.playerNumber}>{player.number}</div>
-                      <div className={styles.playerInfo}>
-                        <div className={styles.playerName}>{player.name}</div>
-                        <div className={styles.playerDetails}>
-                          <span>{player.age} god.</span>
-                          <span>{player.nationality}</span>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-              <div className={styles.positionGroup}>
-                <h3>Veznjaci</h3>
-                <div className={styles.playersList}>
-                  {hardcoded.squad.filter((player) => player.position === "Veznjak").map((player) => (
-                    <div key={player.number} className={styles.playerCard}>
-                      <div className={styles.playerNumber}>{player.number}</div>
-                      <div className={styles.playerInfo}>
-                        <div className={styles.playerName}>{player.name}</div>
-                        <div className={styles.playerDetails}>
-                          <span>{player.age} god.</span>
-                          <span>{player.nationality}</span>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-              <div className={styles.positionGroup}>
-                <h3>Napadači</h3>
-                <div className={styles.playersList}>
-                  {hardcoded.squad.filter((player) => player.position === "Napadač").map((player) => (
-                    <div key={player.number} className={styles.playerCard}>
-                      <div className={styles.playerNumber}>{player.number}</div>
-                      <div className={styles.playerInfo}>
-                        <div className={styles.playerName}>{player.name}</div>
-                        <div className={styles.playerDetails}>
-                          <span>{player.age} god.</span>
-                          <span>{player.nationality}</span>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
+                  </div>
+                ) : null
+              )}
             </div>
           </div>
 

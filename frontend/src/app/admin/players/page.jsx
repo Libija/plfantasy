@@ -49,6 +49,26 @@ export default function AdminPlayers() {
     OTHER: { label: "Rest of the World", flag: "🌍" },
   }
 
+  const mapPlayerToFormData = (player) => {
+    // Ako backend šalje samo 'name', pokušaj splitati na first/last
+    let firstName = player.firstName || "";
+    let lastName = player.lastName || "";
+    if (!firstName && !lastName && player.name) {
+      const parts = player.name.split(" ");
+      firstName = parts[0] || "";
+      lastName = parts.slice(1).join(" ") || "";
+    }
+    return {
+      firstName,
+      lastName,
+      club_id: player.club_id || "",
+      position: player.position || "",
+      shirt_number: player.shirt_number || "",
+      nationality: player.nationality || "",
+      fantasyPrice: player.price || "",
+    };
+  };
+
   const handleFilterChange = (e) => {
     const { name, value } = e.target
     setFilters((prev) => ({
@@ -72,15 +92,24 @@ export default function AdminPlayers() {
     setShowDeleteModal(true)
   }
 
-  const confirmDelete = () => {
-    setPlayers(players.filter((player) => player.id !== selectedPlayer.id))
-    setShowDeleteModal(false)
-    setSelectedPlayer(null)
-  }
+  const confirmDelete = async () => {
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+    try {
+      const res = await fetch(`${apiUrl}/admin/players/${selectedPlayer.id}`, {
+        method: "DELETE",
+      });
+      if (!res.ok) throw new Error("Greška pri brisanju igrača");
+      setPlayers(players.filter((player) => player.id !== selectedPlayer.id));
+      setShowDeleteModal(false);
+      setSelectedPlayer(null);
+    } catch (err) {
+      alert("Greška pri brisanju igrača!");
+    }
+  };
 
   const handleEdit = (player) => {
     setSelectedPlayer(player)
-    setEditFormData({ ...player })
+    setEditFormData(mapPlayerToFormData(player))
     setShowEditModal(true)
   }
 
@@ -92,13 +121,33 @@ export default function AdminPlayers() {
     }))
   }
 
-  const handleEditSubmit = (e) => {
-    e.preventDefault()
-    setPlayers((prev) => prev.map((player) => (player.id === selectedPlayer.id ? { ...editFormData } : player)))
-    setShowEditModal(false)
-    setSelectedPlayer(null)
-    setEditFormData({})
-  }
+  const handleEditSubmit = async (e) => {
+    e.preventDefault();
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+    const payload = {
+      name: `${editFormData.firstName} ${editFormData.lastName}`.trim(),
+      club_id: editFormData.club_id,
+      position: editFormData.position,
+      price: Number(editFormData.fantasyPrice),
+      shirt_number: editFormData.shirt_number ? Number(editFormData.shirt_number) : null,
+      nationality: editFormData.nationality,
+    };
+    try {
+      const res = await fetch(`${apiUrl}/admin/players/${selectedPlayer.id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      if (!res.ok) throw new Error("Greška pri ažuriranju igrača");
+      const updated = await res.json();
+      setPlayers((prev) => prev.map((player) => (player.id === selectedPlayer.id ? updated : player)));
+      setShowEditModal(false);
+      setSelectedPlayer(null);
+      setEditFormData({});
+    } catch (err) {
+      alert("Greška pri ažuriranju igrača!");
+    }
+  };
 
   return (
     <>
@@ -200,17 +249,18 @@ export default function AdminPlayers() {
                   </span>
                 </div>
                 <div className={styles.tableCell}>{player.price}M</div>
-                <div className={styles.tableCell}>{player.shirt_number || "-"}</div>
+                <div className={styles.tableCell}>{player.shirt_number ? player.shirt_number : "-"}</div>
                 <div className={styles.tableCell}>
                   {nationalities[player.nationality]?.flag} {nationalities[player.nationality]?.label}
                 </div>
                 <div className={styles.tableCell}>
                   <div className={styles.actions}>
-                    <button className={styles.actionButton} onClick={() => handleEdit(player)}>
+                    <button className={styles.actionButton} title="Uredi" onClick={() => handleEdit(player)}>
                       <FaEdit />
                     </button>
                     <button
                       className={`${styles.actionButton} ${styles.deleteButton}`}
+                      title="Obriši"
                       onClick={() => handleDelete(player)}
                     >
                       <FaTrash />
