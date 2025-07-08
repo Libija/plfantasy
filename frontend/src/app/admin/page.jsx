@@ -91,27 +91,7 @@ export default function AdminDashboard() {
           </div>
         </div>
 
-        <div className={styles.quickActions}>
-          <h2 className={styles.sectionTitle}>Brze akcije</h2>
-          <div className={styles.actionsGrid}>
-            <Link href="/admin/news/create" className={styles.actionCard}>
-              <FaNewspaper />
-              <span>Nova vijest</span>
-            </Link>
-            <Link href="/admin/clubs/create" className={styles.actionCard}>
-              <FaUsers />
-              <span>Novi klub</span>
-            </Link>
-            <Link href="/admin/players/create" className={styles.actionCard}>
-              <FaUserTie />
-              <span>Novi igrač</span>
-            </Link>
-            <Link href="/admin/matches/create" className={styles.actionCard}>
-              <FaFutbol />
-              <span>Nova utakmica</span>
-            </Link>
-          </div>
-        </div>
+        
 
         <div className={styles.mainContent}>
           <div className={styles.leftColumn}>
