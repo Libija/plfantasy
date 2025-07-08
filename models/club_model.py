@@ -12,3 +12,7 @@ class Club(SQLModel, table=True):
     logo_url: Optional[str]
     primary_color: Optional[str]
     secondary_color: Optional[str]
+    coach: Optional[str]
+
+
+    

@@ -40,3 +40,8 @@ def start_application():
 
 
 app = start_application()
+
+from controllers import user_controller
+app.include_router(user_controller.router)
+from controllers import club_controller
+app.include_router(club_controller.router)
