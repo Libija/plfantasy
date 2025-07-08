@@ -96,7 +96,7 @@
 
 .tableHeader {
   display: grid;
-  grid-template-columns: 2fr 1fr 1fr 0.8fr 1fr 0.8fr 0.8fr 1fr 1fr;
+  grid-template-columns: 2fr 1fr 1fr 0.8fr 1fr 0.8fr 1fr;
   background: #f8f9fa;
   border-bottom: 1px solid #dee2e6;
 }
@@ -114,9 +114,13 @@
 
 .tableRow {
   display: grid;
-  grid-template-columns: 2fr 1fr 1fr 0.8fr 1fr 0.8fr 0.8fr 1fr 1fr;
+  grid-template-columns: 2fr 1fr 1fr 0.8fr 1fr 0.8fr 1fr;
   border-bottom: 1px solid #dee2e6;
   transition: background-color 0.3s;
+}
+
+.zebraRow {
+  background: #f4f6fb;
 }
 
 .tableRow:hover {

@@ -4,8 +4,10 @@ from database import engine
 from fastapi import Depends, FastAPI, HTTPException, Query
 from sqlmodel import Field, Session, SQLModel, create_engine, select
 from starlette.middleware.cors import CORSMiddleware
-
-
+from fastapi.exceptions import RequestValidationError
+from fastapi.responses import JSONResponse
+from fastapi import Request
+import sys
 
 
 def create_db_and_tables():
@@ -35,6 +37,16 @@ def start_application():
         allow_headers=["*"]
     )
 
+    @app.exception_handler(RequestValidationError)
+    async def validation_exception_handler(request: Request, exc: RequestValidationError):
+        print("\n[VALIDATION ERROR]", file=sys.stderr)
+        print(exc.errors(), file=sys.stderr)
+        print("Body:", await request.body(), file=sys.stderr)
+        return JSONResponse(
+            status_code=422,
+            content={"detail": exc.errors(), "body": exc.body},
+        )
+
     return app
 
 
@@ -45,3 +57,5 @@ from controllers import user_controller
 app.include_router(user_controller.router)
 from controllers import club_controller
 app.include_router(club_controller.router)
+from controllers import player_controller
+app.include_router(player_controller.router)

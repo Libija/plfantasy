@@ -151,21 +151,7 @@ export default function AdminClubs() {
                   <h3 className={styles.clubName}>{club.name}</h3>
                   <p className={styles.clubCity}>{club.city}</p>
                 </div>
-                <div style={{ marginLeft: "auto", position: "relative" }}>
-                  <button className={styles.actionButton} style={{ background: "#e9ecef", color: "#333", padding: 8 }} onClick={() => handleActionMenu(club.id)}>
-                    <FaEllipsisV />
-                  </button>
-                  {actionMenuOpen === club.id && (
-                    <div style={{ position: "absolute", right: 0, top: 36, background: "#fff", border: "1px solid #ccc", borderRadius: 6, zIndex: 10, minWidth: 120, boxShadow: "0 2px 8px #0002" }}>
-                      <button className={styles.actionButton} style={{ background: "#ffc107", color: "#212529", borderRadius: 0, width: "100%" }} onClick={() => handleEdit(club)}>
-                        <FaEdit /> Uredi
-                      </button>
-                      <button className={styles.actionButton} style={{ background: "#dc3545", color: "#fff", borderRadius: 0, width: "100%" }} onClick={() => handleDelete(club)}>
-                        <FaTrash /> Obriši
-                      </button>
-                    </div>
-                  )}
-                </div>
+               
               </div>
               <div className={styles.clubDetails}>
                 <div className={styles.detailItem}>
@@ -189,6 +175,12 @@ export default function AdminClubs() {
                 <Link href={`/admin/players?club=${club.id}`} className={styles.actionButton} style={{ background: "#17a2b8", color: "#fff" }}>
                   <FaUsers /> Igrači
                 </Link>
+                <button className={styles.actionButton} style={{ background: "#ffc107", color: "#212529" }} onClick={() => handleEdit(club)}>
+                  <FaEdit /> Uredi
+                </button>
+                <button className={`${styles.actionButton} ${styles.deleteButton}`} onClick={() => handleDelete(club)}>
+                  <FaTrash /> Obriši
+                </button>
               </div>
             </div>
           ))}
