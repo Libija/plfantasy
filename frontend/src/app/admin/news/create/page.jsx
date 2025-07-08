@@ -1,74 +1,92 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import Head from "next/head"
 import Link from "next/link"
 import { FaArrowLeft, FaSave, FaEye, FaUpload } from "react-icons/fa"
 import styles from "../../../../styles/AdminNewsForm.module.css"
+import { useRouter } from "next/navigation"
 
 export default function CreateNews() {
+  const router = useRouter();
   const [formData, setFormData] = useState({
     title: "",
-    category: "Utakmice",
-    relatedClubs: [],
+    category: "general",
+    club_id: "",
     content: "",
-    excerpt: "",
-    status: "draft",
-    featured: false,
-    image: null,
+    image_url: "",
   })
-
+  const [error, setError] = useState("")
+  const [clubs, setClubs] = useState([])
+  const [loadingClubs, setLoadingClubs] = useState(true)
   const [imagePreview, setImagePreview] = useState(null)
 
-  const categories = ["Utakmice", "Transferi", "Klubovi", "Liga", "Infrastruktura", "Ostalo"]
-  const clubs = [
-    "FK Sarajevo",
-    "FK Borac",
-    "HŠK Zrinjski",
-    "FK Željezničar",
-    "FK Tuzla City",
-    "NK Široki Brijeg",
-    "FK Velež",
-    "FK Sloboda",
+  const categories = [
+    { value: "transfer", label: "Transferi" },
+    { value: "injury", label: "Povrede" },
+    { value: "preview", label: "Najave" },
+    { value: "result", label: "Rezultati" },
+    { value: "general", label: "Ostalo" },
   ]
 
-  const handleChange = (e) => {
-    const { name, value, type, checked } = e.target
-    setFormData((prev) => ({
-      ...prev,
-      [name]: type === "checkbox" ? checked : value,
-    }))
-  }
+  useEffect(() => {
+    const fetchClubs = async () => {
+      setLoadingClubs(true)
+      try {
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"
+        const res = await fetch(`${apiUrl}/admin/clubs`)
+        if (!res.ok) throw new Error()
+        const data = await res.json()
+        setClubs(data)
+      } catch {
+        setError("Greška pri dohvatu klubova!")
+      } finally {
+        setLoadingClubs(false)
+      }
+    }
+    fetchClubs()
+  }, [])
 
-  const handleClubChange = (e) => {
-    const { value, checked } = e.target
-    setFormData((prev) => ({
-      ...prev,
-      relatedClubs: checked ? [...prev.relatedClubs, value] : prev.relatedClubs.filter((club) => club !== value),
-    }))
+  const handleChange = (e) => {
+    const { name, value } = e.target
+    setFormData((prev) => ({ ...prev, [name]: value }))
   }
 
   const handleImageChange = (e) => {
     const file = e.target.files[0]
     if (file) {
-      setFormData((prev) => ({ ...prev, image: file }))
-
       const reader = new FileReader()
       reader.onload = (e) => {
         setImagePreview(e.target.result)
+        setFormData((prev) => ({ ...prev, image_url: e.target.result }))
       }
       reader.readAsDataURL(file)
     }
   }
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault()
-    console.log("Saving news:", formData)
-    alert("Vijest je uspješno kreirana!")
-  }
-
-  const handlePreview = () => {
-    alert("Pregled vijesti...")
+    setError("")
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"
+    const payload = {
+      title: formData.title,
+      content: formData.content,
+      image_url: formData.image_url || null,
+      category: formData.category,
+      club_id: formData.club_id ? Number(formData.club_id) : null,
+      date_posted: new Date().toISOString(),
+    }
+    try {
+      const res = await fetch(`${apiUrl}/admin/news/create`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      })
+      if (!res.ok) throw new Error("Greška pri kreiranju vijesti")
+      router.push("/admin/news")
+    } catch (err) {
+      setError("Greška pri kreiranju vijesti!")
+    }
   }
 
   return (
@@ -77,22 +95,15 @@ export default function CreateNews() {
         <title>Nova vijest | Admin</title>
         <meta name="description" content="Kreiranje nove vijesti" />
       </Head>
-
       <div className={styles.container}>
         <div className={styles.header}>
           <Link href="/admin/news" className={styles.backButton}>
             <FaArrowLeft /> Nazad na vijesti
           </Link>
-          <div className={styles.headerActions}>
-            <button className={styles.previewButton} onClick={handlePreview}>
-              <FaEye /> Pregled
-            </button>
-          </div>
         </div>
-
         <div className={styles.formContainer}>
           <h1 className={styles.title}>Nova vijest</h1>
-
+          {error && <div style={{ color: "red", marginBottom: 12 }}>{error}</div>}
           <form onSubmit={handleSubmit} className={styles.form}>
             <div className={styles.formGroup}>
               <label htmlFor="title">Naslov vijesti *</label>
@@ -106,45 +117,29 @@ export default function CreateNews() {
                 placeholder="Unesite naslov vijesti"
               />
             </div>
-
             <div className={styles.formRow}>
               <div className={styles.formGroup}>
                 <label htmlFor="category">Kategorija *</label>
                 <select id="category" name="category" value={formData.category} onChange={handleChange} required>
                   {categories.map((cat) => (
-                    <option key={cat} value={cat}>
-                      {cat}
-                    </option>
+                    <option key={cat.value} value={cat.value}>{cat.label}</option>
                   ))}
                 </select>
               </div>
-
               <div className={styles.formGroup}>
-                <label htmlFor="status">Status *</label>
-                <select id="status" name="status" value={formData.status} onChange={handleChange} required>
-                  <option value="draft">Draft</option>
-                  <option value="published">Objavljeno</option>
-                </select>
+                <label htmlFor="club_id">Klub (opcionalno)</label>
+                {loadingClubs ? (
+                  <div>Učitavanje klubova...</div>
+                ) : (
+                  <select id="club_id" name="club_id" value={formData.club_id} onChange={handleChange}>
+                    <option value="">Bez kluba</option>
+                    {clubs.map((club) => (
+                      <option key={club.id} value={club.id}>{club.name}</option>
+                    ))}
+                  </select>
+                )}
               </div>
             </div>
-
-            <div className={styles.formGroup}>
-              <label>Povezani klubovi</label>
-              <div className={styles.clubsGrid}>
-                {clubs.map((club) => (
-                  <label key={club} className={styles.clubCheckbox}>
-                    <input
-                      type="checkbox"
-                      value={club}
-                      checked={formData.relatedClubs.includes(club)}
-                      onChange={handleClubChange}
-                    />
-                    <span>{club}</span>
-                  </label>
-                ))}
-              </div>
-            </div>
-
             <div className={styles.formGroup}>
               <label htmlFor="image">Slika vijesti</label>
               <div className={styles.imageUpload}>
@@ -161,24 +156,11 @@ export default function CreateNews() {
                 </label>
                 {imagePreview && (
                   <div className={styles.imagePreview}>
-                    <img src={imagePreview || "/placeholder.svg"} alt="Preview" />
+                    <img src={imagePreview} alt="Preview" />
                   </div>
                 )}
               </div>
             </div>
-
-            <div className={styles.formGroup}>
-              <label htmlFor="excerpt">Kratki opis</label>
-              <textarea
-                id="excerpt"
-                name="excerpt"
-                value={formData.excerpt}
-                onChange={handleChange}
-                rows="3"
-                placeholder="Kratki opis vijesti koji će se prikazati na listi"
-              />
-            </div>
-
             <div className={styles.formGroup}>
               <label htmlFor="content">Sadržaj vijesti *</label>
               <textarea
@@ -186,23 +168,12 @@ export default function CreateNews() {
                 name="content"
                 value={formData.content}
                 onChange={handleChange}
-                rows="15"
+                rows="10"
                 required
                 placeholder="Unesite pun sadržaj vijesti"
               />
             </div>
-
             <div className={styles.formGroup}>
-              <label className={styles.checkboxLabel}>
-                <input type="checkbox" name="featured" checked={formData.featured} onChange={handleChange} />
-                Istaknuta vijest
-              </label>
-            </div>
-
-            <div className={styles.formActions}>
-              <Link href="/admin/news" className={styles.cancelButton}>
-                Otkaži
-              </Link>
               <button type="submit" className={styles.saveButton}>
                 <FaSave /> Sačuvaj vijest
               </button>
