@@ -1,4 +1,4 @@
-import Header from "./Header"
+import Header from "./LoggedInHeader"
 import Footer from "./Footer"
 import styles from "../styles/Layout.module.css"
 
