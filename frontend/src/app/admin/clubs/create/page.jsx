@@ -5,25 +5,27 @@ import Head from "next/head"
 import Link from "next/link"
 import { FaArrowLeft, FaSave, FaUpload } from "react-icons/fa"
 import styles from "../../../../styles/AdminClubForm.module.css"
+import { useRouter } from "next/navigation"
 
 export default function CreateClub() {
+  const router = useRouter()
   const [formData, setFormData] = useState({
     name: "",
-    shortName: "",
     city: "",
-    founded: "",
+    year_founded: "",
     stadium: "",
-    capacity: "",
+    stadium_capacity: "",
     coach: "",
-    president: "",
-    website: "",
-    primaryColor: "#FF0000",
-    secondaryColor: "#FFFFFF",
-    logo: null,
     description: "",
+    logo_url: "",
+    primary_color: "#1a237e",
+    secondary_color: "#ffffff",
   })
 
   const [logoPreview, setLogoPreview] = useState(null)
+  const [message, setMessage] = useState("")
+  const [error, setError] = useState("")
+  const [loading, setLoading] = useState(false)
 
   const handleChange = (e) => {
     const { name, value } = e.target
@@ -36,20 +38,54 @@ export default function CreateClub() {
   const handleLogoChange = (e) => {
     const file = e.target.files[0]
     if (file) {
-      setFormData((prev) => ({ ...prev, logo: file }))
-
       const reader = new FileReader()
       reader.onload = (e) => {
         setLogoPreview(e.target.result)
+        setFormData((prev) => ({ ...prev, logo_url: e.target.result }))
       }
       reader.readAsDataURL(file)
     }
   }
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault()
-    console.log("Saving club:", formData)
-    alert("Klub je uspješno kreiran!")
+    setMessage("")
+    setError("")
+    setLoading(true)
+    try {
+      const payload = {
+        name: formData.name,
+        city: formData.city,
+        year_founded: Number(formData.year_founded),
+        stadium: formData.stadium,
+        stadium_capacity: Number(formData.stadium_capacity),
+        coach: formData.coach,
+        description: formData.description,
+        logo_url: formData.logo_url,
+        primary_color: formData.primary_color,
+        secondary_color: formData.secondary_color,
+      }
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"
+      const res = await fetch(`${apiUrl}/admin/clubs/create`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      })
+      if (!res.ok) {
+        const data = await res.json()
+        setError(data.detail || "Greška pri kreiranju kluba.")
+        setLoading(false)
+        return
+      }
+      setMessage("Klub je uspješno kreiran!")
+      setTimeout(() => {
+        router.push("/admin/clubs")
+      }, 1200)
+    } catch (err) {
+      setError("Došlo je do greške. Pokušajte ponovo.")
+    } finally {
+      setLoading(false)
+    }
   }
 
   return (
@@ -59,20 +95,19 @@ export default function CreateClub() {
         <meta name="description" content="Kreiranje novog kluba" />
       </Head>
 
-      <div className={styles.container}>
+      <div className={styles.container} style={{ background: "#101c36", minHeight: "100vh" }}>
         <div className={styles.header}>
           <Link href="/admin/clubs" className={styles.backButton}>
             <FaArrowLeft /> Nazad na klubove
           </Link>
         </div>
 
-        <div className={styles.formContainer}>
+        <div className={styles.formContainer} style={{ background: "#182952", color: "#fff", borderRadius: 12, boxShadow: "0 2px 16px #0008" }}>
           <h1 className={styles.title}>Novi klub</h1>
 
           <form onSubmit={handleSubmit} className={styles.form}>
             <div className={styles.formSection}>
               <h2 className={styles.sectionTitle}>Osnovne informacije</h2>
-
               <div className={styles.formRow}>
                 <div className={styles.formGroup}>
                   <label htmlFor="name">Puno ime kluba *</label>
@@ -84,24 +119,9 @@ export default function CreateClub() {
                     onChange={handleChange}
                     required
                     placeholder="npr. FK Sarajevo"
+                    style={{ background: "#222b44", color: "#fff" }}
                   />
                 </div>
-
-                <div className={styles.formGroup}>
-                  <label htmlFor="shortName">Kratko ime *</label>
-                  <input
-                    type="text"
-                    id="shortName"
-                    name="shortName"
-                    value={formData.shortName}
-                    onChange={handleChange}
-                    required
-                    placeholder="npr. Sarajevo"
-                  />
-                </div>
-              </div>
-
-              <div className={styles.formRow}>
                 <div className={styles.formGroup}>
                   <label htmlFor="city">Grad *</label>
                   <input
@@ -112,29 +132,42 @@ export default function CreateClub() {
                     onChange={handleChange}
                     required
                     placeholder="npr. Sarajevo"
+                    style={{ background: "#222b44", color: "#fff" }}
                   />
                 </div>
-
+              </div>
+              <div className={styles.formRow}>
                 <div className={styles.formGroup}>
-                  <label htmlFor="founded">Godina osnivanja *</label>
+                  <label htmlFor="year_founded">Godina osnivanja *</label>
                   <input
                     type="number"
-                    id="founded"
-                    name="founded"
-                    value={formData.founded}
+                    id="year_founded"
+                    name="year_founded"
+                    value={formData.year_founded}
                     onChange={handleChange}
                     required
                     placeholder="npr. 1946"
                     min="1800"
                     max="2025"
+                    style={{ background: "#222b44", color: "#fff" }}
+                  />
+                </div>
+                <div className={styles.formGroup}>
+                  <label htmlFor="coach">Trener</label>
+                  <input
+                    type="text"
+                    id="coach"
+                    name="coach"
+                    value={formData.coach}
+                    onChange={handleChange}
+                    placeholder="npr. Husref Musemić"
+                    style={{ background: "#222b44", color: "#fff" }}
                   />
                 </div>
               </div>
             </div>
-
             <div className={styles.formSection}>
               <h2 className={styles.sectionTitle}>Stadion</h2>
-
               <div className={styles.formRow}>
                 <div className={styles.formGroup}>
                   <label htmlFor="stadium">Naziv stadiona *</label>
@@ -146,147 +179,90 @@ export default function CreateClub() {
                     onChange={handleChange}
                     required
                     placeholder="npr. Koševo"
+                    style={{ background: "#222b44", color: "#fff" }}
                   />
                 </div>
-
                 <div className={styles.formGroup}>
-                  <label htmlFor="capacity">Kapacitet *</label>
+                  <label htmlFor="stadium_capacity">Kapacitet *</label>
                   <input
                     type="number"
-                    id="capacity"
-                    name="capacity"
-                    value={formData.capacity}
+                    id="stadium_capacity"
+                    name="stadium_capacity"
+                    value={formData.stadium_capacity}
                     onChange={handleChange}
                     required
                     placeholder="npr. 34000"
                     min="1000"
+                    style={{ background: "#222b44", color: "#fff" }}
                   />
                 </div>
               </div>
             </div>
-
             <div className={styles.formSection}>
-              <h2 className={styles.sectionTitle}>Upravljanje</h2>
-
+              <h2 className={styles.sectionTitle}>Opis i boje</h2>
               <div className={styles.formRow}>
                 <div className={styles.formGroup}>
-                  <label htmlFor="coach">Trener</label>
-                  <input
-                    type="text"
-                    id="coach"
-                    name="coach"
-                    value={formData.coach}
+                  <label htmlFor="description">Opis</label>
+                  <textarea
+                    id="description"
+                    name="description"
+                    value={formData.description}
                     onChange={handleChange}
-                    placeholder="npr. Husref Musemić"
+                    placeholder="Unesite opis kluba"
+                    style={{ background: "#222b44", color: "#fff" }}
                   />
                 </div>
-
                 <div className={styles.formGroup}>
-                  <label htmlFor="president">Predsjednik</label>
+                  <label htmlFor="logo_url">Logo (URL ili upload)</label>
                   <input
                     type="text"
-                    id="president"
-                    name="president"
-                    value={formData.president}
+                    id="logo_url"
+                    name="logo_url"
+                    value={formData.logo_url}
                     onChange={handleChange}
-                    placeholder="npr. Emir Hadžihafizbegović"
+                    placeholder="https://..."
+                    style={{ background: "#222b44", color: "#fff" }}
                   />
-                </div>
-              </div>
-
-              <div className={styles.formGroup}>
-                <label htmlFor="website">Web stranica</label>
-                <input
-                  type="url"
-                  id="website"
-                  name="website"
-                  value={formData.website}
-                  onChange={handleChange}
-                  placeholder="https://www.fksarajevo.ba"
-                />
-              </div>
-            </div>
-
-            <div className={styles.formSection}>
-              <h2 className={styles.sectionTitle}>Vizuelni identitet</h2>
-
-              <div className={styles.formRow}>
-                <div className={styles.formGroup}>
-                  <label htmlFor="primaryColor">Primarna boja *</label>
-                  <div className={styles.colorInput}>
-                    <input
-                      type="color"
-                      id="primaryColor"
-                      name="primaryColor"
-                      value={formData.primaryColor}
-                      onChange={handleChange}
-                      required
-                    />
-                    <span className={styles.colorValue}>{formData.primaryColor}</span>
-                  </div>
-                </div>
-
-                <div className={styles.formGroup}>
-                  <label htmlFor="secondaryColor">Sekundarna boja *</label>
-                  <div className={styles.colorInput}>
-                    <input
-                      type="color"
-                      id="secondaryColor"
-                      name="secondaryColor"
-                      value={formData.secondaryColor}
-                      onChange={handleChange}
-                      required
-                    />
-                    <span className={styles.colorValue}>{formData.secondaryColor}</span>
-                  </div>
-                </div>
-              </div>
-
-              <div className={styles.formGroup}>
-                <label htmlFor="logo">Logo kluba</label>
-                <div className={styles.logoUpload}>
                   <input
                     type="file"
-                    id="logo"
                     accept="image/*"
                     onChange={handleLogoChange}
-                    className={styles.logoInput}
                   />
-                  <label htmlFor="logo" className={styles.logoUploadLabel}>
-                    <FaUpload />
-                    <span>Odaberite logo</span>
-                  </label>
                   {logoPreview && (
-                    <div className={styles.logoPreview}>
-                      <img src={logoPreview || "/placeholder.svg"} alt="Logo preview" />
-                    </div>
+                    <img src={logoPreview} alt="Logo preview" style={{ maxWidth: 120, marginTop: 8 }} />
                   )}
                 </div>
               </div>
-            </div>
-
-            <div className={styles.formSection}>
-              <div className={styles.formGroup}>
-                <label htmlFor="description">Opis kluba</label>
-                <textarea
-                  id="description"
-                  name="description"
-                  value={formData.description}
-                  onChange={handleChange}
-                  rows="4"
-                  placeholder="Kratki opis historije i značaja kluba"
-                />
+              <div className={styles.formRow}>
+                <div className={styles.formGroup}>
+                  <label htmlFor="primary_color">Primarna boja</label>
+                  <input
+                    type="color"
+                    id="primary_color"
+                    name="primary_color"
+                    value={formData.primary_color}
+                    onChange={handleChange}
+                    style={{ background: "#222b44", color: "#fff" }}
+                  />
+                </div>
+                <div className={styles.formGroup}>
+                  <label htmlFor="secondary_color">Sekundarna boja</label>
+                  <input
+                    type="color"
+                    id="secondary_color"
+                    name="secondary_color"
+                    value={formData.secondary_color}
+                    onChange={handleChange}
+                    style={{ background: "#222b44", color: "#fff" }}
+                  />
+                </div>
               </div>
             </div>
-
-            <div className={styles.formActions}>
-              <Link href="/admin/clubs" className={styles.cancelButton}>
-                Otkaži
-              </Link>
-              <button type="submit" className={styles.saveButton}>
-                <FaSave /> Sačuvaj klub
-              </button>
-            </div>
+            <button type="submit" className={styles.saveButton} disabled={loading}>
+              {loading ? "Kreiranje..." : <FaSave />} Sačuvaj klub
+            </button>
+            {message && <p style={{ color: "green", marginTop: 10 }}>{message}</p>}
+            {error && <p style={{ color: "red", marginTop: 10 }}>{error}</p>}
           </form>
         </div>
       </div>

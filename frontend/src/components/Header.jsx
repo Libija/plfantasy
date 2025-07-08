@@ -1,70 +1,25 @@
 "use client"
-
-import { useState } from "react"
+import BaseHeader from "./BaseHeader"
 import Link from "next/link"
-import Image from "next/image"
-import { FaBars, FaTimes, FaSearch, FaUser } from "react-icons/fa"
-import styles from "../styles/Header.module.css"
+import { FaUser, FaSignOutAlt } from "react-icons/fa"
+import useAuth from "../hooks/use-auth"
 
 export default function Header() {
-  const [isMenuOpen, setIsMenuOpen] = useState(false)
-
-  const toggleMenu = () => {
-    setIsMenuOpen(!isMenuOpen)
-  }
+  const { isLoggedIn, logout } = useAuth()
 
   return (
-    <header className={styles.header}>
-      <div className={styles.container}>
-        <div className={styles.logoContainer}>
-          <Link href="/">
-            <div className={styles.logo}>
-              <Image src="/logo.png" alt="PLKutak Logo" width={150} height={50} priority />
-            </div>
-          </Link>
-        </div>
-
-        <div className={styles.searchBar}>
-          <input type="text" placeholder="Pretraži..." />
-          <button type="submit">
-            <FaSearch />
-          </button>
-        </div>
-
-        <div className={styles.authButtons}>
-          <Link href="/login" className={styles.loginButton}>
-            <FaUser />
-            <span>Prijava</span>
-          </Link>
-        </div>
-
-        <button className={styles.menuToggle} onClick={toggleMenu}>
-          {isMenuOpen ? <FaTimes /> : <FaBars />}
+    <BaseHeader>
+      {isLoggedIn ? (
+        <button onClick={logout} style={{ display: "flex",color: "white", alignItems: "center", gap: 4, background: "none", border: "none", cursor: "pointer" }}>
+          <FaSignOutAlt />
+          <span>Odjavi se</span>
         </button>
-
-        <nav className={`${styles.nav} ${isMenuOpen ? styles.active : ""}`}>
-          <ul className={styles.navList}>
-            <li className={styles.navItem}>
-              <Link href="/">Početna</Link>
-            </li>
-            <li className={styles.navItem}>
-              <Link href="/vijesti">Vijesti</Link>
-            </li>
-            <li className={styles.navItem}>
-              <Link href="/utakmice">Utakmice</Link>
-            </li>
-            <li className={styles.navItem}>
-              <Link href="/tabela">Tabela</Link>
-            </li>
-            <li className={styles.navItem}>
-              <Link href="/klubovi">Klubovi</Link>
-            </li>
-            <li className={styles.navItem}>
-              <Link href="/fantasy">Fantasy</Link>
-            </li>
-          </ul>
-        </nav>
-      </div>
-    </header>
+      ) : (
+        <Link href="/login" style={{ display: "flex", alignItems: "center", gap: 4 }}>
+          <FaUser />
+          <span>Prijava</span>
+        </Link>
+      )}
+    </BaseHeader>
   )
 }
