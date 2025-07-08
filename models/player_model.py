@@ -8,6 +8,15 @@ class Position(str, Enum):
     MID = "MID"
     FWD = "FWD"
 
+class Nationality(str, Enum):
+    BIH = "BIH"
+    HRV = "HRV"
+    SLO = "SLO"
+    SRB = "SRB"
+    MNE = "MNE"
+    MKD = "MKD"
+    OTHER = "OTHER"
+
 class Player(SQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
     name: str
@@ -15,4 +24,4 @@ class Player(SQLModel, table=True):
     position: Position
     price: float
     shirt_number: Optional[int]
-    image_url: Optional[str]
+    nationality: Nationality = Field(default=Nationality.OTHER)
