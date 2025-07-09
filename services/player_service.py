@@ -24,7 +24,28 @@ def get_player_service(session: Session, player_id: int) -> PlayerResponse:
 
 def list_players_by_club_service(session: Session, club_id: int) -> List[PlayerResponse]:
     players = get_players_by_club(session, club_id)
-    return [PlayerResponse.from_orm(player) for player in players]
+    player_responses = []
+    
+    for player in players:
+        player_dict = {
+            "id": player.id,
+            "name": player.name,
+            "club_id": player.club_id,
+            "position": player.position,
+            "price": player.price,
+            "shirt_number": player.shirt_number,
+            "nationality": player.nationality
+        }
+        
+        # Dohvati ime kluba
+        from models.club_model import Club
+        club = session.get(Club, player.club_id)
+        if club:
+            player_dict["club_name"] = club.name
+        
+        player_responses.append(PlayerResponse(**player_dict))
+    
+    return player_responses
 
 def update_player_service(session: Session, player_id: int, data: PlayerUpdate) -> PlayerResponse:
     player = get_player_by_id(session, player_id)

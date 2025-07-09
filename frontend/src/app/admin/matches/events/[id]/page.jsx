@@ -42,7 +42,7 @@ export default function MatchEvents() {
     home: [],
     away: []
   })
-  const [existingEvents, setExistingEvents] = useState([])
+  const [existingEvents, setExistingEvents] = useState([]) // Neće se koristiti
   const [existingSubstitutions, setExistingSubstitutions] = useState([])
 
   const eventTypes = [
@@ -62,7 +62,7 @@ export default function MatchEvents() {
     if (match) {
       fetchPlayers()
       fetchLineups()
-      fetchExistingEvents()
+      // fetchExistingEvents() - uklonjeno jer ne želimo učitavati postojeće događaje
       fetchExistingSubstitutions()
     }
   }, [match])
@@ -125,18 +125,18 @@ export default function MatchEvents() {
     }
   }
 
-  const fetchExistingEvents = async () => {
-    try {
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"
-      const response = await fetch(`${apiUrl}/admin/matchevents/match/${matchId}`)
-      if (response.ok) {
-        const data = await response.json()
-        setExistingEvents(data)
-      }
-    } catch (error) {
-      console.error('Greška pri učitavanju događaja:', error)
-    }
-  }
+  // const fetchExistingEvents = async () => {
+  //   try {
+  //     const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"
+  //     const response = await fetch(`${apiUrl}/admin/matchevents/match/${matchId}`)
+  //     if (response.ok) {
+  //         const data = await response.json()
+  //         setExistingEvents(data)
+  //     }
+  //   } catch (error) {
+  //     console.error('Greška pri učitavanju događaja:', error)
+  //   }
+  // }
 
   const fetchExistingSubstitutions = async () => {
     try {
@@ -378,31 +378,7 @@ export default function MatchEvents() {
 
         <form onSubmit={handleSubmit}>
           <div className={styles.content}>
-            {/* Postojeći događaji */}
-            <div className={styles.eventsSection}>
-              <div className={styles.sectionHeader}>
-                <h2>Postojeći događaji</h2>
-              </div>
-
-              <div className={styles.eventsList}>
-                {existingEvents
-                  .filter(event => event.event_type !== "assist") // Filtrirati asistencije jer su dio gol događaja
-                  .sort((a, b) => a.minute - b.minute)
-                  .map((event) => (
-                    <div key={event.id} className={styles.eventItem}>
-                      <div className={styles.eventIcon}>{getEventIcon(event.event_type)}</div>
-                      <div className={styles.eventDetails}>
-                        <div className={styles.eventMinute}>{event.minute}'</div>
-                        <div className={styles.eventType}>{getEventLabel(event.event_type)}</div>
-                        <div className={styles.eventPlayer}>
-                          {event.player_name} ({event.club_name})
-                          {event.event_type === "goal" && event.assist_player_name && ` - asist: ${event.assist_player_name}`}
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-              </div>
-            </div>
+            {/* Postojeći događaji - uklonjeno jer ne želimo prikazivati postojeće događaje */}
 
             {/* Dodavanje događaja */}
             <div className={styles.addEventSection}>

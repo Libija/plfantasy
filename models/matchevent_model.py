@@ -1,6 +1,7 @@
 from sqlmodel import SQLModel, Field
 from typing import Optional
 from enum import Enum
+from datetime import datetime
 
 class MatchEventType(str, Enum):
     goal = "goal"
@@ -18,3 +19,4 @@ class MatchEvent(SQLModel, table=True):
     event_type: MatchEventType
     minute: int
     assist_player_id: Optional[int] = Field(default=None, foreign_key="player.id")
+    created_at: datetime = Field(default_factory=datetime.utcnow)

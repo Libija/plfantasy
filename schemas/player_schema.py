@@ -26,6 +26,7 @@ class PlayerResponse(BaseModel):
     price: float
     shirt_number: Optional[int]
     nationality: Nationality
+    club_name: Optional[str] = None
 
     class Config:
         from_attributes = True 
