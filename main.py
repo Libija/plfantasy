@@ -65,3 +65,11 @@ from controllers import gameweek_controller
 app.include_router(gameweek_controller.router)
 from controllers import match_controller
 app.include_router(match_controller.router)
+from controllers import match_lineup_controller
+app.include_router(match_lineup_controller.router)
+from controllers import match_substitution_controller
+app.include_router(match_substitution_controller.router)
+from controllers import match_statistics_controller
+app.include_router(match_statistics_controller.router)
+from controllers import matchevent_controller
+app.include_router(matchevent_controller.router)

@@ -118,7 +118,10 @@ export default function CreateMatch() {
         setDateOptions(dates)
         setFormData(prev => ({
           ...prev,
-          date: dates[0] || ""
+          date: dates[0] || "",
+          homeTeam: "", // Resetuj odabrane timove
+          awayTeam: "", // jer se možda promijenila dostupnost
+          stadium: ""   // Resetuj stadion jer se resetuje domaći tim
         }))
         // Dohvati utakmice za to kolo
         const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"
@@ -131,18 +134,36 @@ export default function CreateMatch() {
         }
       } else {
         setDateOptions([])
-        setFormData(prev => ({ ...prev, date: "" }))
+        setFormData(prev => ({ 
+          ...prev, 
+          date: "",
+          homeTeam: "",
+          awayTeam: "",
+          stadium: ""
+        }))
         setMatchesInRound([])
       }
     }
 
-    // Ako se promijeni domaći tim, automatski popuni stadion
+    // Ako se promijeni domaći tim, automatski popuni stadion i resetuj gostujući tim
     if (name === 'homeTeam') {
       const selectedClub = clubs.find(c => c.id.toString() === value)
       if (selectedClub) {
         setFormData(prev => ({
           ...prev,
-          stadium: selectedClub.stadium || ""
+          stadium: selectedClub.stadium || "",
+          awayTeam: "" // Resetuj gostujući tim jer se možda promijenila dostupnost
+        }))
+      }
+    }
+
+    // Ako se promijeni gostujući tim, resetuj domaći tim ako je postao nedostupan
+    if (name === 'awayTeam') {
+      const selectedClub = clubs.find(c => c.id.toString() === value)
+      if (selectedClub && formData.homeTeam === value) {
+        setFormData(prev => ({
+          ...prev,
+          homeTeam: "" // Resetuj domaći tim jer je isti kao gostujući
         }))
       }
     }
@@ -150,8 +171,24 @@ export default function CreateMatch() {
 
   const handleSubmit = async (e) => {
     e.preventDefault()
+    
+    // Validacija da li su izabrani različiti timovi
     if (formData.homeTeam === formData.awayTeam) {
       alert("Tim ne može igrati protiv sebe!")
+      return
+    }
+    
+    // Validacija da li su timovi već zauzeti u tom kolu
+    const selectedHomeClub = parseInt(formData.homeTeam)
+    const selectedAwayClub = parseInt(formData.awayTeam)
+    
+    if (usedClubIds.has(selectedHomeClub)) {
+      alert("Domaći tim već igra u ovom kolu!")
+      return
+    }
+    
+    if (usedClubIds.has(selectedAwayClub)) {
+      alert("Gostujući tim već igra u ovom kolu!")
       return
     }
     
@@ -211,6 +248,26 @@ export default function CreateMatch() {
     usedClubIds.add(match.away_club_id)
   })
 
+  // Funkcija za provjeru da li je klub već izabran u drugom dropdown-u
+  const isClubSelectedInOtherTeam = (clubId, currentTeam) => {
+    if (currentTeam === 'home') {
+      return formData.awayTeam === clubId.toString()
+    } else {
+      return formData.homeTeam === clubId.toString()
+    }
+  }
+
+  // Funkcija za provjeru dostupnih timova
+  const getAvailableTeams = (currentTeam) => {
+    return clubs.filter(club => 
+      !usedClubIds.has(club.id) && 
+      !isClubSelectedInOtherTeam(club.id, currentTeam)
+    )
+  }
+
+  const availableHomeTeams = getAvailableTeams('home')
+  const availableAwayTeams = getAvailableTeams('away')
+
   return (
     <>
       <Head>
@@ -263,16 +320,100 @@ export default function CreateMatch() {
             <div className={styles.formSection}>
               <h2 className={styles.sectionTitle}>Timovi</h2>
 
+              {matchesInRound.length > 0 && (
+                <div style={{ 
+                  background: '#fef3c7', 
+                  border: '1px solid #f59e0b', 
+                  borderRadius: '8px', 
+                  padding: '12px', 
+                  marginBottom: '20px',
+                  fontSize: '0.9rem',
+                  color: '#92400e'
+                }}>
+                  <strong>Napomena:</strong> Sljedeći timovi već igraju u ovom kolu:
+                  <ul style={{ margin: '8px 0 0 20px' }}>
+                    {matchesInRound.map(match => (
+                      <li key={match.id}>
+                        {match.home_club?.name || `Klub ${match.home_club_id}`} vs {match.away_club?.name || `Klub ${match.away_club_id}`}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
+              {usedClubIds.size >= clubs.length && (
+                <div style={{ 
+                  background: '#fee2e2', 
+                  border: '1px solid #ef4444', 
+                  borderRadius: '8px', 
+                  padding: '12px', 
+                  marginBottom: '20px',
+                  fontSize: '0.9rem',
+                  color: '#991b1b'
+                }}>
+                  <strong>Upozorenje:</strong> Svi timovi već igraju u ovom kolu. Nije moguće dodati novu utakmicu.
+                </div>
+              )}
+
+              {usedClubIds.size > 0 && usedClubIds.size < clubs.length && (
+                <div style={{ 
+                  background: '#dbeafe', 
+                  border: '1px solid #3b82f6', 
+                  borderRadius: '8px', 
+                  padding: '12px', 
+                  marginBottom: '20px',
+                  fontSize: '0.9rem',
+                  color: '#1e40af'
+                }}>
+                  <strong>Info:</strong> Dostupno je {clubs.length - usedClubIds.size} od {clubs.length} timova za ovu utakmicu.
+                </div>
+              )}
+
+              {availableHomeTeams.length === 0 && availableAwayTeams.length === 0 && (
+                <div style={{ 
+                  background: '#fee2e2', 
+                  border: '1px solid #ef4444', 
+                  borderRadius: '8px', 
+                  padding: '12px', 
+                  marginBottom: '20px',
+                  fontSize: '0.9rem',
+                  color: '#991b1b'
+                }}>
+                  <strong>Upozorenje:</strong> Nema dostupnih timova za kreiranje nove utakmice u ovom kolu.
+                </div>
+              )}
+
+              {formData.homeTeam && formData.awayTeam && (
+                <div style={{ 
+                  background: '#dcfce7', 
+                  border: '1px solid #22c55e', 
+                  borderRadius: '8px', 
+                  padding: '12px', 
+                  marginBottom: '20px',
+                  fontSize: '0.9rem',
+                  color: '#166534'
+                }}>
+                  <strong>Odabrani timovi:</strong> {clubs.find(c => c.id.toString() === formData.homeTeam)?.name} vs {clubs.find(c => c.id.toString() === formData.awayTeam)?.name}
+                </div>
+              )}
+
               <div className={styles.teamsSelector}>
                 <div className={styles.teamGroup}>
                   <label htmlFor="homeTeam">Domaći tim *</label>
                   <select id="homeTeam" name="homeTeam" value={formData.homeTeam} onChange={handleChange} required>
                     <option value="">Odaberite domaći tim</option>
-                    {clubs.map((club) => (
-                      <option key={club.id} value={club.id} disabled={usedClubIds.has(club.id) && formData.homeTeam !== club.id.toString()}>
-                        {club.name}
-                      </option>
-                    ))}
+                    {availableHomeTeams.length === 0 ? (
+                      <option value="" disabled>Nema dostupnih timova</option>
+                    ) : (
+                      availableHomeTeams.map((club) => (
+                        <option 
+                          key={club.id} 
+                          value={club.id} 
+                        >
+                          {club.name}
+                        </option>
+                      ))
+                    )}
                   </select>
                 </div>
 
@@ -282,11 +423,18 @@ export default function CreateMatch() {
                   <label htmlFor="awayTeam">Gostujući tim *</label>
                   <select id="awayTeam" name="awayTeam" value={formData.awayTeam} onChange={handleChange} required>
                     <option value="">Odaberite gostujući tim</option>
-                    {clubs.map((club) => (
-                      <option key={club.id} value={club.id} disabled={usedClubIds.has(club.id) && formData.awayTeam !== club.id.toString()}>
-                        {club.name}
-                      </option>
-                    ))}
+                    {availableAwayTeams.length === 0 ? (
+                      <option value="" disabled>Nema dostupnih timova</option>
+                    ) : (
+                      availableAwayTeams.map((club) => (
+                        <option 
+                          key={club.id} 
+                          value={club.id} 
+                        >
+                          {club.name}
+                        </option>
+                      ))
+                    )}
                   </select>
                 </div>
               </div>
@@ -348,8 +496,12 @@ export default function CreateMatch() {
               <Link href="/admin/matches" className={styles.cancelButton}>
                 Otkaži
               </Link>
-              <button type="submit" className={styles.saveButton}>
-                <FaSave /> Kreiraj utakmicu
+              <button 
+                type="submit" 
+                className={styles.saveButton}
+                disabled={availableHomeTeams.length === 0 || availableAwayTeams.length === 0}
+              >
+                <FaSave /> {(availableHomeTeams.length === 0 || availableAwayTeams.length === 0) ? 'Nema dostupnih timova' : 'Kreiraj utakmicu'}
               </button>
             </div>
           </form>

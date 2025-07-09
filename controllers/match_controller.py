@@ -140,17 +140,22 @@ def change_match_status(
     except Exception as e:
         raise HTTPException(status_code=500, detail="Greška pri promjeni statusa")
 
+from pydantic import BaseModel
+
+class MatchScoreUpdate(BaseModel):
+    home_score: int
+    away_score: int
+
 @router.patch("/{match_id}/score", response_model=MatchResponse)
 def update_match_score(
     match_id: int,
-    home_score: int,
-    away_score: int,
+    score_data: MatchScoreUpdate,
     db: Session = Depends(get_session)
 ):
     """Ažurira rezultat utakmice"""
     try:
         service = MatchService(db)
-        match = service.update_match_score(match_id, home_score, away_score)
+        match = service.update_match_score(match_id, score_data.home_score, score_data.away_score)
         if not match:
             raise HTTPException(status_code=404, detail="Utakmica nije pronađena")
         return match

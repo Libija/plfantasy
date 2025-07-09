@@ -304,6 +304,9 @@ export default function RoundMatches() {
                       <Link href={`/admin/matches/result/${match.id}`} className={styles.resultButton}>
                         Unesi rezultat
                       </Link>
+                      <Link href={`/admin/matches/events/${match.id}`} className={styles.eventsButton}>
+                        Unesi evente
+                      </Link>
                       <button className={styles.editButton} onClick={() => handleEditClick(match)}>
                         <FaEdit />
                       </button>
@@ -317,13 +320,13 @@ export default function RoundMatches() {
                         Ažuriraj rezultat
                       </Link>
                       <Link href={`/admin/matches/events/${match.id}`} className={styles.eventsButton}>
-                        Događaji
+                        Unesi evente
                       </Link>
                     </>
                   ) : (
                     <>
                       <Link href={`/admin/matches/events/${match.id}`} className={styles.eventsButton}>
-                        Događaji
+                        Unesi evente
                       </Link>
                       <button className={styles.editButton} onClick={() => handleEditClick(match)}>
                         <FaEdit />

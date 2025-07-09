@@ -1,6 +1,22 @@
 from typing import Generator
 from sqlmodel import SQLModel, create_engine, Session
 
+# Import svih modela
+from models.user_model import User
+from models.club_model import Club
+from models.player_model import Player
+from models.news_model import News
+from models.gameweek_model import Gameweek
+from models.match_model import Match
+from models.matchevent_model import MatchEvent
+from models.match_lineup_model import MatchLineup
+from models.match_substitution_model import MatchSubstitution
+from models.match_statistics_model import MatchStatistics
+from models.fantasyteam_model import FantasyTeam
+from models.fantasyteamplayer import FantasyTeamPlayer
+from models.gameweekscore_model import GameweekScore
+from models.playerfantasypoints_model import PlayerFantasyPoints
+
 # Naziv fajla i URL za SQLite bazu
 sqlite_file_name = "database.db"
 sqlite_url = f"sqlite:///{sqlite_file_name}"

@@ -77,6 +77,8 @@ class MatchRepository:
             # Dohvati klubove iz baze
             home_club = self.db.get(Club, match.home_club_id)
             away_club = self.db.get(Club, match.away_club_id)
+            
+
             result.append({
                 'id': match.id,
                 'home_club_id': match.home_club_id,
@@ -101,6 +103,19 @@ class MatchRepository:
         if not match:
             return None
         
+        # Dohvati klubove iz baze
+        home_club = self.db.get(Club, match.home_club_id)
+        away_club = self.db.get(Club, match.away_club_id)
+        
+        # Alternativno: koristi JOIN query
+        # from sqlmodel import select
+        # home_club_query = select(Club).where(Club.id == match.home_club_id)
+        # home_club = self.db.exec(home_club_query).first()
+        # away_club_query = select(Club).where(Club.id == match.away_club_id)
+        # away_club = self.db.exec(away_club_query).first()
+        
+
+        
         return {
             'id': match.id,
             'home_club_id': match.home_club_id,
@@ -114,13 +129,13 @@ class MatchRepository:
             'status': match.status,
             'home_club': {
                 'id': match.home_club_id,
-                'name': f"Klub {match.home_club_id}",  # Placeholder
-                'logo_url': None
+                'name': home_club.name if home_club else f"Klub {match.home_club_id}",
+                'logo_url': home_club.logo_url if home_club else None
             },
             'away_club': {
                 'id': match.away_club_id,
-                'name': f"Klub {match.away_club_id}",  # Placeholder
-                'logo_url': None
+                'name': away_club.name if away_club else f"Klub {match.away_club_id}",
+                'logo_url': away_club.logo_url if away_club else None
             },
             'created_at': match.created_at,
             'updated_at': match.updated_at

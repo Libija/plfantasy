@@ -17,3 +17,4 @@ class MatchEvent(SQLModel, table=True):
     player_id: int = Field(foreign_key="player.id")
     event_type: MatchEventType
     minute: int
+    assist_player_id: Optional[int] = Field(default=None, foreign_key="player.id")
