@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import Head from "next/head"
 import Link from "next/link"
 import { useParams } from "next/navigation"
@@ -20,85 +20,156 @@ export default function RoundMatches() {
     status: "U toku",
   })
 
-  const [matches, setMatches] = useState([
-    {
-      id: 1,
-      homeTeam: { id: 1, name: "FK Sarajevo", logo: "/placeholder.svg?height=40&width=40" },
-      awayTeam: { id: 2, name: "FK Željezničar", logo: "/placeholder.svg?height=40&width=40" },
-      date: "2024-08-24",
-      time: "20:00",
-      stadium: "Koševo",
-      status: "Završena",
-      homeScore: 2,
-      awayScore: 1,
-    },
-    {
-      id: 2,
-      homeTeam: { id: 3, name: "FK Zrinjski", logo: "/placeholder.svg?height=40&width=40" },
-      awayTeam: { id: 4, name: "FK Borac", logo: "/placeholder.svg?height=40&width=40" },
-      date: "2024-08-24",
-      time: "18:00",
-      stadium: "Pod Bijelim Brijegom",
-      status: "Završena",
-      homeScore: 3,
-      awayScore: 0,
-    },
-    {
-      id: 3,
-      homeTeam: { id: 5, name: "FK Velež", logo: "/placeholder.svg?height=40&width=40" },
-      awayTeam: { id: 6, name: "FK Široki Brijeg", logo: "/placeholder.svg?height=40&width=40" },
-      date: "2024-08-25",
-      time: "17:00",
-      stadium: "Rođeni",
-      status: "U toku",
-      homeScore: 1,
-      awayScore: 0,
-    },
-    {
-      id: 4,
-      homeTeam: { id: 7, name: "FK Tuzla City", logo: "/placeholder.svg?height=40&width=40" },
-      awayTeam: { id: 8, name: "FK Sloboda", logo: "/placeholder.svg?height=40&width=40" },
-      date: "2024-08-25",
-      time: "19:00",
-      stadium: "Tušanj",
-      status: "Zakazana",
-      homeScore: null,
-      awayScore: null,
-    },
-    {
-      id: 5,
-      homeTeam: { id: 9, name: "NK Posušje", logo: "/placeholder.svg?height=40&width=40" },
-      awayTeam: { id: 10, name: "FK Igman", logo: "/placeholder.svg?height=40&width=40" },
-      date: "2024-08-25",
-      time: "20:00",
-      stadium: "Mokri Dolac",
-      status: "Zakazana",
-      homeScore: null,
-      awayScore: null,
-    },
-  ])
+  const [matches, setMatches] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [mounted, setMounted] = useState(false)
 
   const [showDeleteModal, setShowDeleteModal] = useState(false)
   const [matchToDelete, setMatchToDelete] = useState(null)
+  const [showEditModal, setShowEditModal] = useState(false)
+  const [editingMatch, setEditingMatch] = useState(null)
+  const [editFormData, setEditFormData] = useState({})
+
+  // Učitavanje podataka
+  useEffect(() => {
+    setMounted(true)
+    fetchRoundData()
+    fetchMatches()
+  }, [roundId])
+
+  const fetchRoundData = async () => {
+    try {
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"
+      const response = await fetch(`${apiUrl}/api/gameweeks/${roundId}`)
+      if (response.ok) {
+        const data = await response.json()
+        setRound({
+          id: data.id,
+          number: data.number,
+          season: data.season,
+          startDate: data.start_date.split('T')[0],
+          endDate: data.end_date.split('T')[0],
+          status: data.status === 'scheduled' ? 'Zakazano' : 
+                 data.status === 'in_progress' ? 'U toku' : 'Završeno'
+        })
+      }
+    } catch (error) {
+      console.error('Greška pri učitavanju podataka kola:', error)
+    }
+  }
+
+  const fetchMatches = async () => {
+    try {
+      setLoading(true)
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"
+      const response = await fetch(`${apiUrl}/api/matches/gameweek/${roundId}`)
+      if (response.ok) {
+        const data = await response.json()
+        console.log('Matches data:', data) // Debug log
+        setMatches(data)
+      } else {
+        console.error('Greška pri učitavanju utakmica')
+      }
+    } catch (error) {
+      console.error('Greška pri učitavanju utakmica:', error)
+    } finally {
+      setLoading(false)
+    }
+  }
 
   const handleDeleteClick = (match) => {
     setMatchToDelete(match)
     setShowDeleteModal(true)
   }
 
-  const confirmDelete = () => {
-    setMatches(matches.filter((match) => match.id !== matchToDelete.id))
-    setShowDeleteModal(false)
-    setMatchToDelete(null)
+  const confirmDelete = async () => {
+    try {
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"
+      const response = await fetch(`${apiUrl}/api/matches/${matchToDelete.id}`, {
+        method: 'DELETE',
+      })
+      
+      if (response.ok) {
+        setMatches(matches.filter((match) => match.id !== matchToDelete.id))
+        setShowDeleteModal(false)
+        setMatchToDelete(null)
+      } else {
+        const errorData = await response.json()
+        alert(`Greška: ${errorData.detail}`)
+      }
+    } catch (error) {
+      console.error('Greška pri brisanju utakmice:', error)
+      alert('Greška pri brisanju utakmice')
+    }
+  }
+
+  const handleEditClick = (match) => {
+    setEditingMatch(match)
+    setEditFormData({
+      date: match.date.split('T')[0],
+      time: match.date.split('T')[1].substring(0, 5),
+      stadium: match.stadium,
+      referee: match.referee || ""
+    })
+    setShowEditModal(true)
+  }
+
+  const handleEditChange = (e) => {
+    const { name, value } = e.target
+    setEditFormData(prev => ({
+      ...prev,
+      [name]: value
+    }))
+  }
+
+  const saveEditChanges = async () => {
+    try {
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"
+      const response = await fetch(`${apiUrl}/api/matches/${editingMatch.id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          date: editFormData.date + 'T' + editFormData.time + ':00',
+          stadium: editFormData.stadium,
+          referee: editFormData.referee || null
+        }),
+      })
+      
+      if (response.ok) {
+        // Ažuriraj lokalno stanje
+        setMatches(matches.map(match => {
+          if (match.id === editingMatch.id) {
+            return {
+              ...match,
+              date: editFormData.date + 'T' + editFormData.time + ':00',
+              stadium: editFormData.stadium,
+              referee: editFormData.referee || null
+            }
+          }
+          return match
+        }))
+        setShowEditModal(false)
+        setEditingMatch(null)
+        setEditFormData({})
+      } else {
+        const errorData = await response.json()
+        alert(`Greška: ${errorData.detail}`)
+      }
+    } catch (error) {
+      console.error('Greška pri ažuriranju utakmice:', error)
+      alert('Greška pri ažuriranju utakmice')
+    }
   }
 
   const getStatusClass = (status) => {
     switch (status) {
-      case "Završena":
+      case "completed":
         return styles.statusCompleted
-      case "U toku":
+      case "in_progress":
         return styles.statusInProgress
-      case "Zakazana":
+      case "scheduled":
         return styles.statusScheduled
       default:
         return ""
@@ -112,6 +183,16 @@ export default function RoundMatches() {
       .join("")
       .substring(0, 3)
       .toUpperCase()
+  }
+
+  const formatDate = (dateString) => {
+    if (!mounted) return dateString
+    return new Date(dateString).toLocaleDateString("bs-BA")
+  }
+
+  const formatTime = (dateString) => {
+    if (!mounted) return "00:00"
+    return new Date(dateString).toLocaleTimeString("bs-BA", {hour: '2-digit', minute: '2-digit'})
   }
 
   return (
@@ -131,7 +212,7 @@ export default function RoundMatches() {
             Utakmice {round.number}. kola
             <span className={`${styles.roundStatus} ${getStatusClass(round.status)}`}>{round.status}</span>
           </h1>
-          <Link href={`/admin/rounds/${roundId}/matches/create`} className={styles.createButton}>
+          <Link href="/admin/matches/create" className={styles.createButton}>
             <FaPlus /> Dodaj utakmicu
           </Link>
         </div>
@@ -140,8 +221,8 @@ export default function RoundMatches() {
           <div className={styles.infoItem}>
             <FaCalendarAlt />
             <span>
-              {new Date(round.startDate).toLocaleDateString("bs-BA")} -{" "}
-              {new Date(round.endDate).toLocaleDateString("bs-BA")}
+              {formatDate(round.startDate)} -{" "}
+              {formatDate(round.endDate)}
             </span>
           </div>
           <div className={styles.infoItem}>
@@ -150,10 +231,12 @@ export default function RoundMatches() {
         </div>
 
         <div className={styles.matchesList}>
-          {matches.length === 0 ? (
+          {loading ? (
+            <div className={styles.loading}>Učitavanje utakmica...</div>
+          ) : matches.length === 0 ? (
             <div className={styles.noMatches}>
               <p>Nema utakmica u ovom kolu.</p>
-              <Link href={`/admin/rounds/${roundId}/matches/create`} className={styles.addMatchButton}>
+              <Link href="/admin/matches/create" className={styles.addMatchButton}>
                 <FaPlus /> Dodaj prvu utakmicu
               </Link>
             </div>
@@ -163,37 +246,40 @@ export default function RoundMatches() {
                 <div className={styles.matchHeader}>
                   <div className={styles.matchDate}>
                     <FaCalendarAlt />
-                    <span>{new Date(match.date).toLocaleDateString("bs-BA")}</span>
+                    <span>{formatDate(match.date)}</span>
                   </div>
                   <div className={styles.matchTime}>
                     <FaClock />
-                    <span>{match.time}</span>
+                    <span>{formatTime(match.date)}</span>
                   </div>
                   <div className={styles.matchStadium}>
                     <FaMapMarkerAlt />
                     <span>{match.stadium}</span>
                   </div>
-                  <div className={`${styles.matchStatus} ${getStatusClass(match.status)}`}>{match.status}</div>
+                  <div className={`${styles.matchStatus} ${getStatusClass(match.status)}`}>
+                    {match.status === 'scheduled' ? 'Zakazana' : 
+                     match.status === 'in_progress' ? 'U toku' : 'Završena'}
+                  </div>
                 </div>
 
                 <div className={styles.matchTeams}>
                   <div className={styles.team}>
                     <div className={styles.teamLogo}>
-                      {match.homeTeam.logo ? (
-                        <img src={match.homeTeam.logo || "/placeholder.svg"} alt={match.homeTeam.name} />
+                      {match.home_club_logo ? (
+                        <img src={match.home_club_logo} alt={match.home_club_name} className={styles.clubLogoImg} />
                       ) : (
-                        <div className={styles.teamInitials}>{getTeamInitials(match.homeTeam.name)}</div>
+                        <div className={styles.teamInitials}>{getTeamInitials(match.home_club_name)}</div>
                       )}
                     </div>
-                    <div className={styles.teamName}>{match.homeTeam.name}</div>
+                    <div className={styles.teamName}>{match.home_club_name}</div>
                   </div>
 
                   <div className={styles.matchScore}>
-                    {match.status !== "Zakazana" ? (
+                    {match.status !== "scheduled" ? (
                       <>
-                        <span className={styles.score}>{match.homeScore}</span>
+                        <span className={styles.score}>{match.home_score || 0}</span>
                         <span className={styles.scoreSeparator}>:</span>
-                        <span className={styles.score}>{match.awayScore}</span>
+                        <span className={styles.score}>{match.away_score || 0}</span>
                       </>
                     ) : (
                       <span className={styles.vs}>VS</span>
@@ -202,30 +288,30 @@ export default function RoundMatches() {
 
                   <div className={styles.team}>
                     <div className={styles.teamLogo}>
-                      {match.awayTeam.logo ? (
-                        <img src={match.awayTeam.logo || "/placeholder.svg"} alt={match.awayTeam.name} />
+                      {match.away_club_logo ? (
+                        <img src={match.away_club_logo} alt={match.away_club_name} className={styles.clubLogoImg} />
                       ) : (
-                        <div className={styles.teamInitials}>{getTeamInitials(match.awayTeam.name)}</div>
+                        <div className={styles.teamInitials}>{getTeamInitials(match.away_club_name)}</div>
                       )}
                     </div>
-                    <div className={styles.teamName}>{match.awayTeam.name}</div>
+                    <div className={styles.teamName}>{match.away_club_name}</div>
                   </div>
                 </div>
 
                 <div className={styles.matchActions}>
-                  {match.status === "Zakazana" ? (
+                  {match.status === "scheduled" ? (
                     <>
                       <Link href={`/admin/matches/result/${match.id}`} className={styles.resultButton}>
                         Unesi rezultat
                       </Link>
-                      <Link href={`/admin/matches/edit/${match.id}`} className={styles.editButton}>
+                      <button className={styles.editButton} onClick={() => handleEditClick(match)}>
                         <FaEdit />
-                      </Link>
+                      </button>
                       <button className={styles.deleteButton} onClick={() => handleDeleteClick(match)}>
                         <FaTrash />
                       </button>
                     </>
-                  ) : match.status === "U toku" ? (
+                  ) : match.status === "in_progress" ? (
                     <>
                       <Link href={`/admin/matches/result/${match.id}`} className={styles.updateButton}>
                         Ažuriraj rezultat
@@ -239,9 +325,9 @@ export default function RoundMatches() {
                       <Link href={`/admin/matches/events/${match.id}`} className={styles.eventsButton}>
                         Događaji
                       </Link>
-                      <Link href={`/admin/matches/edit/${match.id}`} className={styles.editButton}>
+                      <button className={styles.editButton} onClick={() => handleEditClick(match)}>
                         <FaEdit />
-                      </Link>
+                      </button>
                     </>
                   )}
                 </div>
@@ -256,8 +342,8 @@ export default function RoundMatches() {
             <div className={styles.modal}>
               <h2 className={styles.modalTitle}>Potvrda brisanja</h2>
               <p className={styles.modalText}>
-                Da li ste sigurni da želite obrisati utakmicu {matchToDelete?.homeTeam.name} vs{" "}
-                {matchToDelete?.awayTeam.name}?
+                Da li ste sigurni da želite obrisati utakmicu {matchToDelete?.home_club_name} vs{" "}
+                {matchToDelete?.away_club_name}?
               </p>
               <div className={styles.modalActions}>
                 <button className={styles.cancelButton} onClick={() => setShowDeleteModal(false)}>
@@ -265,6 +351,65 @@ export default function RoundMatches() {
                 </button>
                 <button className={styles.confirmButton} onClick={confirmDelete}>
                   Obriši
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Edit Modal */}
+        {showEditModal && (
+          <div className={styles.modalOverlay}>
+            <div className={styles.modal}>
+              <h2 className={styles.modalTitle}>Uredi utakmicu</h2>
+              <div className={styles.modalForm}>
+                <div className={styles.formGroup}>
+                  <label htmlFor="editDate">Datum:</label>
+                  <input
+                    type="date"
+                    id="editDate"
+                    name="date"
+                    value={editFormData.date}
+                    onChange={handleEditChange}
+                  />
+                </div>
+                <div className={styles.formGroup}>
+                  <label htmlFor="editTime">Vrijeme:</label>
+                  <input
+                    type="time"
+                    id="editTime"
+                    name="time"
+                    value={editFormData.time}
+                    onChange={handleEditChange}
+                  />
+                </div>
+                <div className={styles.formGroup}>
+                  <label htmlFor="editStadium">Stadion:</label>
+                  <input
+                    type="text"
+                    id="editStadium"
+                    name="stadium"
+                    value={editFormData.stadium}
+                    onChange={handleEditChange}
+                  />
+                </div>
+                <div className={styles.formGroup}>
+                  <label htmlFor="editReferee">Sudija:</label>
+                  <input
+                    type="text"
+                    id="editReferee"
+                    name="referee"
+                    value={editFormData.referee}
+                    onChange={handleEditChange}
+                  />
+                </div>
+              </div>
+              <div className={styles.modalActions}>
+                <button className={styles.cancelButton} onClick={() => setShowEditModal(false)}>
+                  Otkaži
+                </button>
+                <button className={styles.confirmButton} onClick={saveEditChanges}>
+                  Sačuvaj
                 </button>
               </div>
             </div>
