@@ -68,7 +68,7 @@ export default function MatchResult() {
   const fetchMatchData = async () => {
     try {
       const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"
-      const response = await fetch(`${apiUrl}/api/matches/${matchId}/detailed`)
+              const response = await fetch(`${apiUrl}/admin/matches/${matchId}/detailed`)
       if (response.ok) {
         const data = await response.json()
 
@@ -90,39 +90,46 @@ export default function MatchResult() {
   const fetchLineups = async () => {
     try {
       const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"
-      const response = await fetch(`${apiUrl}/api/match-lineups/match/${matchId}`)
+      const response = await fetch(`${apiUrl}/admin/match-lineups/match/${matchId}`)
       if (response.ok) {
-        const lineupsData = await response.json()
+        const data = await response.json()
         
-        // Inicijalizuj postave
-        const homeLineup = Array(11).fill('')
-        const awayLineup = Array(11).fill('')
+        // Konvertuj podatke u format koji frontend očekuje
+        const homeLineups = []
+        const awayLineups = []
         
-        lineupsData.forEach(lineup => {
-          if (lineup.lineup_type === 'starting') {
-            if (lineup.club_id === match.home_club_id) {
-              // Pronađi slobodnu poziciju u domaćoj postavi
-              const index = homeLineup.findIndex(pos => pos === '')
-              if (index !== -1) {
-                homeLineup[index] = lineup.player_id.toString()
-              }
-            } else if (lineup.club_id === match.away_club_id) {
-              // Pronađi slobodnu poziciju u gostujućoj postavi
-              const index = awayLineup.findIndex(pos => pos === '')
-              if (index !== -1) {
-                awayLineup[index] = lineup.player_id.toString()
-              }
+        // Inicijalizuj nizove sa 11 praznih pozicija
+        for (let i = 0; i < 11; i++) {
+          homeLineups.push('')
+          awayLineups.push('')
+        }
+        
+        // Popuni podatke iz baze
+        data.forEach(lineup => {
+          if (lineup.club_id === match.home_club_id) {
+            // Pronađi prvu slobodnu poziciju u home nizu
+            const index = homeLineups.findIndex(pos => pos === '')
+            if (index !== -1) {
+              homeLineups[index] = lineup.player_id.toString()
+            }
+          } else if (lineup.club_id === match.away_club_id) {
+            // Pronađi prvu slobodnu poziciju u away nizu
+            const index = awayLineups.findIndex(pos => pos === '')
+            if (index !== -1) {
+              awayLineups[index] = lineup.player_id.toString()
             }
           }
         })
         
         setLineups({
-          home: homeLineup,
-          away: awayLineup
+          home: homeLineups,
+          away: awayLineups
         })
+      } else {
+        console.error('Greška pri učitavanju sastava')
       }
     } catch (error) {
-      console.error('Greška pri učitavanju postava:', error)
+      console.error('Greška pri učitavanju sastava:', error)
     }
   }
 
@@ -150,7 +157,7 @@ export default function MatchResult() {
   const handleLineupChange = (team, idx, value) => {
     setLineups(prev => ({
       ...prev,
-      [team]: prev[team].map((v, i) => (i === idx ? value : v)),
+      [team]: prev[team]?.map((v, i) => (i === idx ? value : v)) || Array(11).fill(''),
     }))
   }
 
@@ -162,10 +169,10 @@ export default function MatchResult() {
     const playerIdStr = playerId.toString()
     
     // Provjeri da li je igrač već izabran u nekoj drugoj poziciji
-    return lineups[team].some((id, idx) => {
+    return lineups[team]?.some((id, idx) => {
       const idStr = id.toString()
       return idStr === playerIdStr && idx !== currentIndex
-    })
+    }) || false
   }
 
   const handleSubmit = async (e) => {
@@ -173,8 +180,8 @@ export default function MatchResult() {
     setSaving(true)
 
     // Validacija da li su svi igrači različiti
-    const homePlayerIds = lineups.home.filter(id => id !== '')
-    const awayPlayerIds = lineups.away.filter(id => id !== '')
+    const homePlayerIds = lineups.home?.filter(id => id !== '') || []
+    const awayPlayerIds = lineups.away?.filter(id => id !== '') || []
     
     const homeDuplicates = homePlayerIds.filter((id, index) => homePlayerIds.indexOf(id) !== index)
     const awayDuplicates = awayPlayerIds.filter((id, index) => awayPlayerIds.indexOf(id) !== index)
@@ -195,7 +202,7 @@ export default function MatchResult() {
       const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"
       
       // Ažuriraj rezultat
-      const resultResponse = await fetch(`${apiUrl}/api/matches/${matchId}/score`, {
+      const resultResponse = await fetch(`${apiUrl}/admin/matches/${matchId}/score`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
@@ -208,7 +215,7 @@ export default function MatchResult() {
 
       if (resultResponse.ok) {
         // Sačuvaj statistike za domaći tim
-        const homeStatsResponse = await fetch(`${apiUrl}/api/match-statistics/match/${matchId}/club/${match.home_club.id}`, {
+        const homeStatsResponse = await fetch(`${apiUrl}/admin/match-statistics/match/${matchId}/club/${match.home_club.id}`, {
           method: 'PATCH',
           headers: {
             'Content-Type': 'application/json',
@@ -217,7 +224,7 @@ export default function MatchResult() {
         })
 
         // Sačuvaj statistike za gostujući tim
-        const awayStatsResponse = await fetch(`${apiUrl}/api/match-statistics/match/${matchId}/club/${match.away_club.id}`, {
+        const awayStatsResponse = await fetch(`${apiUrl}/admin/match-statistics/match/${matchId}/club/${match.away_club.id}`, {
           method: 'PATCH',
           headers: {
             'Content-Type': 'application/json',
@@ -229,9 +236,9 @@ export default function MatchResult() {
         const lineupData = []
         
         // Dodaj domaću postavu
-        lineups.home.forEach((playerId, index) => {
+        lineups.home?.forEach((playerId, index) => {
           if (playerId) {
-            const player = players.home.find(p => p.id == playerId)
+            const player = players.home?.find(p => p.id == playerId)
             if (player) {
               lineupData.push({
                 match_id: parseInt(matchId),
@@ -247,9 +254,9 @@ export default function MatchResult() {
         })
 
         // Dodaj gostujuću postavu
-        lineups.away.forEach((playerId, index) => {
+        lineups.away?.forEach((playerId, index) => {
           if (playerId) {
-            const player = players.away.find(p => p.id == playerId)
+            const player = players.away?.find(p => p.id == playerId)
             if (player) {
               lineupData.push({
                 match_id: parseInt(matchId),
@@ -266,13 +273,13 @@ export default function MatchResult() {
 
         // Sačuvaj postave u bazu
         if (lineupData.length > 0) {
-          // Prvo obriši postojeće postave za ovu utakmicu
-          await fetch(`${apiUrl}/api/match-lineups/match/${matchId}`, {
-            method: 'DELETE',
+          // Obriši postojeće postave
+          await fetch(`${apiUrl}/admin/match-lineups/match/${matchId}`, {
+            method: 'DELETE'
           })
 
-          // Zatim kreiraj nove postave
-          const lineupResponse = await fetch(`${apiUrl}/api/match-lineups/bulk`, {
+          // Kreiraj nove postave
+          const lineupResponse = await fetch(`${apiUrl}/admin/match-lineups/bulk`, {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
@@ -339,13 +346,11 @@ export default function MatchResult() {
 
   // Funkcija za dobijanje liste izabranih igrača
   const getSelectedPlayers = (team) => {
-    return lineups[team]
-      .map((playerId, index) => {
-        if (!playerId) return null
-        const player = players[team].find(p => p.id.toString() === playerId.toString())
-        return player ? `${index + 1}. ${player.name} (${player.position})` : null
-      })
-      .filter(Boolean)
+    return lineups[team]?.map((playerId, index) => {
+      if (!playerId) return null
+      const player = players[team]?.find(p => p.id.toString() === playerId.toString())
+      return player ? `${index + 1}. ${player.name} (${player.position})` : null
+    })?.filter(Boolean) || []
   }
 
   const selectedHomePlayers = getSelectedPlayers('home')
@@ -431,19 +436,19 @@ export default function MatchResult() {
                 <strong>Napomena:</strong> Igrači koji su već izabrani u drugoj poziciji će biti onemogućeni u dropdown-ovima. 
                 Potrebno je izabrati 11 igrača za svaki tim.
                 <br />
-                <strong>Status:</strong> Domaći tim: {selectedHomePlayers.length}/11, Gostujući tim: {selectedAwayPlayers.length}/11
+                <strong>Status:</strong> Domaći tim: {selectedHomePlayers?.length || 0}/11, Gostujući tim: {selectedAwayPlayers?.length || 0}/11
               </div>
 
               {/* Prikaz izabranih igrača */}
-              {(selectedHomePlayers.length > 0 || selectedAwayPlayers.length > 0) && (
+              {((selectedHomePlayers?.length || 0) > 0 || (selectedAwayPlayers?.length || 0) > 0) && (
                 <div className={styles.selectedPlayersInfo}>
                   <strong>Izabrani igrači:</strong>
                   <div className={styles.selectedPlayersGrid}>
                     <div>
                       <strong>{match.home_club?.name}:</strong>
-                      {selectedHomePlayers.length > 0 ? (
+                      {(selectedHomePlayers?.length || 0) > 0 ? (
                         <ul className={styles.selectedPlayersList}>
-                          {selectedHomePlayers.map((player, index) => (
+                          {selectedHomePlayers?.map((player, index) => (
                             <li key={index}>{player}</li>
                           ))}
                         </ul>
@@ -453,9 +458,9 @@ export default function MatchResult() {
                     </div>
                     <div>
                       <strong>{match.away_club?.name}:</strong>
-                      {selectedAwayPlayers.length > 0 ? (
+                      {(selectedAwayPlayers?.length || 0) > 0 ? (
                         <ul className={styles.selectedPlayersList}>
-                          {selectedAwayPlayers.map((player, index) => (
+                          {selectedAwayPlayers?.map((player, index) => (
                             <li key={index}>{player}</li>
                           ))}
                         </ul>
@@ -470,7 +475,7 @@ export default function MatchResult() {
               <div className={styles.formRow}>
                 <div className={styles.formGroup}>
                   <h3>{match.home_club?.name || `Domaći klub (${match.home_club_id})`}</h3>
-                  {lineups.home.map((playerId, idx) => (
+                  {lineups.home?.map((playerId, idx) => (
                     <select
                       key={idx}
                       value={playerId}
@@ -478,7 +483,7 @@ export default function MatchResult() {
                       className={styles.formGroup}
                     >
                       <option value="">Izaberi igrača #{idx + 1}</option>
-                      {players.home.map(player => (
+                      {players.home?.map(player => (
                         <option 
                           key={player.id} 
                           value={player.id}
@@ -493,7 +498,7 @@ export default function MatchResult() {
                 </div>
                 <div className={styles.formGroup}>
                   <h3>{match.away_club?.name || `Gostujući klub (${match.away_club_id})`}</h3>
-                  {lineups.away.map((playerId, idx) => (
+                  {lineups.away?.map((playerId, idx) => (
                     <select
                       key={idx}
                       value={playerId}
@@ -501,7 +506,7 @@ export default function MatchResult() {
                       className={styles.formGroup}
                     >
                       <option value="">Izaberi igrača #{idx + 1}</option>
-                      {players.away.map(player => (
+                      {players.away?.map(player => (
                         <option 
                           key={player.id} 
                           value={player.id}
@@ -703,11 +708,11 @@ export default function MatchResult() {
               <button 
                 type="submit" 
                 className={styles.saveButton} 
-                disabled={saving || selectedHomePlayers.length < 11 || selectedAwayPlayers.length < 11}
+                disabled={saving || (selectedHomePlayers?.length || 0) < 11 || (selectedAwayPlayers?.length || 0) < 11}
               >
                 <FaSave /> {saving ? 'Čuvanje...' : 'Sačuvaj rezultat'}
-                {!saving && (selectedHomePlayers.length < 11 || selectedAwayPlayers.length < 11) && 
-                  ` (Potrebno ${11 - Math.min(selectedHomePlayers.length, selectedAwayPlayers.length)} igrača više)`}
+                {!saving && ((selectedHomePlayers?.length || 0) < 11 || (selectedAwayPlayers?.length || 0) < 11) && 
+                  ` (Potrebno ${11 - Math.min(selectedHomePlayers?.length || 0, selectedAwayPlayers?.length || 0)} igrača više)`}
               </button>
             </div>
           </form>

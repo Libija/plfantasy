@@ -73,3 +73,5 @@ from controllers import match_statistics_controller
 app.include_router(match_statistics_controller.router)
 from controllers import matchevent_controller
 app.include_router(matchevent_controller.router)
+from controllers import fantasy_points_controller
+app.include_router(fantasy_points_controller.router)

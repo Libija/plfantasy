@@ -25,7 +25,7 @@ export default function AdminRounds() {
     try {
       setLoading(true)
       const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"
-      let url = `${apiUrl}/api/gameweeks`
+      let url = `${apiUrl}/admin/gameweeks`
       const params = new URLSearchParams()
       
       if (selectedSeason !== 'all') {
@@ -56,7 +56,7 @@ export default function AdminRounds() {
   const fetchSeasons = async () => {
     try {
       const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"
-      const response = await fetch(`${apiUrl}/api/gameweeks/seasons/list`)
+      const response = await fetch(`${apiUrl}/admin/gameweeks/seasons/list`)
       if (response.ok) {
         const data = await response.json()
         setSeasons(data.seasons)
@@ -88,7 +88,7 @@ export default function AdminRounds() {
   const confirmDelete = async () => {
     try {
       const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"
-      const response = await fetch(`${apiUrl}/api/gameweeks/${roundToDelete.id}`, {
+      const response = await fetch(`${apiUrl}/admin/gameweeks/${roundToDelete.id}`, {
         method: 'DELETE',
       })
       
@@ -117,7 +117,7 @@ export default function AdminRounds() {
   const saveEditChanges = async () => {
     try {
       const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"
-      const response = await fetch(`${apiUrl}/api/gameweeks/${editingRound.id}`, {
+      const response = await fetch(`${apiUrl}/admin/gameweeks/${editingRound.id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',

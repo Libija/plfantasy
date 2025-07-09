@@ -6,7 +6,7 @@ from models.match_model import MatchStatus
 from schemas.match_schema import MatchCreate, MatchUpdate, MatchResponse, MatchListResponse, MatchWithClubsResponse
 from services.match_service import MatchService
 
-router = APIRouter(prefix="/api/matches", tags=["matches"])
+router = APIRouter(prefix="/admin/matches", tags=["matches"])
 
 @router.post("/", response_model=MatchResponse)
 def create_match(

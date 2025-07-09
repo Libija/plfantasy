@@ -5,7 +5,7 @@ from database import get_session
 from schemas.match_statistics_schema import MatchStatisticsCreate, MatchStatisticsUpdate, MatchStatisticsResponse, MatchStatisticsWithClubResponse
 from services.match_statistics_service import MatchStatisticsService
 
-router = APIRouter(prefix="/api/match-statistics", tags=["match-statistics"])
+router = APIRouter(prefix="/admin/match-statistics", tags=["match-statistics"])
 
 @router.post("/", response_model=MatchStatisticsResponse)
 def create_statistics(

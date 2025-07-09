@@ -40,7 +40,7 @@ export default function RoundMatches() {
   const fetchRoundData = async () => {
     try {
       const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"
-      const response = await fetch(`${apiUrl}/api/gameweeks/${roundId}`)
+      const response = await fetch(`${apiUrl}/admin/gameweeks/${roundId}`)
       if (response.ok) {
         const data = await response.json()
         setRound({
@@ -62,7 +62,7 @@ export default function RoundMatches() {
     try {
       setLoading(true)
       const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"
-      const response = await fetch(`${apiUrl}/api/matches/gameweek/${roundId}`)
+      const response = await fetch(`${apiUrl}/admin/matches/gameweek/${roundId}`)
       if (response.ok) {
         const data = await response.json()
         console.log('Matches data:', data) // Debug log
@@ -85,7 +85,7 @@ export default function RoundMatches() {
   const confirmDelete = async () => {
     try {
       const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"
-      const response = await fetch(`${apiUrl}/api/matches/${matchToDelete.id}`, {
+      const response = await fetch(`${apiUrl}/admin/matches/${matchToDelete.id}`, {
         method: 'DELETE',
       })
       
@@ -125,7 +125,7 @@ export default function RoundMatches() {
   const saveEditChanges = async () => {
     try {
       const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"
-      const response = await fetch(`${apiUrl}/api/matches/${editingMatch.id}`, {
+      const response = await fetch(`${apiUrl}/admin/matches/${editingMatch.id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',

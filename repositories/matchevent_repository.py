@@ -1,6 +1,8 @@
 from typing import List, Optional
 from sqlmodel import Session, select
 from models.matchevent_model import MatchEvent
+from models.player_model import Player
+from models.club_model import Club
 from schemas.matchevent_schema import MatchEventCreate, MatchEventUpdate
 
 class MatchEventRepository:
@@ -22,7 +24,43 @@ class MatchEventRepository:
     def get_by_match(self, match_id: int) -> List[MatchEvent]:
         """Dohvata sve događaje za utakmicu"""
         statement = select(MatchEvent).where(MatchEvent.match_id == match_id)
-        return self.db.exec(statement).all()
+        return list(self.db.exec(statement).all())
+
+    def get_by_match_with_players(self, match_id: int) -> List[dict]:
+        """Dohvata sve događaje za utakmicu sa imenima igrača i klubova"""
+        statement = select(MatchEvent).where(MatchEvent.match_id == match_id)
+        events = list(self.db.exec(statement).all())
+        
+        result = []
+        for event in events:
+            event_dict = {
+                "id": event.id,
+                "match_id": event.match_id,
+                "player_id": event.player_id,
+                "event_type": event.event_type,
+                "minute": event.minute,
+                "assist_player_id": event.assist_player_id,
+                "created_at": event.created_at
+            }
+            
+            # Dohvati igrača
+            player = self.db.get(Player, event.player_id)
+            if player:
+                event_dict["player_name"] = player.name
+                # Dohvati klub
+                club = self.db.get(Club, player.club_id)
+                if club:
+                    event_dict["club_name"] = club.name
+            
+            # Dohvati asistenta ako postoji
+            if event.assist_player_id:
+                assist_player = self.db.get(Player, event.assist_player_id)
+                if assist_player:
+                    event_dict["assist_player_name"] = assist_player.name
+            
+            result.append(event_dict)
+        
+        return result
 
     def update(self, event_id: int, event_data: MatchEventUpdate) -> Optional[MatchEvent]:
         """Ažurira događaj"""

@@ -21,8 +21,8 @@ class MatchEventService:
 
     def get_match_events(self, match_id: int) -> List[MatchEventResponse]:
         """Dohvata sve događaje za utakmicu"""
-        events = self.repository.get_by_match(match_id)
-        return [MatchEventResponse.from_orm(event) for event in events]
+        events_data = self.repository.get_by_match_with_players(match_id)
+        return [MatchEventResponse(**event_data) for event_data in events_data]
 
     def update_event(self, event_id: int, event_data: MatchEventUpdate) -> Optional[MatchEventResponse]:
         """Ažurira događaj"""

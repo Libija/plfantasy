@@ -64,7 +64,7 @@ export default function CreateRound() {
         const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"
         console.log('Sending data:', requestData)
         
-        const response = await fetch(`${apiUrl}/api/gameweeks`, {
+        const response = await fetch(`${apiUrl}/admin/gameweeks`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',

@@ -65,7 +65,7 @@ export default function CreateMatch() {
   const fetchRounds = async () => {
     try {
       const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"
-      const response = await fetch(`${apiUrl}/api/gameweeks`)
+      const response = await fetch(`${apiUrl}/admin/gameweeks`)
       if (response.ok) {
         const data = await response.json()
         setRounds(data)
@@ -125,7 +125,7 @@ export default function CreateMatch() {
         }))
         // Dohvati utakmice za to kolo
         const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"
-        const res = await fetch(`${apiUrl}/api/matches/gameweek/${selectedRound.id}`)
+        const res = await fetch(`${apiUrl}/admin/matches/gameweek/${selectedRound.id}`)
         if (res.ok) {
           const data = await res.json()
           setMatchesInRound(data)
@@ -206,7 +206,7 @@ export default function CreateMatch() {
       
       console.log('Creating match:', requestData)
       
-      const response = await fetch(`${apiUrl}/api/matches`, {
+      const response = await fetch(`${apiUrl}/admin/matches`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

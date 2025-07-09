@@ -5,7 +5,7 @@ from database import get_session
 from schemas.match_substitution_schema import MatchSubstitutionCreate, MatchSubstitutionUpdate, MatchSubstitutionResponse, MatchSubstitutionWithPlayersResponse
 from services.match_substitution_service import MatchSubstitutionService
 
-router = APIRouter(prefix="/api/match-substitutions", tags=["match-substitutions"])
+router = APIRouter(prefix="/admin/match-substitutions", tags=["match-substitutions"])
 
 @router.post("/", response_model=MatchSubstitutionResponse)
 def create_substitution(
