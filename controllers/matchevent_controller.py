@@ -5,7 +5,7 @@ from database import get_session
 from schemas.matchevent_schema import MatchEventCreate, MatchEventUpdate, MatchEventResponse
 from services.matchevent_service import MatchEventService
 
-router = APIRouter(prefix="/api/matchevents", tags=["matchevents"])
+router = APIRouter(prefix="/admin/matchevents", tags=["matchevents"])
 
 @router.post("/", response_model=MatchEventResponse)
 def create_event(

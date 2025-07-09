@@ -5,7 +5,7 @@ from database import get_session
 from schemas.match_lineup_schema import MatchLineupCreate, MatchLineupUpdate, MatchLineupResponse, MatchLineupWithPlayerResponse, MatchLineupBulkCreate
 from services.match_lineup_service import MatchLineupService
 
-router = APIRouter(prefix="/api/match-lineups", tags=["match-lineups"])
+router = APIRouter(prefix="/admin/match-lineups", tags=["match-lineups"])
 
 @router.post("/", response_model=MatchLineupResponse)
 def create_lineup(

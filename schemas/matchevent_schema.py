@@ -23,6 +23,9 @@ class MatchEventResponse(BaseModel):
     event_type: MatchEventType
     minute: int
     assist_player_id: Optional[int] = None
+    player_name: Optional[str] = None
+    club_name: Optional[str] = None
+    assist_player_name: Optional[str] = None
 
     class Config:
         from_attributes = True 

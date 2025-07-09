@@ -68,7 +68,7 @@ export default function MatchResult() {
   const fetchMatchData = async () => {
     try {
       const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"
-      const response = await fetch(`${apiUrl}/api/matches/${matchId}/detailed`)
+              const response = await fetch(`${apiUrl}/admin/matches/${matchId}/detailed`)
       if (response.ok) {
         const data = await response.json()
 
@@ -90,39 +90,15 @@ export default function MatchResult() {
   const fetchLineups = async () => {
     try {
       const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"
-      const response = await fetch(`${apiUrl}/api/match-lineups/match/${matchId}`)
+      const response = await fetch(`${apiUrl}/admin/match-lineups/match/${matchId}`)
       if (response.ok) {
-        const lineupsData = await response.json()
-        
-        // Inicijalizuj postave
-        const homeLineup = Array(11).fill('')
-        const awayLineup = Array(11).fill('')
-        
-        lineupsData.forEach(lineup => {
-          if (lineup.lineup_type === 'starting') {
-            if (lineup.club_id === match.home_club_id) {
-              // Pronađi slobodnu poziciju u domaćoj postavi
-              const index = homeLineup.findIndex(pos => pos === '')
-              if (index !== -1) {
-                homeLineup[index] = lineup.player_id.toString()
-              }
-            } else if (lineup.club_id === match.away_club_id) {
-              // Pronađi slobodnu poziciju u gostujućoj postavi
-              const index = awayLineup.findIndex(pos => pos === '')
-              if (index !== -1) {
-                awayLineup[index] = lineup.player_id.toString()
-              }
-            }
-          }
-        })
-        
-        setLineups({
-          home: homeLineup,
-          away: awayLineup
-        })
+        const data = await response.json()
+        setLineups(data)
+      } else {
+        console.error('Greška pri učitavanju sastava')
       }
     } catch (error) {
-      console.error('Greška pri učitavanju postava:', error)
+      console.error('Greška pri učitavanju sastava:', error)
     }
   }
 
@@ -195,7 +171,7 @@ export default function MatchResult() {
       const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"
       
       // Ažuriraj rezultat
-      const resultResponse = await fetch(`${apiUrl}/api/matches/${matchId}/score`, {
+      const resultResponse = await fetch(`${apiUrl}/admin/matches/${matchId}/score`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
@@ -208,7 +184,7 @@ export default function MatchResult() {
 
       if (resultResponse.ok) {
         // Sačuvaj statistike za domaći tim
-        const homeStatsResponse = await fetch(`${apiUrl}/api/match-statistics/match/${matchId}/club/${match.home_club.id}`, {
+        const homeStatsResponse = await fetch(`${apiUrl}/admin/match-statistics/match/${matchId}/club/${match.home_club.id}`, {
           method: 'PATCH',
           headers: {
             'Content-Type': 'application/json',
@@ -217,7 +193,7 @@ export default function MatchResult() {
         })
 
         // Sačuvaj statistike za gostujući tim
-        const awayStatsResponse = await fetch(`${apiUrl}/api/match-statistics/match/${matchId}/club/${match.away_club.id}`, {
+        const awayStatsResponse = await fetch(`${apiUrl}/admin/match-statistics/match/${matchId}/club/${match.away_club.id}`, {
           method: 'PATCH',
           headers: {
             'Content-Type': 'application/json',
@@ -266,13 +242,13 @@ export default function MatchResult() {
 
         // Sačuvaj postave u bazu
         if (lineupData.length > 0) {
-          // Prvo obriši postojeće postave za ovu utakmicu
-          await fetch(`${apiUrl}/api/match-lineups/match/${matchId}`, {
-            method: 'DELETE',
+          // Obriši postojeće postave
+          await fetch(`${apiUrl}/admin/match-lineups/match/${matchId}`, {
+            method: 'DELETE'
           })
 
-          // Zatim kreiraj nove postave
-          const lineupResponse = await fetch(`${apiUrl}/api/match-lineups/bulk`, {
+          // Kreiraj nove postave
+          const lineupResponse = await fetch(`${apiUrl}/admin/match-lineups/bulk`, {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',

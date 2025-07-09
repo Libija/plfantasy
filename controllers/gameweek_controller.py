@@ -6,7 +6,7 @@ from models.gameweek_model import GameweekStatus
 from schemas.gameweek_schema import GameweekCreate, GameweekUpdate, GameweekResponse, GameweekListResponse
 from services.gameweek_service import GameweekService
 
-router = APIRouter(prefix="/api/gameweeks", tags=["gameweeks"])
+router = APIRouter(prefix="/admin/gameweeks", tags=["gameweeks"])
 
 @router.post("/", response_model=GameweekResponse)
 def create_gameweek(
