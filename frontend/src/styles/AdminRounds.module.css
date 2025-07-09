@@ -207,6 +207,25 @@
   cursor: not-allowed;
 }
 
+.loading {
+  text-align: center;
+  padding: 3rem;
+  font-size: 1.1rem;
+  color: #666;
+  grid-column: 1 / -1;
+}
+
+.noRounds {
+  text-align: center;
+  padding: 3rem;
+  font-size: 1.1rem;
+  color: #666;
+  grid-column: 1 / -1;
+  background-color: #f8f9fa;
+  border-radius: 8px;
+  border: 2px dashed #ddd;
+}
+
 /* Modal styles */
 .modalOverlay {
   position: fixed;

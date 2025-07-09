@@ -1,99 +1,101 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import Head from "next/head"
 import Link from "next/link"
 import { FaArrowLeft, FaPlus, FaEdit, FaTrash, FaEye, FaSave, FaUpload } from "react-icons/fa"
 import styles from "../../../styles/AdminNews.module.css"
 
 export default function AdminNews() {
-  const [news, setNews] = useState([
-    {
-      id: 1,
-      title: "Sarajevo pobjedilo Zrinjski u derbiju kola",
-      category: "Utakmice",
-      author: "Admin",
-      date: "22.05.2025.",
-      status: "Objavljeno",
-      views: 1245,
-      relatedClubs: ["FK Sarajevo", "HŠK Zrinjski"],
-      excerpt: "Uzbudljiv derbi završen je pobjedom domaćina",
-      content: "Sarajevo je u uzbudljivom derbiju savladalo Zrinjski rezultatom 2:1...",
-      featured: true,
-      image: null,
-    },
-    {
-      id: 2,
-      title: "Tuzla City doveo novo pojačanje iz Hrvatske",
-      category: "Transferi",
-      author: "Admin",
-      date: "21.05.2025.",
-      status: "Objavljeno",
-      views: 856,
-      relatedClubs: ["FK Tuzla City"],
-      excerpt: "Novi igrač stiže iz Hrvatske",
-      content: "FK Tuzla City je doveo novo pojačanje...",
-      featured: false,
-      image: null,
-    },
-    {
-      id: 3,
-      title: "Borac se priprema za evropske izazove",
-      category: "Klubovi",
-      author: "Admin",
-      date: "20.05.2025.",
-      status: "Draft",
-      views: 0,
-      relatedClubs: ["FK Borac"],
-      excerpt: "Priprema za evropska takmičenja",
-      content: "FK Borac intenzivno radi na pripremama...",
-      featured: false,
-      image: null,
-    },
-  ])
-
+  const [news, setNews] = useState([])
+  const [clubs, setClubs] = useState([])
   const [showDeleteModal, setShowDeleteModal] = useState(false)
   const [showEditModal, setShowEditModal] = useState(false)
   const [selectedNews, setSelectedNews] = useState(null)
   const [editFormData, setEditFormData] = useState({})
   const [imagePreview, setImagePreview] = useState(null)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState("")
+
+  useEffect(() => {
+    const fetchNews = async () => {
+      setLoading(true)
+      try {
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"
+        const res = await fetch(`${apiUrl}/admin/news`)
+        if (!res.ok) throw new Error()
+        const data = await res.json()
+        setNews(data)
+      } catch {
+        setError("Greška pri dohvatu vijesti!")
+      } finally {
+        setLoading(false)
+      }
+    }
+    fetchNews()
+  }, [])
+
+  useEffect(() => {
+    const fetchClubs = async () => {
+      try {
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"
+        const res = await fetch(`${apiUrl}/admin/clubs`)
+        if (!res.ok) throw new Error()
+        const data = await res.json()
+        setClubs(data)
+      } catch {
+        // ignore
+      }
+    }
+    fetchClubs()
+  }, [])
+
+  const getClubName = (club_id) => {
+    if (!club_id) return "-"
+    const club = clubs.find((c) => c.id === club_id)
+    return club ? club.name : "-"
+  }
 
   const categories = ["Utakmice", "Transferi", "Klubovi", "Liga", "Infrastruktura", "Ostalo"]
-  const clubs = [
-    "FK Sarajevo",
-    "FK Borac",
-    "HŠK Zrinjski",
-    "FK Željezničar",
-    "FK Tuzla City",
-    "NK Široki Brijeg",
-    "FK Velež",
-    "FK Sloboda",
-  ]
+
+  const CATEGORY_LABELS = {
+    transfer: "Transferi",
+    injury: "Povrede",
+    preview: "Najave",
+    result: "Rezultati",
+    general: "Ostalo",
+  };
 
   const handleDelete = (newsItem) => {
     setSelectedNews(newsItem)
     setShowDeleteModal(true)
   }
 
-  const confirmDelete = () => {
-    setNews(news.filter((item) => item.id !== selectedNews.id))
-    setShowDeleteModal(false)
-    setSelectedNews(null)
+  const confirmDelete = async () => {
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"
+    try {
+      const res = await fetch(`${apiUrl}/admin/news/${selectedNews.id}`, {
+        method: "DELETE",
+      })
+      if (!res.ok) throw new Error()
+      setNews(news.filter((item) => item.id !== selectedNews.id))
+      setShowDeleteModal(false)
+      setSelectedNews(null)
+    } catch {
+      alert("Greška pri brisanju vijesti!")
+    }
   }
 
   const handleEdit = (newsItem) => {
     setSelectedNews(newsItem)
     setEditFormData({ ...newsItem })
-    setImagePreview(newsItem.image)
+    setImagePreview(newsItem.image_url)
     setShowEditModal(true)
   }
 
   const handleEditChange = (e) => {
-    const { name, value, type, checked } = e.target
-    setEditFormData((prev) => ({
-      ...prev,
-      [name]: type === "checkbox" ? checked : value,
-    }))
+    const { name, value } = e.target
+    setEditFormData((prev) => ({ ...prev, [name]: value }))
   }
 
   const handleClubChange = (e) => {
@@ -107,23 +109,42 @@ export default function AdminNews() {
   const handleImageChange = (e) => {
     const file = e.target.files[0]
     if (file) {
-      setEditFormData((prev) => ({ ...prev, image: file }))
-
       const reader = new FileReader()
       reader.onload = (e) => {
         setImagePreview(e.target.result)
+        setEditFormData((prev) => ({ ...prev, image_url: e.target.result }))
       }
       reader.readAsDataURL(file)
     }
   }
 
-  const handleEditSubmit = (e) => {
+  const handleEditSubmit = async (e) => {
     e.preventDefault()
-    setNews((prev) => prev.map((item) => (item.id === selectedNews.id ? { ...editFormData } : item)))
-    setShowEditModal(false)
-    setSelectedNews(null)
-    setEditFormData({})
-    setImagePreview(null)
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"
+    const payload = {
+      title: editFormData.title,
+      content: editFormData.content,
+      image_url: editFormData.image_url || null,
+      category: editFormData.category,
+      club_id: editFormData.club_id ? Number(editFormData.club_id) : null,
+      date_posted: editFormData.date_posted,
+    }
+    try {
+      const res = await fetch(`${apiUrl}/admin/news/${selectedNews.id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      })
+      if (!res.ok) throw new Error()
+      const updated = await res.json()
+      setNews((prev) => prev.map((item) => (item.id === selectedNews.id ? updated : item)))
+      setShowEditModal(false)
+      setSelectedNews(null)
+      setEditFormData({})
+      setImagePreview(null)
+    } catch {
+      alert("Greška pri ažuriranju vijesti!")
+    }
   }
 
   return (
@@ -150,45 +171,47 @@ export default function AdminNews() {
           <div className={styles.tableHeader}>
             <div className={styles.headerCell}>Naslov</div>
             <div className={styles.headerCell}>Kategorija</div>
-            <div className={styles.headerCell}>Autor</div>
+            <div className={styles.headerCell}>Klub</div>
             <div className={styles.headerCell}>Datum</div>
-            <div className={styles.headerCell}>Status</div>
-            <div className={styles.headerCell}>Pregledi</div>
             <div className={styles.headerCell}>Akcije</div>
           </div>
 
-          {news.map((item) => (
-            <div key={item.id} className={styles.tableRow}>
-              <div className={styles.tableCell}>
-                <div className={styles.newsTitle}>{item.title}</div>
-              </div>
-              <div className={styles.tableCell}>
-                <span className={styles.category}>{item.category}</span>
-              </div>
-              <div className={styles.tableCell}>{item.author}</div>
-              <div className={styles.tableCell}>{item.date}</div>
-              <div className={styles.tableCell}>
-                <span className={`${styles.status} ${styles[item.status.toLowerCase()]}`}>{item.status}</span>
-              </div>
-              <div className={styles.tableCell}>{item.views}</div>
-              <div className={styles.tableCell}>
-                <div className={styles.actions}>
-                  <Link href={`/vijesti/${item.id}`} className={styles.actionButton}>
-                    <FaEye />
-                  </Link>
-                  <button className={styles.actionButton} onClick={() => handleEdit(item)}>
-                    <FaEdit />
-                  </button>
-                  <button
-                    className={`${styles.actionButton} ${styles.deleteButton}`}
-                    onClick={() => handleDelete(item)}
-                  >
-                    <FaTrash />
-                  </button>
+          {loading ? (
+            <p>Učitavanje vijesti...</p>
+          ) : error ? (
+            <p style={{ color: "red" }}>{error}</p>
+          ) : news.length === 0 ? (
+            <p>Nema vijesti za prikaz.</p>
+          ) : (
+            news.map((item) => (
+              <div key={item.id} className={styles.tableRow}>
+                <div className={styles.tableCell}>
+                  <div className={styles.newsTitle}>{item.title}</div>
+                </div>
+                <div className={styles.tableCell}>
+                  <span className={styles.category}>{CATEGORY_LABELS[item.category] || item.category}</span>
+                </div>
+                <div className={styles.tableCell}>{getClubName(item.club_id)}</div>
+                <div className={styles.tableCell}>{item.date_posted ? new Date(item.date_posted).toLocaleDateString() : "-"}</div>
+                <div className={styles.tableCell}>
+                  <div className={styles.actions}>
+                    <Link href={`/vijesti/${item.id}`} className={styles.actionButton}>
+                      <FaEye />
+                    </Link>
+                    <button className={styles.actionButton} onClick={() => handleEdit(item)}>
+                      <FaEdit />
+                    </button>
+                    <button
+                      className={`${styles.actionButton} ${styles.deleteButton}`}
+                      onClick={() => handleDelete(item)}
+                    >
+                      <FaTrash />
+                    </button>
+                  </div>
                 </div>
               </div>
-            </div>
-          ))}
+            ))
+          )}
         </div>
 
         {/* Edit Modal */}
@@ -213,7 +236,6 @@ export default function AdminNews() {
                     required
                   />
                 </div>
-
                 <div className={styles.formRow}>
                   <div className={styles.formGroup}>
                     <label htmlFor="edit-category">Kategorija *</label>
@@ -224,46 +246,26 @@ export default function AdminNews() {
                       onChange={handleEditChange}
                       required
                     >
-                      {categories.map((cat) => (
-                        <option key={cat} value={cat}>
-                          {cat}
-                        </option>
+                      {Object.entries(CATEGORY_LABELS).map(([key, label]) => (
+                        <option key={key} value={key}>{label}</option>
                       ))}
                     </select>
                   </div>
-
                   <div className={styles.formGroup}>
-                    <label htmlFor="edit-status">Status *</label>
+                    <label htmlFor="edit-club">Klub (opcionalno)</label>
                     <select
-                      id="edit-status"
-                      name="status"
-                      value={editFormData.status || ""}
+                      id="edit-club"
+                      name="club_id"
+                      value={editFormData.club_id || ""}
                       onChange={handleEditChange}
-                      required
                     >
-                      <option value="Draft">Draft</option>
-                      <option value="Objavljeno">Objavljeno</option>
+                      <option value="">Bez kluba</option>
+                      {clubs.map((club) => (
+                        <option key={club.id} value={club.id}>{club.name}</option>
+                      ))}
                     </select>
                   </div>
                 </div>
-
-                <div className={styles.formGroup}>
-                  <label>Povezani klubovi</label>
-                  <div className={styles.clubsGrid}>
-                    {clubs.map((club) => (
-                      <label key={club} className={styles.clubCheckbox}>
-                        <input
-                          type="checkbox"
-                          value={club}
-                          checked={editFormData.relatedClubs?.includes(club) || false}
-                          onChange={handleClubChange}
-                        />
-                        <span>{club}</span>
-                      </label>
-                    ))}
-                  </div>
-                </div>
-
                 <div className={styles.formGroup}>
                   <label htmlFor="edit-image">Slika vijesti</label>
                   <div className={styles.imageUpload}>
@@ -285,18 +287,6 @@ export default function AdminNews() {
                     )}
                   </div>
                 </div>
-
-                <div className={styles.formGroup}>
-                  <label htmlFor="edit-excerpt">Kratki opis</label>
-                  <textarea
-                    id="edit-excerpt"
-                    name="excerpt"
-                    value={editFormData.excerpt || ""}
-                    onChange={handleEditChange}
-                    rows="3"
-                  />
-                </div>
-
                 <div className={styles.formGroup}>
                   <label htmlFor="edit-content">Sadržaj vijesti *</label>
                   <textarea
@@ -308,19 +298,6 @@ export default function AdminNews() {
                     required
                   />
                 </div>
-
-                <div className={styles.formGroup}>
-                  <label className={styles.checkboxLabel}>
-                    <input
-                      type="checkbox"
-                      name="featured"
-                      checked={editFormData.featured || false}
-                      onChange={handleEditChange}
-                    />
-                    Istaknuta vijest
-                  </label>
-                </div>
-
                 <div className={styles.modalActions}>
                   <button type="button" className={styles.cancelButton} onClick={() => setShowEditModal(false)}>
                     Otkaži

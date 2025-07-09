@@ -44,7 +44,7 @@ def start_application():
         print("Body:", await request.body(), file=sys.stderr)
         return JSONResponse(
             status_code=422,
-            content={"detail": exc.errors(), "body": exc.body},
+            content={"detail": [{"loc": error["loc"], "msg": error["msg"]} for error in exc.errors()]},
         )
 
     return app
@@ -59,3 +59,9 @@ from controllers import club_controller
 app.include_router(club_controller.router)
 from controllers import player_controller
 app.include_router(player_controller.router)
+from controllers import news_controller
+app.include_router(news_controller.router)
+from controllers import gameweek_controller
+app.include_router(gameweek_controller.router)
+from controllers import match_controller
+app.include_router(match_controller.router)
