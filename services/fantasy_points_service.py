@@ -88,6 +88,18 @@ class FantasyPointsService:
                 )
                 self.db.add(fantasy_point)
                 fantasy_points_list.append(fantasy_point)
+
+                # Update player price based on points
+                player = self.db.get(Player, player_id)
+                if player:
+                    if points > 0:
+                        player.price += round(points / 10, 2)
+                    elif points < 0:
+                        player.price -= round(abs(points) / 10, 2)
+                    # Ensure price doesn't go below a minimum (e.g., 0.1)
+                    if player.price < 0.1:
+                        player.price = 0.1
+                    self.db.add(player)  # Mark as dirty for update
             
             print(f"Kreiram {len(fantasy_points_list)} fantasy poena")
             
