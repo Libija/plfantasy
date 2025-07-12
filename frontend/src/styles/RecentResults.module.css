@@ -110,3 +110,18 @@
 .resultLink:hover {
   background-color: #3a56d4;
 }
+
+.loading {
+  text-align: center;
+  color: #6c7293;
+  font-size: 1rem;
+  padding: 2rem;
+}
+
+.noResults {
+  text-align: center;
+  color: #6c7293;
+  font-size: 1rem;
+  padding: 2rem;
+  font-style: italic;
+}
