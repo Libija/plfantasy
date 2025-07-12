@@ -59,6 +59,7 @@ from controllers import club_controller
 app.include_router(club_controller.router)
 from controllers import player_controller
 app.include_router(player_controller.router)
+app.include_router(player_controller.public_router)
 from controllers import news_controller
 app.include_router(news_controller.router)
 from controllers import gameweek_controller

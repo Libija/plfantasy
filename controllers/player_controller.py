@@ -7,6 +7,21 @@ from typing import List, Optional
 
 router = APIRouter(prefix="/admin/players", tags=["players"])
 
+# Javni endpointi za igrače
+public_router = APIRouter(prefix="/players", tags=["public-players"])
+
+@public_router.get("/", response_model=List[PlayerResponse])
+def get_public_players(club_id: Optional[int] = Query(None), session: Session = Depends(get_session)):
+    """Dohvata sve igrače ili igrače određenog kluba za javnost"""
+    if club_id is not None:
+        return list_players_by_club_service(session, club_id)
+    return list_players_service(session)
+
+@public_router.get("/{player_id}", response_model=PlayerResponse)
+def get_public_player(player_id: int, session: Session = Depends(get_session)):
+    """Dohvata igrača po ID-u za javnost"""
+    return get_player_service(session, player_id)
+
 # No image_url handling needed
 # Nationality handled via schema
 

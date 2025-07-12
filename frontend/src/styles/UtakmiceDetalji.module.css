@@ -547,6 +547,11 @@
   margin: 0 0 0.5rem 0;
 }
 
+.unusedPlayer {
+  opacity: 0.7;
+  background-color: rgba(108, 114, 147, 0.1);
+}
+
 .statsContent {
   padding: 1.5rem;
   display: flex;

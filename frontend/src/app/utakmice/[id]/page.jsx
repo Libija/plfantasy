@@ -67,8 +67,14 @@ export default function UtakmiceDetalji() {
       const lineupsResponse = await fetch(`${apiUrl}/match-lineups/match/${id}`)
       if (lineupsResponse.ok) {
         const lineupsData = await lineupsResponse.json()
+        console.log('Lineups data received:', lineupsData)
         setLineups(lineupsData)
+      } else {
+        console.error('Lineups response not ok:', lineupsResponse.status, lineupsResponse.statusText)
       }
+
+      // Fetch sve igrače kluba
+      await fetchAllClubPlayers()
 
       // Fetch statistike (samo za završene utakmice)
       if (match.status === 'completed') {
@@ -108,6 +114,33 @@ export default function UtakmiceDetalji() {
       }
     } catch (error) {
       console.error('Greška pri učitavanju H2H utakmica:', error)
+    }
+  }
+
+  const fetchAllClubPlayers = async () => {
+    if (!match) return
+
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"
+    
+    try {
+      // Dohvati sve igrače za oba kluba
+      const [homePlayersResponse, awayPlayersResponse] = await Promise.all([
+        fetch(`${apiUrl}/players?club_id=${match.home_club_id}`),
+        fetch(`${apiUrl}/players?club_id=${match.away_club_id}`)
+      ])
+
+      const homePlayers = homePlayersResponse.ok ? await homePlayersResponse.json() : []
+      const awayPlayers = awayPlayersResponse.ok ? await awayPlayersResponse.json() : []
+
+      console.log('Home club players:', homePlayers)
+      console.log('Away club players:', awayPlayers)
+
+      setAllClubPlayers({
+        [match.home_club_id]: homePlayers,
+        [match.away_club_id]: awayPlayers
+      })
+    } catch (error) {
+      console.error('Greška pri učitavanju igrača kluba:', error)
     }
   }
 
@@ -165,7 +198,18 @@ export default function UtakmiceDetalji() {
   }
 
   const getSubstitutes = (clubId) => {
-    return getLineupsByClub(clubId).filter(l => l.lineup_type === 'substitute')
+    // Klupa = svi ostali igrači kluba koji nisu u prvih 11
+    const allClubPlayersList = allClubPlayers[clubId] || []
+    const startingPlayers = getStartingLineup(clubId)
+    
+    // Dohvati ID-ove igrača iz prvih 11
+    const startingPlayerIds = startingPlayers.map(p => p.player_id)
+    
+    // Klupa = svi igrači kluba koji nisu u prvih 11
+    const substitutePlayers = allClubPlayersList.filter(p => !startingPlayerIds.includes(p.id))
+    
+    console.log(`Substitutes for club ${clubId}:`, substitutePlayers)
+    return substitutePlayers
   }
 
   const getStatisticsByClub = (clubId) => {
@@ -180,14 +224,12 @@ export default function UtakmiceDetalji() {
     return lineups.filter(l => l.club_id === clubId)
   }
 
+  const [allClubPlayers, setAllClubPlayers] = useState({})
+
   const getUnusedPlayers = (clubId) => {
-    const allPlayers = getAllPlayersForClub(clubId)
-    const startingPlayers = getStartingLineup(clubId)
-    const substitutePlayers = getSubstitutes(clubId)
-    
-    // Dohvati sve igrače koji nisu ni u početnom sastavu ni na klupi
-    const usedPlayerIds = [...startingPlayers, ...substitutePlayers].map(p => p.player_id)
-    return allPlayers.filter(p => !usedPlayerIds.includes(p.player_id))
+    // Ostali igrači = svi igrači kluba koji nisu ni u prvih 11 ni na klupi
+    // Ali pošto je klupa = svi ostali igrači kluba, ova sekcija će biti prazna
+    return []
   }
 
   const isPlayerSubstituted = (playerId, clubId) => {
@@ -212,15 +254,15 @@ export default function UtakmiceDetalji() {
     }
   }
 
-  const PlayerItem = ({ player, clubId, showSubstitutionInfo = false }) => {
-    const substitutionInfo = showSubstitutionInfo ? getSubstitutionInfo(player.player_id, clubId) : null
-    const isSubstituted = isPlayerSubstituted(player.player_id, clubId)
+  const PlayerItem = ({ player, clubId, showSubstitutionInfo = false, isUnusedPlayer = false }) => {
+    const substitutionInfo = showSubstitutionInfo ? getSubstitutionInfo(player.player_id || player.id, clubId) : null
+    const isSubstituted = isPlayerSubstituted(player.player_id || player.id, clubId)
     
     return (
-      <li className={`${styles.player} ${isSubstituted ? styles.substitutedPlayer : ''}`}>
-        <span className={styles.playerNumber}>{player.shirt_number}</span>
-        <span className={styles.playerName}>{player.player_name}</span>
-        <span className={styles.playerPosition}>{player.position}</span>
+      <li className={`${styles.player} ${isSubstituted ? styles.substitutedPlayer : ''} ${isUnusedPlayer ? styles.unusedPlayer : ''}`}>
+        <span className={styles.playerNumber}>{player.shirt_number || player.number || 'N/A'}</span>
+        <span className={styles.playerName}>{player.player_name || player.name}</span>
+        <span className={styles.playerPosition}>{player.position || 'N/A'}</span>
         {substitutionInfo && (
           <span className={`${styles.substitutionBadge} ${styles[substitutionInfo.type]}`}>
             {substitutionInfo.type === 'in' ? '🔄' : '🔄'} {substitutionInfo.minute}'
@@ -462,16 +504,7 @@ export default function UtakmiceDetalji() {
                       ))}
                     </ul>
                   </div>
-                  {getUnusedPlayers(match.home_club_id).length > 0 && (
-                    <div className={styles.unusedPlayers}>
-                      <h4>Ostali igrači</h4>
-                      <ul className={styles.playersList}>
-                        {getUnusedPlayers(match.home_club_id).map((player) => (
-                          <PlayerItem key={`home-unused-${player.id}`} player={player} clubId={match.home_club_id} showSubstitutionInfo={false} />
-                        ))}
-                      </ul>
-                    </div>
-                  )}
+                  
                 </div>
 
                 <div className={styles.teamLineup}>
@@ -492,16 +525,7 @@ export default function UtakmiceDetalji() {
                       ))}
                     </ul>
                   </div>
-                  {getUnusedPlayers(match.away_club_id).length > 0 && (
-                    <div className={styles.unusedPlayers}>
-                      <h4>Ostali igrači</h4>
-                      <ul className={styles.playersList}>
-                        {getUnusedPlayers(match.away_club_id).map((player) => (
-                          <PlayerItem key={`away-unused-${player.id}`} player={player} clubId={match.away_club_id} showSubstitutionInfo={false} />
-                        ))}
-                      </ul>
-                    </div>
-                  )}
+                  
                 </div>
               </div>
             </div>
