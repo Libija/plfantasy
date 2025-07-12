@@ -7,6 +7,19 @@ from typing import List
 
 router = APIRouter(prefix="/admin/clubs", tags=["clubs"])
 
+# Javni endpointi za klubove
+public_router = APIRouter(prefix="/clubs", tags=["public-clubs"])
+
+@public_router.get("/", response_model=List[ClubResponse])
+def get_public_clubs(session: Session = Depends(get_session)):
+    """Dohvata sve klubove za javnost"""
+    return list_clubs_service(session)
+
+@public_router.get("/{club_id}", response_model=ClubResponse)
+def get_public_club(club_id: int, session: Session = Depends(get_session)):
+    """Dohvata klub po ID-u za javnost"""
+    return get_club_service(session, club_id)
+
 @router.post("/create", response_model=ClubResponse, status_code=status.HTTP_201_CREATED)
 def create_club(data: ClubCreate, session: Session = Depends(get_session)):
     return create_club_service(session, data)

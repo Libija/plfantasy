@@ -7,6 +7,57 @@ from services.match_statistics_service import MatchStatisticsService
 
 router = APIRouter(prefix="/admin/match-statistics", tags=["match-statistics"])
 
+# Javni endpointi za match statistics
+public_router = APIRouter(prefix="/match-statistics", tags=["public-match-statistics"])
+
+@public_router.get("/match/{match_id}", response_model=List[MatchStatisticsWithClubResponse])
+def get_public_match_statistics(
+    match_id: int,
+    db: Session = Depends(get_session)
+):
+    """Dohvata sve statistike za utakmicu za javnost"""
+    try:
+        service = MatchStatisticsService(db)
+        return service.get_match_statistics(match_id)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail="Greška pri dohvatanju statistika")
+
+@public_router.get("/match/{match_id}/club/{club_id}", response_model=MatchStatisticsResponse)
+def get_public_club_statistics(
+    match_id: int,
+    club_id: int,
+    db: Session = Depends(get_session)
+):
+    """Dohvata statistike za određeni klub u utakmici za javnost"""
+    try:
+        service = MatchStatisticsService(db)
+        statistics = service.get_club_statistics(match_id, club_id)
+        if not statistics:
+            raise HTTPException(status_code=404, detail="Statistike nisu pronađene")
+        return statistics
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail="Greška pri dohvatanju statistika")
+
+@public_router.get("/{statistics_id}", response_model=MatchStatisticsResponse)
+def get_public_statistics(
+    statistics_id: int,
+    db: Session = Depends(get_session)
+):
+    """Dohvata statistike po ID-u za javnost"""
+    try:
+        service = MatchStatisticsService(db)
+        statistics = service.get_statistics(statistics_id)
+        if not statistics:
+            raise HTTPException(status_code=404, detail="Statistike nisu pronađene")
+        return statistics
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail="Greška pri dohvatanju statistika")
+
+# Admin endpointi
 @router.post("/", response_model=MatchStatisticsResponse)
 def create_statistics(
     statistics_data: MatchStatisticsCreate,

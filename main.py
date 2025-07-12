@@ -57,21 +57,33 @@ from controllers import user_controller
 app.include_router(user_controller.router)
 from controllers import club_controller
 app.include_router(club_controller.router)
+app.include_router(club_controller.public_router)
 from controllers import player_controller
 app.include_router(player_controller.router)
+app.include_router(player_controller.public_router)
 from controllers import news_controller
 app.include_router(news_controller.router)
 from controllers import gameweek_controller
 app.include_router(gameweek_controller.router)
+app.include_router(gameweek_controller.public_router)
 from controllers import match_controller
 app.include_router(match_controller.router)
+app.include_router(match_controller.public_router)
 from controllers import match_lineup_controller
 app.include_router(match_lineup_controller.router)
+app.include_router(match_lineup_controller.public_router)
 from controllers import match_substitution_controller
 app.include_router(match_substitution_controller.router)
+app.include_router(match_substitution_controller.public_router)
 from controllers import match_statistics_controller
 app.include_router(match_statistics_controller.router)
+app.include_router(match_statistics_controller.public_router)
 from controllers import matchevent_controller
 app.include_router(matchevent_controller.router)
+app.include_router(matchevent_controller.public_router)
 from controllers import fantasy_points_controller
 app.include_router(fantasy_points_controller.router)
+from controllers import league_table_controller
+app.include_router(league_table_controller.router)
+from controllers import top_scorers_controller
+app.include_router(top_scorers_controller.router)

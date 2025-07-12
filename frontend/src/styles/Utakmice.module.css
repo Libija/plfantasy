@@ -25,6 +25,49 @@
   margin-bottom: 2rem;
 }
 
+.filterSection {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 2rem;
+}
+
+.gameweekFilter {
+  background-color: #16213e;
+  color: #b8c1ec;
+  border: 1px solid #2a2a3a;
+  border-radius: 4px;
+  padding: 0.5rem 1rem;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: border-color 0.3s;
+}
+
+.gameweekFilter:hover {
+  border-color: #4361ee;
+}
+
+.gameweekFilter:focus {
+  outline: none;
+  border-color: #4361ee;
+}
+
+.loading {
+  text-align: center;
+  color: #b8c1ec;
+  font-size: 1.1rem;
+  padding: 2rem;
+}
+
+.noMatches {
+  text-align: center;
+  color: #6c7293;
+  font-size: 1.1rem;
+  padding: 2rem;
+  background-color: #1a1a2e;
+  border-radius: 8px;
+  border: 1px solid #2a2a3a;
+}
+
 .tabButton {
   background-color: #16213e;
   color: #b8c1ec;
@@ -182,6 +225,10 @@
   .tabs {
     flex-direction: column;
     gap: 0.5rem;
+  }
+
+  .filterSection {
+    justify-content: center;
   }
 
   .matchTeams {

@@ -8,6 +8,49 @@ from services.gameweek_service import GameweekService
 
 router = APIRouter(prefix="/admin/gameweeks", tags=["gameweeks"])
 
+# Javni endpointi za kola
+public_router = APIRouter(prefix="/gameweeks", tags=["public-gameweeks"])
+
+@public_router.get("/", response_model=List[GameweekListResponse])
+def get_public_gameweeks(
+    season: Optional[str] = Query(None, description="Filter po sezoni"),
+    status: Optional[GameweekStatus] = Query(None, description="Filter po statusu"),
+    db: Session = Depends(get_session)
+):
+    """Dohvata sva kola za javnost sa opcionalnim filterima"""
+    try:
+        service = GameweekService(db)
+        return service.get_all_gameweeks(season=season, status=status)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail="Greška pri dohvatanju kola")
+
+@public_router.get("/{gameweek_id}", response_model=GameweekResponse)
+def get_public_gameweek(
+    gameweek_id: int,
+    db: Session = Depends(get_session)
+):
+    """Dohvata kolo po ID-u za javnost"""
+    try:
+        service = GameweekService(db)
+        gameweek = service.get_gameweek(gameweek_id)
+        if not gameweek:
+            raise HTTPException(status_code=404, detail="Kolo nije pronađeno")
+        return gameweek
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail="Greška pri dohvatanju kola")
+
+@public_router.get("/seasons/list")
+def get_public_seasons(db: Session = Depends(get_session)):
+    """Dohvata sve sezone za javnost"""
+    try:
+        service = GameweekService(db)
+        return {"seasons": service.get_seasons()}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail="Greška pri dohvatanju sezona")
+
+# Admin endpointi
 @router.post("/", response_model=GameweekResponse)
 def create_gameweek(
     gameweek_data: GameweekCreate,

@@ -8,6 +8,57 @@ from services.match_service import MatchService
 
 router = APIRouter(prefix="/admin/matches", tags=["matches"])
 
+# Javni endpointi za utakmice
+public_router = APIRouter(prefix="/matches", tags=["public-matches"])
+
+@public_router.get("/", response_model=List[MatchListResponse])
+def get_public_matches(
+    gameweek_id: Optional[int] = Query(None, description="Filter po kolu"),
+    status: Optional[MatchStatus] = Query(None, description="Filter po statusu"),
+    db: Session = Depends(get_session)
+):
+    """Dohvata sve utakmice za javnost sa opcionalnim filterima"""
+    try:
+        service = MatchService(db)
+        return service.get_all_matches(gameweek_id=gameweek_id, status=status)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail="Greška pri dohvatanju utakmica")
+
+@public_router.get("/{match_id}", response_model=MatchResponse)
+def get_public_match(
+    match_id: int,
+    db: Session = Depends(get_session)
+):
+    """Dohvata utakmicu po ID-u za javnost"""
+    try:
+        service = MatchService(db)
+        match = service.get_match(match_id)
+        if not match:
+            raise HTTPException(status_code=404, detail="Utakmica nije pronađena")
+        return match
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail="Greška pri dohvatanju utakmice")
+
+@public_router.get("/{match_id}/detailed", response_model=MatchWithClubsResponse)
+def get_public_match_with_clubs(
+    match_id: int,
+    db: Session = Depends(get_session)
+):
+    """Dohvata utakmicu sa detaljnim informacijama o klubovima za javnost"""
+    try:
+        service = MatchService(db)
+        match = service.get_match_with_clubs(match_id)
+        if not match:
+            raise HTTPException(status_code=404, detail="Utakmica nije pronađena")
+        return match
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail="Greška pri dohvatanju utakmice")
+
+# Admin endpointi
 @router.post("/", response_model=MatchResponse)
 def create_match(
     match_data: MatchCreate,

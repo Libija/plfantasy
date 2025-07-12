@@ -7,6 +7,39 @@ from services.match_substitution_service import MatchSubstitutionService
 
 router = APIRouter(prefix="/admin/match-substitutions", tags=["match-substitutions"])
 
+# Javni endpointi za match substitutions
+public_router = APIRouter(prefix="/match-substitutions", tags=["public-match-substitutions"])
+
+@public_router.get("/match/{match_id}", response_model=List[MatchSubstitutionWithPlayersResponse])
+def get_public_match_substitutions(
+    match_id: int,
+    db: Session = Depends(get_session)
+):
+    """Dohvata sve izmjene za utakmicu za javnost"""
+    try:
+        service = MatchSubstitutionService(db)
+        return service.get_match_substitutions(match_id)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail="Greška pri dohvatanju izmjena")
+
+@public_router.get("/{substitution_id}", response_model=MatchSubstitutionResponse)
+def get_public_substitution(
+    substitution_id: int,
+    db: Session = Depends(get_session)
+):
+    """Dohvata izmjenu po ID-u za javnost"""
+    try:
+        service = MatchSubstitutionService(db)
+        substitution = service.get_substitution(substitution_id)
+        if not substitution:
+            raise HTTPException(status_code=404, detail="Izmjena nije pronađena")
+        return substitution
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail="Greška pri dohvatanju izmjene")
+
+# Admin endpointi
 @router.post("/", response_model=MatchSubstitutionResponse)
 def create_substitution(
     substitution_data: MatchSubstitutionCreate,
