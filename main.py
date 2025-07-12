@@ -57,6 +57,7 @@ from controllers import user_controller
 app.include_router(user_controller.router)
 from controllers import club_controller
 app.include_router(club_controller.router)
+app.include_router(club_controller.public_router)
 from controllers import player_controller
 app.include_router(player_controller.router)
 app.include_router(player_controller.public_router)
@@ -82,3 +83,5 @@ app.include_router(matchevent_controller.router)
 app.include_router(matchevent_controller.public_router)
 from controllers import fantasy_points_controller
 app.include_router(fantasy_points_controller.router)
+from controllers import league_table_controller
+app.include_router(league_table_controller.router)

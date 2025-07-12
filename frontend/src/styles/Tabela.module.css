@@ -189,6 +189,23 @@
   color: #f72585;
 }
 
+.loading {
+  text-align: center;
+  color: #b8c1ec;
+  font-size: 1.1rem;
+  padding: 2rem;
+}
+
+.error {
+  text-align: center;
+  color: #f72585;
+  font-size: 1.1rem;
+  padding: 2rem;
+  background-color: rgba(247, 37, 133, 0.1);
+  border-radius: 8px;
+  border: 1px solid rgba(247, 37, 133, 0.3);
+}
+
 /* Responsive */
 @media (max-width: 992px) {
   .tableHeader {
