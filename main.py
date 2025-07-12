@@ -85,3 +85,5 @@ from controllers import fantasy_points_controller
 app.include_router(fantasy_points_controller.router)
 from controllers import league_table_controller
 app.include_router(league_table_controller.router)
+from controllers import top_scorers_controller
+app.include_router(top_scorers_controller.router)
