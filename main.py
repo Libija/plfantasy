@@ -63,15 +63,21 @@ from controllers import news_controller
 app.include_router(news_controller.router)
 from controllers import gameweek_controller
 app.include_router(gameweek_controller.router)
+app.include_router(gameweek_controller.public_router)
 from controllers import match_controller
 app.include_router(match_controller.router)
+app.include_router(match_controller.public_router)
 from controllers import match_lineup_controller
 app.include_router(match_lineup_controller.router)
+app.include_router(match_lineup_controller.public_router)
 from controllers import match_substitution_controller
 app.include_router(match_substitution_controller.router)
+app.include_router(match_substitution_controller.public_router)
 from controllers import match_statistics_controller
 app.include_router(match_statistics_controller.router)
+app.include_router(match_statistics_controller.public_router)
 from controllers import matchevent_controller
 app.include_router(matchevent_controller.router)
+app.include_router(matchevent_controller.public_router)
 from controllers import fantasy_points_controller
 app.include_router(fantasy_points_controller.router)

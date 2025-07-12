@@ -7,6 +7,39 @@ from services.match_lineup_service import MatchLineupService
 
 router = APIRouter(prefix="/admin/match-lineups", tags=["match-lineups"])
 
+# Javni endpointi za match lineups
+public_router = APIRouter(prefix="/match-lineups", tags=["public-match-lineups"])
+
+@public_router.get("/match/{match_id}", response_model=List[MatchLineupWithPlayerResponse])
+def get_public_match_lineups(
+    match_id: int,
+    db: Session = Depends(get_session)
+):
+    """Dohvata sve postave za utakmicu za javnost"""
+    try:
+        service = MatchLineupService(db)
+        return service.get_match_lineups(match_id)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail="Greška pri dohvatanju postava")
+
+@public_router.get("/{lineup_id}", response_model=MatchLineupResponse)
+def get_public_lineup(
+    lineup_id: int,
+    db: Session = Depends(get_session)
+):
+    """Dohvata postavu po ID-u za javnost"""
+    try:
+        service = MatchLineupService(db)
+        lineup = service.get_lineup(lineup_id)
+        if not lineup:
+            raise HTTPException(status_code=404, detail="Postava nije pronađena")
+        return lineup
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail="Greška pri dohvatanju postave")
+
+# Admin endpointi
 @router.post("/", response_model=MatchLineupResponse)
 def create_lineup(
     lineup_data: MatchLineupCreate,

@@ -7,6 +7,39 @@ from services.matchevent_service import MatchEventService
 
 router = APIRouter(prefix="/admin/matchevents", tags=["matchevents"])
 
+# Javni endpointi za match events
+public_router = APIRouter(prefix="/matchevents", tags=["public-matchevents"])
+
+@public_router.get("/match/{match_id}", response_model=List[MatchEventResponse])
+def get_public_match_events(
+    match_id: int,
+    db: Session = Depends(get_session)
+):
+    """Dohvata sve događaje za utakmicu za javnost"""
+    try:
+        service = MatchEventService(db)
+        return service.get_match_events(match_id)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail="Greška pri dohvatanju događaja")
+
+@public_router.get("/{event_id}", response_model=MatchEventResponse)
+def get_public_event(
+    event_id: int,
+    db: Session = Depends(get_session)
+):
+    """Dohvata događaj po ID-u za javnost"""
+    try:
+        service = MatchEventService(db)
+        event = service.get_event(event_id)
+        if not event:
+            raise HTTPException(status_code=404, detail="Događaj nije pronađen")
+        return event
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail="Greška pri dohvatanju događaja")
+
+# Admin endpointi
 @router.post("/", response_model=MatchEventResponse)
 def create_event(
     event_data: MatchEventCreate,

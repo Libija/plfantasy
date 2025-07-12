@@ -2,127 +2,94 @@
 
 import Head from "next/head"
 import Link from "next/link"
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import styles from "../../styles/Utakmice.module.css"
 
 export default function Utakmice() {
   const [activeTab, setActiveTab] = useState("upcoming")
+  const [upcomingMatches, setUpcomingMatches] = useState([])
+  const [recentResults, setRecentResults] = useState([])
+  const [gameweeks, setGameweeks] = useState([])
+  const [selectedGameweek, setSelectedGameweek] = useState("all")
+  const [loading, setLoading] = useState(true)
+  const [mounted, setMounted] = useState(false)
 
-  // Simulirani podaci za nadolazeće utakmice
-  const upcomingMatches = [
-    {
-      id: 1,
-      homeTeam: "Sarajevo",
-      awayTeam: "Željezničar",
-      date: "25.05.2025.",
-      time: "20:00",
-      stadium: "Koševo",
-      round: "16. kolo",
-    },
-    {
-      id: 2,
-      homeTeam: "Borac",
-      awayTeam: "Tuzla City",
-      date: "26.05.2025.",
-      time: "18:00",
-      stadium: "Gradski stadion",
-      round: "16. kolo",
-    },
-    {
-      id: 3,
-      homeTeam: "Zrinjski",
-      awayTeam: "Široki Brijeg",
-      date: "26.05.2025.",
-      time: "20:00",
-      stadium: "Pod Bijelim Brijegom",
-      round: "16. kolo",
-    },
-    {
-      id: 4,
-      homeTeam: "Velež",
-      awayTeam: "Sloboda",
-      date: "27.05.2025.",
-      time: "18:00",
-      stadium: "Rođeni",
-      round: "16. kolo",
-    },
-    {
-      id: 5,
-      homeTeam: "Posušje",
-      awayTeam: "Igman",
-      date: "27.05.2025.",
-      time: "20:00",
-      stadium: "Mokri Dolac",
-      round: "16. kolo",
-    },
-    {
-      id: 6,
-      homeTeam: "Željezničar",
-      awayTeam: "Borac",
-      date: "01.06.2025.",
-      time: "20:00",
-      stadium: "Grbavica",
-      round: "17. kolo",
-    },
-  ]
+  useEffect(() => {
+    setMounted(true)
+    fetchGameweeks()
+    fetchMatches()
+  }, [])
 
-  // Simulirani podaci za nedavne rezultate
-  const recentResults = [
-    {
-      id: 7,
-      homeTeam: "Sarajevo",
-      homeScore: 2,
-      awayTeam: "Zrinjski",
-      awayScore: 1,
-      date: "19.05.2025.",
-      round: "15. kolo",
-    },
-    {
-      id: 8,
-      homeTeam: "Željezničar",
-      homeScore: 3,
-      awayTeam: "Velež",
-      awayScore: 0,
-      date: "18.05.2025.",
-      round: "15. kolo",
-    },
-    {
-      id: 9,
-      homeTeam: "Tuzla City",
-      homeScore: 1,
-      awayTeam: "Borac",
-      awayScore: 1,
-      date: "18.05.2025.",
-      round: "15. kolo",
-    },
-    {
-      id: 10,
-      homeTeam: "Široki Brijeg",
-      homeScore: 2,
-      awayTeam: "Posušje",
-      awayScore: 0,
-      date: "17.05.2025.",
-      round: "15. kolo",
-    },
-    {
-      id: 11,
-      homeTeam: "Sloboda",
-      homeScore: 1,
-      awayTeam: "Igman",
-      awayScore: 0,
-      date: "17.05.2025.",
-      round: "15. kolo",
-    },
-    {
-      id: 12,
-      homeTeam: "Borac",
-      homeScore: 3,
-      awayTeam: "Sarajevo",
-      awayScore: 2,
-      date: "12.05.2025.",
-      round: "14. kolo",
-    },
-  ]
+  useEffect(() => {
+    fetchMatches()
+  }, [activeTab, selectedGameweek])
+
+  const fetchGameweeks = async () => {
+    try {
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"
+      const response = await fetch(`${apiUrl}/gameweeks`)
+      if (response.ok) {
+        const data = await response.json()
+        setGameweeks(data)
+      }
+    } catch (error) {
+      console.error('Greška pri učitavanju kola:', error)
+    }
+  }
+
+  const fetchMatches = async () => {
+    try {
+      setLoading(true)
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"
+      
+      let url = `${apiUrl}/matches`
+      const params = new URLSearchParams()
+      
+      if (activeTab === "upcoming") {
+        params.append('status', 'scheduled')
+      } else {
+        params.append('status', 'completed')
+      }
+      
+      if (selectedGameweek !== 'all') {
+        params.append('gameweek_id', selectedGameweek)
+      }
+      
+      if (params.toString()) {
+        url += '?' + params.toString()
+      }
+      
+      const response = await fetch(url)
+      if (response.ok) {
+        const data = await response.json()
+        
+        if (activeTab === "upcoming") {
+          setUpcomingMatches(data)
+        } else {
+          setRecentResults(data)
+        }
+      }
+    } catch (error) {
+      console.error('Greška pri učitavanju utakmica:', error)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const formatDate = (dateString) => {
+    if (!mounted) return dateString
+    return new Date(dateString).toLocaleDateString("bs-BA")
+  }
+
+  const formatTime = (dateString) => {
+    if (!mounted) return "00:00"
+    return new Date(dateString).toLocaleTimeString("bs-BA", {hour: '2-digit', minute: '2-digit'})
+  }
+
+  const getGameweekNumber = (gameweekId) => {
+    const gameweek = gameweeks.find(gw => gw.id === gameweekId)
+    return gameweek ? `${gameweek.number}. kolo` : "Nepoznato kolo"
+  }
 
   return (
     <>
@@ -150,61 +117,98 @@ export default function Utakmice() {
           </button>
         </div>
 
-        {activeTab === "upcoming" && (
-          <div className={styles.matchesList}>
-            {upcomingMatches.map((match) => (
-              <div key={match.id} className={styles.matchCard}>
-                <div className={styles.matchHeader}>
-                  <span className={styles.matchRound}>{match.round}</span>
-                  <span className={styles.matchDate}>
-                    {match.date} | {match.time}
-                  </span>
-                </div>
-                <div className={styles.matchTeams}>
-                  <div className={styles.teamHome}>
-                    <span className={styles.teamName}>{match.homeTeam}</span>
-                  </div>
-                  <div className={styles.matchInfo}>
-                    <span className={styles.vs}>VS</span>
-                    <span className={styles.stadium}>{match.stadium}</span>
-                  </div>
-                  <div className={styles.teamAway}>
-                    <span className={styles.teamName}>{match.awayTeam}</span>
-                  </div>
-                </div>
-                <Link href={`/utakmice/${match.id}`} className={styles.matchLink}>
-                  Detalji utakmice
-                </Link>
-              </div>
+        <div className={styles.filterSection}>
+          <select 
+            value={selectedGameweek} 
+            onChange={(e) => setSelectedGameweek(e.target.value)}
+            className={styles.gameweekFilter}
+          >
+            <option value="all">Sva kola</option>
+            {gameweeks.map((gameweek) => (
+              <option key={gameweek.id} value={gameweek.id}>
+                {gameweek.number}. kolo
+              </option>
             ))}
-          </div>
-        )}
+          </select>
+        </div>
 
-        {activeTab === "results" && (
-          <div className={styles.matchesList}>
-            {recentResults.map((result) => (
-              <div key={result.id} className={styles.matchCard}>
-                <div className={styles.matchHeader}>
-                  <span className={styles.matchRound}>{result.round}</span>
-                  <span className={styles.matchDate}>{result.date}</span>
-                </div>
-                <div className={styles.matchTeams}>
-                  <div className={styles.teamHome}>
-                    <span className={styles.teamName}>{result.homeTeam}</span>
-                    <span className={styles.score}>{result.homeScore}</span>
+        {loading ? (
+          <div className={styles.loading}>Učitavanje utakmica...</div>
+        ) : (
+          <>
+            {activeTab === "upcoming" && (
+              <div className={styles.matchesList}>
+                {upcomingMatches.length === 0 ? (
+                  <div className={styles.noMatches}>
+                    <p>Nema nadolazećih utakmica.</p>
                   </div>
-                  <div className={styles.separator}>-</div>
-                  <div className={styles.teamAway}>
-                    <span className={styles.score}>{result.awayScore}</span>
-                    <span className={styles.teamName}>{result.awayTeam}</span>
-                  </div>
-                </div>
-                <Link href={`/utakmice/${result.id}`} className={styles.matchLink}>
-                  Detalji utakmice
-                </Link>
+                ) : (
+                  upcomingMatches.map((match) => (
+                    <div key={match.id} className={styles.matchCard}>
+                      <div className={styles.matchHeader}>
+                        <span className={styles.matchRound}>
+                          {getGameweekNumber(match.gameweek_id)}
+                        </span>
+                        <span className={styles.matchDate}>
+                          {formatDate(match.date)} | {formatTime(match.date)}
+                        </span>
+                      </div>
+                      <div className={styles.matchTeams}>
+                        <div className={styles.teamHome}>
+                          <span className={styles.teamName}>{match.home_club_name}</span>
+                        </div>
+                        <div className={styles.matchInfo}>
+                          <span className={styles.vs}>VS</span>
+                          <span className={styles.stadium}>{match.stadium}</span>
+                        </div>
+                        <div className={styles.teamAway}>
+                          <span className={styles.teamName}>{match.away_club_name}</span>
+                        </div>
+                      </div>
+                      <Link href={`/utakmice/${match.id}`} className={styles.matchLink}>
+                        Detalji utakmice
+                      </Link>
+                    </div>
+                  ))
+                )}
               </div>
-            ))}
-          </div>
+            )}
+
+            {activeTab === "results" && (
+              <div className={styles.matchesList}>
+                {recentResults.length === 0 ? (
+                  <div className={styles.noMatches}>
+                    <p>Nema završenih utakmica.</p>
+                  </div>
+                ) : (
+                  recentResults.map((result) => (
+                    <div key={result.id} className={styles.matchCard}>
+                      <div className={styles.matchHeader}>
+                        <span className={styles.matchRound}>
+                          {getGameweekNumber(result.gameweek_id)}
+                        </span>
+                        <span className={styles.matchDate}>{formatDate(result.date)}</span>
+                      </div>
+                      <div className={styles.matchTeams}>
+                        <div className={styles.teamHome}>
+                          <span className={styles.teamName}>{result.home_club_name}</span>
+                          <span className={styles.score}>{result.home_score}</span>
+                        </div>
+                        <div className={styles.separator}>-</div>
+                        <div className={styles.teamAway}>
+                          <span className={styles.score}>{result.away_score}</span>
+                          <span className={styles.teamName}>{result.away_club_name}</span>
+                        </div>
+                      </div>
+                      <Link href={`/utakmice/${result.id}`} className={styles.matchLink}>
+                        Detalji utakmice
+                      </Link>
+                    </div>
+                  ))
+                )}
+              </div>
+            )}
+          </>
         )}
       </div>
     </>
