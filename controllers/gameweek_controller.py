@@ -5,6 +5,7 @@ from database import get_session
 from models.gameweek_model import GameweekStatus
 from schemas.gameweek_schema import GameweekCreate, GameweekUpdate, GameweekResponse, GameweekListResponse
 from services.gameweek_service import GameweekService
+from services.transfer_service import TransferService
 
 router = APIRouter(prefix="/admin/gameweeks", tags=["gameweeks"])
 
@@ -110,6 +111,16 @@ def update_gameweek(
         gameweek = service.update_gameweek(gameweek_id, gameweek_data)
         if not gameweek:
             raise HTTPException(status_code=404, detail="Kolo nije pronađeno")
+        
+        # Automatski ažuriraj transfer window status ako se promijenio status kola
+        if gameweek_data.status is not None:
+            try:
+                transfer_service = TransferService(db)
+                transfer_service.check_and_update_transfer_window_status("2024/25")
+            except Exception as e:
+                print(f"Transfer window update error: {e}")
+                # Ne prekidaj ažuriranje kola ako transfer window update ne uspije
+        
         return gameweek
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
@@ -149,7 +160,15 @@ def change_gameweek_status(
         gameweek = service.change_gameweek_status(gameweek_id, status)
         if not gameweek:
             raise HTTPException(status_code=404, detail="Kolo nije pronađeno")
-        return gameweek
+        
+        # Automatski ažuriraj transfer window status nakon promjene statusa kola
+        transfer_service = TransferService(db)
+        auto_update_result = transfer_service.check_and_update_transfer_window_status("2024/25")
+        
+        return {
+            "gameweek": gameweek,
+            "transfer_window_update": auto_update_result
+        }
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
     except HTTPException:

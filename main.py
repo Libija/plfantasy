@@ -90,3 +90,7 @@ app.include_router(top_scorers_controller.router)
 from controllers import fantasy_team_controller
 app.include_router(fantasy_team_controller.router)
 app.include_router(fantasy_team_controller.public_router)
+from controllers import transfer_window_controller
+app.include_router(transfer_window_controller.router)
+from controllers import fantasy_transfer_controller
+app.include_router(fantasy_transfer_controller.router)
