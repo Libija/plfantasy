@@ -1,27 +1,99 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import Head from "next/head"
 import Link from "next/link"
+import { useRouter } from "next/navigation"
 import { FaTrophy, FaUsers, FaExchangeAlt, FaChartLine, FaHistory, FaCog } from "react-icons/fa"
 import styles from "../../styles/FantasyDashboard.module.css"
+import useAuth from "../../hooks/use-auth"
 
 export default function FantasyDashboard() {
   const [showCreateLeagueModal, setShowCreateLeagueModal] = useState(false)
   const [showJoinLeagueModal, setShowJoinLeagueModal] = useState(false)
   const [leagueName, setLeagueName] = useState("")
   const [leagueCode, setLeagueCode] = useState("")
+  const [loading, setLoading] = useState(true)
+  const [fantasyTeam, setFantasyTeam] = useState(null)
+  const [error, setError] = useState("")
+  const router = useRouter()
+  const { user, isLoggedIn, loading: authLoading } = useAuth()
 
-  // Simulirani podaci za fantasy tim
-  const fantasyTeam = {
-    name: "Bordo Mašina",
-    points: 1245,
-    rank: 342,
-    totalPlayers: 5782,
-    value: 102.5,
-    lastWeekPoints: 78,
-    lastWeekRank: 356,
-  }
+  useEffect(() => {
+    // Ako se još učitava auth, ne radi ništa
+    if (authLoading) {
+      return
+    }
+
+    // Ako korisnik nije ulogovan, preusmjeri na login
+    if (!isLoggedIn) {
+      router.push("/login")
+      return
+    }
+
+    const loadFantasyTeam = async () => {
+      try {
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"
+        const res = await fetch(`${apiUrl}/fantasy/teams/user/${user.id}`)
+        
+        if (!res.ok) {
+          throw new Error("Greška pri dohvatu fantasy tima")
+        }
+        
+        const teams = await res.json()
+        
+        if (teams.length === 0) {
+          // Korisnik nema fantasy tim, preusmjeri na kreiranje
+          router.push("/fantasy/create-team")
+          return
+        }
+        
+        // Korisnik ima tim, postavi prvi tim kao aktivan
+        setFantasyTeam(teams[0])
+      } catch (err) {
+        console.error("Greška pri dohvatu fantasy tima:", err)
+        setError("Greška pri dohvatu fantasy tima!")
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    loadFantasyTeam()
+
+    // Slušaj custom event za osvježavanje fantasy tima
+    const onFantasyTeamChanged = async () => {
+      try {
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"
+        const res = await fetch(`${apiUrl}/fantasy/teams/user/${user.id}`)
+        
+        if (!res.ok) {
+          throw new Error("Greška pri dohvatu fantasy tima")
+        }
+        
+        const teams = await res.json()
+        
+        if (teams.length === 0) {
+          // Korisnik nema fantasy tim, preusmjeri na kreiranje
+          router.push("/fantasy/create-team")
+          return
+        }
+        
+        // Korisnik ima tim, postavi prvi tim kao aktivan
+        setFantasyTeam(teams[0])
+      } catch (err) {
+        console.error("Greška pri dohvatu fantasy tima:", err)
+        setError("Greška pri dohvatu fantasy tima!")
+      } finally {
+        setLoading(false)
+      }
+    }
+    
+    window.addEventListener("fantasyTeamChanged", onFantasyTeamChanged)
+    
+    return () => {
+      window.removeEventListener("fantasyTeamChanged", onFantasyTeamChanged)
+    }
+  }, [authLoading, isLoggedIn, user, router])
 
   // Simulirani podaci za lige
   const leagues = [
@@ -68,6 +140,45 @@ export default function FantasyDashboard() {
     setShowJoinLeagueModal(false)
   }
 
+  // Prikaži loading dok se provjerava tim
+  if (loading || authLoading) {
+    return (
+      <div className={styles.container}>
+        <div style={{ textAlign: "center", padding: "2rem" }}>
+          <p>Provjeravam fantasy tim...</p>
+        </div>
+      </div>
+    )
+  }
+
+  // Prikaži error ako je došlo do greške
+  if (error) {
+    return (
+      <div className={styles.container}>
+        <div style={{ textAlign: "center", padding: "2rem" }}>
+          <p style={{ color: "red" }}>{error}</p>
+          <button onClick={() => window.location.reload()}>Pokušaj ponovo</button>
+        </div>
+      </div>
+    )
+  }
+
+  // Ako nema fantasy tima, neće se prikazati jer će se preusmjeriti
+  if (!fantasyTeam) {
+    return null
+  }
+
+  // Simulirani podaci za fantasy tim (trebat će se zamijeniti sa pravim podacima)
+  const teamStats = {
+    name: fantasyTeam.name,
+    points: 1245,
+    rank: 342,
+    totalPlayers: 5782,
+    value: 102.5,
+    lastWeekPoints: 78,
+    lastWeekRank: 356,
+  }
+
   return (
     <>
       <Head>
@@ -78,20 +189,20 @@ export default function FantasyDashboard() {
       <div className={styles.container}>
         <div className={styles.dashboardHeader}>
           <div className={styles.teamInfo}>
-            <h1 className={styles.teamName}>{fantasyTeam.name}</h1>
+            <h1 className={styles.teamName}>{teamStats.name}</h1>
             <div className={styles.teamStats}>
               <div className={styles.statItem}>
-                <span className={styles.statValue}>{fantasyTeam.points}</span>
+                <span className={styles.statValue}>{teamStats.points}</span>
                 <span className={styles.statLabel}>Ukupno bodova</span>
               </div>
               <div className={styles.statItem}>
                 <span className={styles.statValue}>
-                  {fantasyTeam.rank} <span className={styles.statSubtext}>/ {fantasyTeam.totalPlayers}</span>
+                  {teamStats.rank} <span className={styles.statSubtext}>/ {teamStats.totalPlayers}</span>
                 </span>
                 <span className={styles.statLabel}>Globalni rang</span>
               </div>
               <div className={styles.statItem}>
-                <span className={styles.statValue}>{fantasyTeam.value}M</span>
+                <span className={styles.statValue}>{teamStats.value}M</span>
                 <span className={styles.statLabel}>Vrijednost tima</span>
               </div>
             </div>
@@ -101,11 +212,11 @@ export default function FantasyDashboard() {
             <h3>Prošla sedmica</h3>
             <div className={styles.weeklyStats}>
               <div className={styles.weeklyStatItem}>
-                <span className={styles.weeklyStatValue}>{fantasyTeam.lastWeekPoints}</span>
+                <span className={styles.weeklyStatValue}>{teamStats.lastWeekPoints}</span>
                 <span className={styles.weeklyStatLabel}>Bodova</span>
               </div>
               <div className={styles.weeklyStatItem}>
-                <span className={styles.weeklyStatValue}>{fantasyTeam.lastWeekRank}</span>
+                <span className={styles.weeklyStatValue}>{teamStats.lastWeekRank}</span>
                 <span className={styles.weeklyStatLabel}>Rang</span>
               </div>
             </div>
@@ -124,13 +235,13 @@ export default function FantasyDashboard() {
                   <p>Upravljaj svojim timom</p>
                 </div>
               </Link>
-              <Link href="/fantasy/points" className={styles.actionCard}>
+              <Link href="/fantasy/results" className={styles.actionCard}>
                 <div className={styles.actionIcon}>
                   <FaChartLine />
                 </div>
                 <div className={styles.actionContent}>
-                  <h3>Bodovi</h3>
-                  <p>Pregled bodova tima</p>
+                  <h3>Rezultati</h3>
+                  <p>Pregled rezultata tima</p>
                 </div>
               </Link>
               <Link href="/fantasy/history" className={styles.actionCard}>
@@ -216,60 +327,20 @@ export default function FantasyDashboard() {
                 Pogledaj kompletnu tabelu
               </Link>
             </div>
-
-            <div className={styles.upcomingFixtures}>
-              <div className={styles.sectionHeader}>
-                <h2>Nadolazeće utakmice</h2>
-              </div>
-              <div className={styles.fixturesList}>
-                <div className={styles.fixtureItem}>
-                  <div className={styles.fixtureDate}>Sub, 25. Maj</div>
-                  <div className={styles.fixtureTeams}>
-                    <span>Sarajevo</span>
-                    <span className={styles.fixtureVs}>vs</span>
-                    <span>Željezničar</span>
-                  </div>
-                  <div className={styles.fixtureTime}>20:00</div>
-                </div>
-                <div className={styles.fixtureItem}>
-                  <div className={styles.fixtureDate}>Ned, 26. Maj</div>
-                  <div className={styles.fixtureTeams}>
-                    <span>Borac</span>
-                    <span className={styles.fixtureVs}>vs</span>
-                    <span>Tuzla City</span>
-                  </div>
-                  <div className={styles.fixtureTime}>18:00</div>
-                </div>
-                <div className={styles.fixtureItem}>
-                  <div className={styles.fixtureDate}>Ned, 26. Maj</div>
-                  <div className={styles.fixtureTeams}>
-                    <span>Zrinjski</span>
-                    <span className={styles.fixtureVs}>vs</span>
-                    <span>Široki Brijeg</span>
-                  </div>
-                  <div className={styles.fixtureTime}>20:00</div>
-                </div>
-              </div>
-              <Link href="/utakmice" className={styles.viewAllLink}>
-                Pogledaj sve utakmice
-              </Link>
-            </div>
           </div>
         </div>
-      </div>
 
-      {/* Modal za kreiranje lige */}
-      {showCreateLeagueModal && (
-        <div className={styles.modalOverlay}>
-          <div className={styles.modal}>
-            <div className={styles.modalHeader}>
-              <h3>Kreiraj novu ligu</h3>
-              <button className={styles.closeModalBtn} onClick={() => setShowCreateLeagueModal(false)}>
-                ×
-              </button>
-            </div>
-            <div className={styles.modalContent}>
-              <form onSubmit={handleCreateLeague}>
+        {/* Create League Modal */}
+        {showCreateLeagueModal && (
+          <div className={styles.modalOverlay}>
+            <div className={styles.modal}>
+              <div className={styles.modalHeader}>
+                <h3>Kreiraj novu ligu</h3>
+                <button className={styles.closeButton} onClick={() => setShowCreateLeagueModal(false)}>
+                  ×
+                </button>
+              </div>
+              <form onSubmit={handleCreateLeague} className={styles.modalForm}>
                 <div className={styles.formGroup}>
                   <label htmlFor="leagueName">Naziv lige</label>
                   <input
@@ -277,31 +348,34 @@ export default function FantasyDashboard() {
                     id="leagueName"
                     value={leagueName}
                     onChange={(e) => setLeagueName(e.target.value)}
-                    required
                     placeholder="Unesite naziv lige"
+                    required
                   />
                 </div>
-                <button type="submit" className={styles.submitButton}>
-                  Kreiraj ligu
-                </button>
+                <div className={styles.modalActions}>
+                  <button type="button" className={styles.cancelButton} onClick={() => setShowCreateLeagueModal(false)}>
+                    Otkaži
+                  </button>
+                  <button type="submit" className={styles.createButton}>
+                    Kreiraj ligu
+                  </button>
+                </div>
               </form>
             </div>
           </div>
-        </div>
-      )}
+        )}
 
-      {/* Modal za pridruživanje ligi */}
-      {showJoinLeagueModal && (
-        <div className={styles.modalOverlay}>
-          <div className={styles.modal}>
-            <div className={styles.modalHeader}>
-              <h3>Pridruži se ligi</h3>
-              <button className={styles.closeModalBtn} onClick={() => setShowJoinLeagueModal(false)}>
-                ×
-              </button>
-            </div>
-            <div className={styles.modalContent}>
-              <form onSubmit={handleJoinLeague}>
+        {/* Join League Modal */}
+        {showJoinLeagueModal && (
+          <div className={styles.modalOverlay}>
+            <div className={styles.modal}>
+              <div className={styles.modalHeader}>
+                <h3>Pridruži se ligi</h3>
+                <button className={styles.closeButton} onClick={() => setShowJoinLeagueModal(false)}>
+                  ×
+                </button>
+              </div>
+              <form onSubmit={handleJoinLeague} className={styles.modalForm}>
                 <div className={styles.formGroup}>
                   <label htmlFor="leagueCode">Kod lige</label>
                   <input
@@ -309,18 +383,23 @@ export default function FantasyDashboard() {
                     id="leagueCode"
                     value={leagueCode}
                     onChange={(e) => setLeagueCode(e.target.value)}
-                    required
                     placeholder="Unesite kod lige"
+                    required
                   />
                 </div>
-                <button type="submit" className={styles.submitButton}>
-                  Pridruži se
-                </button>
+                <div className={styles.modalActions}>
+                  <button type="button" className={styles.cancelButton} onClick={() => setShowJoinLeagueModal(false)}>
+                    Otkaži
+                  </button>
+                  <button type="submit" className={styles.joinButton}>
+                    Pridruži se
+                  </button>
+                </div>
               </form>
             </div>
           </div>
-        </div>
-      )}
+        )}
+      </div>
     </>
   )
 }

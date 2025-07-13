@@ -1,32 +1,98 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import Head from "next/head"
 import { useRouter } from "next/navigation"
 import { FaTrophy, FaUsers, FaHeart } from "react-icons/fa"
 import styles from "../../../styles/CreateFantasyTeam.module.css"
+import useAuth from "../../../hooks/use-auth"
 
 export default function CreateFantasyTeam() {
   const [teamName, setTeamName] = useState("")
   const [favoriteClub, setFavoriteClub] = useState("")
+  const [clubs, setClubs] = useState([])
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState("")
   const router = useRouter()
+  const { user, isLoggedIn, loading: authLoading } = useAuth()
 
-  // Simulirani podaci za klubove
-  const clubs = [
-    { id: 1, name: "FK Sarajevo", logo: "/clubs/sarajevo.png" },
-    { id: 2, name: "FK Željezničar", logo: "/clubs/zeljeznicar.png" },
-    { id: 3, name: "FK Borac Banja Luka", logo: "/clubs/borac.png" },
-    { id: 4, name: "HŠK Zrinjski", logo: "/clubs/zrinjski.png" },
-    { id: 5, name: "FK Tuzla City", logo: "/clubs/tuzla.png" },
-    { id: 6, name: "NK Široki Brijeg", logo: "/clubs/siroki.png" },
-    { id: 7, name: "FK Sloboda Tuzla", logo: "/clubs/sloboda.png" },
-    { id: 8, name: "FK Velež", logo: "/clubs/velez.png" },
-    { id: 9, name: "NK Čelik", logo: "/clubs/celik.png" },
-    { id: 10, name: "FK Igman Konjic", logo: "/clubs/igman.png" },
-    { id: 11, name: "FK Radnik Bijeljina", logo: "/clubs/radnik.png" },
-    { id: 12, name: "FK Leotar", logo: "/clubs/leotar.png" },
-  ]
+  const checkExistingTeam = async () => {
+    try {
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"
+      const res = await fetch(`${apiUrl}/fantasy/teams/user/${user.id}`)
+      
+      if (res.ok) {
+        const teams = await res.json()
+        if (teams.length > 0) {
+          // Korisnik već ima tim, preusmjeri na dashboard
+          router.push("/fantasy")
+          return
+        }
+      }
+    } catch (err) {
+      console.error("Greška pri provjeri postojećeg tima:", err)
+    }
+  }
+
+  const fetchClubs = async () => {
+    try {
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"
+      const res = await fetch(`${apiUrl}/admin/clubs`)
+      if (!res.ok) throw new Error("Greška pri dohvatu klubova")
+      const data = await res.json()
+      setClubs(data)
+    } catch (err) {
+      setError("Greška pri dohvatu klubova!")
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  useEffect(() => {
+    // Ako se još učitava auth, ne radi ništa
+    if (authLoading) {
+      return
+    }
+
+    // Ako korisnik nije ulogovan, preusmjeri na login
+    if (!isLoggedIn) {
+      router.push("/login")
+      return
+    }
+
+    // Prvo provjeri da li korisnik već ima tim
+    checkExistingTeam()
+    // Zatim dohvati klubove
+    fetchClubs()
+  }, [authLoading, isLoggedIn, user, router])
+
+  // Dodaj event listener za osvježavanje kada se kreira tim
+  useEffect(() => {
+    const onFantasyTeamChanged = async () => {
+      try {
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"
+        const res = await fetch(`${apiUrl}/fantasy/teams/user/${user.id}`)
+        
+        if (res.ok) {
+          const teams = await res.json()
+          if (teams.length > 0) {
+            // Korisnik već ima tim, preusmjeri na dashboard
+            router.push("/fantasy")
+            return
+          }
+        }
+      } catch (err) {
+        console.error("Greška pri provjeri postojećeg tima:", err)
+      }
+    }
+
+    window.addEventListener("fantasyTeamChanged", onFantasyTeamChanged)
+    
+    return () => {
+      window.removeEventListener("fantasyTeamChanged", onFantasyTeamChanged)
+    }
+  }, [user, router])
 
   const handleSubmit = async (e) => {
     e.preventDefault()
@@ -42,28 +108,54 @@ export default function CreateFantasyTeam() {
     }
 
     setIsSubmitting(true)
+    setError("")
 
     try {
-      // Ovdje bi se implementirala logika za kreiranje tima
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"
+      
       const teamData = {
+        user_id: user.id,
         name: teamName.trim(),
-        favorite_club: favoriteClub,
-        created_at: new Date().toISOString(),
+        favorite_club_id: favoriteClub === "fan_of_league" ? null : Number(favoriteClub),
       }
 
-      // Simulacija API poziva
-      await new Promise((resolve) => setTimeout(resolve, 1500))
+      const res = await fetch(`${apiUrl}/fantasy/teams`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(teamData),
+      })
 
-      console.log("Kreiran tim:", teamData)
+      if (!res.ok) {
+        const errorData = await res.json()
+        throw new Error(errorData.detail || "Greška pri kreiranju tima")
+      }
 
-      // Preusmjeri na draft stranicu
-      router.push("/draft")
+      const createdTeam = await res.json()
+      console.log("Kreiran tim:", createdTeam)
+
+      // Emituj event da je fantasy tim kreiran
+      window.dispatchEvent(new Event("fantasyTeamChanged"))
+
+      // Preusmjeri na fantasy dashboard
+      router.push("/fantasy")
     } catch (error) {
       console.error("Greška pri kreiranju tima:", error)
-      alert("Došlo je do greške. Molimo pokušajte ponovo.")
+      setError(error.message || "Došlo je do greške. Molimo pokušajte ponovo.")
     } finally {
       setIsSubmitting(false)
     }
+  }
+
+  if (loading || authLoading) {
+    return (
+      <div className={styles.container}>
+        <div className={styles.createTeamCard}>
+          <p>Učitavanje...</p>
+        </div>
+      </div>
+    )
   }
 
   return (
@@ -84,6 +176,12 @@ export default function CreateFantasyTeam() {
               Kreirajte svoj tim i takmičite se sa prijateljima u najuzbudljivijoj fantasy ligi BiH
             </p>
           </div>
+
+          {error && (
+            <div className={styles.errorMessage}>
+              {error}
+            </div>
+          )}
 
           <form onSubmit={handleSubmit} className={styles.form}>
             <div className={styles.formGroup}>
