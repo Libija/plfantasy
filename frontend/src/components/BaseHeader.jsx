@@ -1,11 +1,11 @@
 "use client"
 import Link from "next/link"
 import Image from "next/image"
-import { FaBars, FaTimes, FaSearch } from "react-icons/fa"
+import { FaBars, FaTimes } from "react-icons/fa"
 import { useState } from "react"
 import styles from "../styles/Header.module.css"
 
-export default function BaseHeader({ logoHref = "/", children, extraNav, className = "" }) {
+export default function BaseHeader({ logoHref = "/", navLinks = [], children, className = "" }) {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
 
   const toggleMenu = () => setIsMenuOpen((v) => !v)
@@ -21,30 +21,21 @@ export default function BaseHeader({ logoHref = "/", children, extraNav, classNa
           </Link>
         </div>
 
-        <div className={styles.searchBar}>
-          <input type="text" placeholder="Pretraži..." />
-          <button type="submit">
-            <FaSearch />
-          </button>
-        </div>
+        <nav className={`${styles.nav} ${isMenuOpen ? styles.active : ""}`}>
+          <ul className={styles.navList}>
+            {navLinks.map((link) => (
+              <li className={styles.navItem} key={link.href}>
+                {link.component ? link.component : <Link href={link.href}>{link.label}</Link>}
+              </li>
+            ))}
+          </ul>
+        </nav>
 
         {children && <div className={styles.authButtons}>{children}</div>}
 
         <button className={styles.menuToggle} onClick={toggleMenu}>
           {isMenuOpen ? <FaTimes /> : <FaBars />}
         </button>
-
-        <nav className={`${styles.nav} ${isMenuOpen ? styles.active : ""}`}>
-          <ul className={styles.navList}>
-            <li className={styles.navItem}><Link href="/">Početna</Link></li>
-            <li className={styles.navItem}><Link href="/vijesti">Vijesti</Link></li>
-            <li className={styles.navItem}><Link href="/utakmice">Utakmice</Link></li>
-            <li className={styles.navItem}><Link href="/tabela">Tabela</Link></li>
-            <li className={styles.navItem}><Link href="/klubovi">Klubovi</Link></li>
-            <li className={styles.navItem}><Link href="/fantasy">Fantasy</Link></li>
-            {extraNav}
-          </ul>
-        </nav>
       </div>
     </header>
   )
