@@ -8,7 +8,9 @@ from services.fantasy_team_service import (
     get_user_fantasy_teams_service,
     update_fantasy_team_service,
     delete_fantasy_team_service,
-    list_fantasy_teams_service
+    list_fantasy_teams_service,
+    get_transfers_data_service,
+    save_transfers_service
 )
 from typing import List
 
@@ -42,6 +44,17 @@ def delete_fantasy_team(fantasy_team_id: int, session: Session = Depends(get_ses
     """Briše fantasy tim"""
     delete_fantasy_team_service(session, fantasy_team_id)
     return None
+
+# Transfer endpoints
+@public_router.get("/transfers/{user_id}")
+def get_transfers_data(user_id: int, session: Session = Depends(get_session)):
+    """Dohvata podatke za transfers stranicu - tim, igrače, transfer window status, itd."""
+    return get_transfers_data_service(session, user_id)
+
+@public_router.post("/transfers/{user_id}")
+def save_transfers(user_id: int, transfer_data: dict, session: Session = Depends(get_session)):
+    """Sprema draft ili transfere za korisnika"""
+    return save_transfers_service(session, user_id, transfer_data)
 
 # Admin endpointi
 @router.get("/teams", response_model=List[FantasyTeamResponse])

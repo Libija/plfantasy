@@ -167,7 +167,11 @@
 }
 
 .gkPosition {
-  background: linear-gradient(135deg, #f39c12 0%, #e67e22 100%) !important;
+  background: rgba(255, 255, 255, 0.9);
+}
+.gkPosition.filled {
+  background: linear-gradient(135deg, #f39c12 0%, #e67e22 100%);
+  color: white;
 }
 
 .dfPosition.filled {
@@ -198,6 +202,7 @@
   font-size: 0.7rem;
   opacity: 0.9;
   margin-bottom: 0.25rem;
+  color: #222 !important;
 }
 
 .playerPrice {
@@ -580,4 +585,150 @@
     text-align: center;
     padding: 0.5rem;
   }
+}
+
+.transferWindowInfo {
+  background: #f8f9fa;
+  border: 1px solid #dee2e6;
+  border-radius: 8px;
+  padding: 20px;
+  margin-bottom: 20px;
+}
+
+.transferWindowInfo h3 {
+  margin: 0 0 10px 0;
+  color: #333;
+  font-size: 18px;
+}
+
+.transferWindowInfo p {
+  margin: 5px 0;
+  color: #666;
+  font-size: 14px;
+}
+
+.transfersInfo {
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid #dee2e6;
+}
+
+.penalty {
+  color: #dc3545 !important;
+  font-weight: bold;
+}
+
+.captainIcons {
+  display: flex;
+  gap: 5px;
+  margin-top: 5px;
+}
+
+.captainIcon {
+  color: #ffc107;
+  font-size: 12px;
+}
+
+.viceCaptainIcon {
+  color: #6c757d;
+  font-size: 12px;
+}
+
+.captainSelection {
+  margin-top: 30px;
+  padding: 20px;
+  background: #f8f9fa;
+  border-radius: 8px;
+  border: 1px solid #dee2e6;
+}
+
+.captainSelection h3 {
+  margin: 0 0 15px 0;
+  color: #333;
+  font-size: 18px;
+}
+
+.captainOptions {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 15px;
+}
+
+.captainOption {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 15px;
+  background: white;
+  border: 1px solid #dee2e6;
+  border-radius: 6px;
+}
+
+.playerInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.playerInfo span:first-child {
+  font-weight: bold;
+  color: #333;
+}
+
+.playerInfo .playerTeam {
+  font-size: 12px;
+  color: #666;
+}
+
+.captainButtons {
+  display: flex;
+  gap: 10px;
+}
+
+.captainBtn {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 8px 12px;
+  border: 1px solid #dee2e6;
+  border-radius: 4px;
+  background: white;
+  color: #666;
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.captainBtn:hover {
+  background: #f8f9fa;
+}
+
+.captainBtn.active {
+  background: #007bff;
+  color: white;
+  border-color: #007bff;
+}
+
+.captainBtn svg {
+  font-size: 10px;
+}
+
+.loadingMessage {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 200px;
+  font-size: 18px;
+  color: #666;
+}
+
+.errorMessage {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 200px;
+  font-size: 18px;
+  color: #dc3545;
+  text-align: center;
+  padding: 20px;
 }
