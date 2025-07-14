@@ -112,24 +112,42 @@ def get_transfers_data_service(session: Session, user_id: int) -> Dict[str, Any]
     gameweeks = session.exec(select(Gameweek)).all()
     is_window_open = True
     for gw in gameweeks:
-        # Usporedi status neovisno o veličini slova
-        if str(gw.status).lower() == "in_progress":
+        # Proveri status enum vrednost
+        if gw.status.value == "in_progress":
             is_window_open = False
             break
-    # Sljedeće kolo je zakazano s najmanjim brojem
+    
+    # Transfer window je otvoren kada nema kola koja su IN_PROGRESS
+    
+    # Sledeće kolo je ono sa najmanjim brojem koje je SCHEDULED
+    # Ako nema SCHEDULED kola, uzmi prvo kolo koje nije COMPLETED
     next_gameweek = None
-    zakazana_kola = [gw for gw in gameweeks if str(gw.status).lower() == "scheduled"]
-    if zakazana_kola:
-        next_gameweek = min(zakazana_kola, key=lambda x: x.number)
+    scheduled_gameweeks = [gw for gw in gameweeks if gw.status.value == "scheduled"]
+    if scheduled_gameweeks:
+        next_gameweek = min(scheduled_gameweeks, key=lambda x: x.number)
+    else:
+        # Ako nema SCHEDULED kola, uzmi prvo kolo koje nije COMPLETED
+        non_completed_gameweeks = [gw for gw in gameweeks if gw.status.value != "completed"]
+        if non_completed_gameweeks:
+            next_gameweek = min(non_completed_gameweeks, key=lambda x: x.number)
+    
+    print(f"DEBUG get_transfers_data: Broj kola u bazi: {len(gameweeks)}")
+    print(f"DEBUG get_transfers_data: Sva kola: {[(gw.number, gw.status.value) for gw in gameweeks]}")
+    print(f"DEBUG get_transfers_data: Scheduled kola: {[gw.number for gw in scheduled_gameweeks]}")
+    non_completed_gameweeks = [gw for gw in gameweeks if gw.status.value != "completed"]
+    print(f"DEBUG get_transfers_data: Non-completed kola: {[gw.number for gw in non_completed_gameweeks]}")
+    print(f"DEBUG get_transfers_data: Next gameweek: {next_gameweek.number if next_gameweek else 'None'}")
     
     # Dohvati broj transfera za naredno kolo (ako postoji)
     transfers_this_week = 0
     if next_gameweek and fantasy_team.id is not None:
         transfer_repo = TransferLogRepository(session)
+        # Broj transfera je broj IN transfera
         transfers_this_week = transfer_repo.get_transfer_count_by_gameweek(fantasy_team.id, next_gameweek.number)
     
     # Izračunaj besplatne transfere i penal
     free_transfers = 3
+    remaining_free_transfers = max(0, free_transfers - transfers_this_week)
     penalty = max(0, transfers_this_week - free_transfers) * 4
     
     # Pripremi podatke o igračima u timu
@@ -178,6 +196,17 @@ def get_transfers_data_service(session: Session, user_id: int) -> Dict[str, Any]
         "napadaci": sorted([p for p in all_players_data if p["position"] == "FWD"], key=lambda x: x["price"], reverse=True)
     }
     
+    transfer_window_data = {
+        "is_open": is_window_open,
+        "next_gameweek": next_gameweek.number if next_gameweek else None,
+        "next_gameweek_id": next_gameweek.id if next_gameweek else None,
+        "next_gameweek_name": f"Kolo {next_gameweek.number}" if next_gameweek else None
+    }
+    
+    print(f"DEBUG get_transfers_data: Transfer window data: {transfer_window_data}")
+    print(f"DEBUG get_transfers_data: Broj igrača u timu: {len(team_players)}")
+    print(f"DEBUG get_transfers_data: is_draft_mode: {len(team_players) == 0}")
+    
     return {
         "fantasy_team": {
             "id": fantasy_team.id,
@@ -189,15 +218,11 @@ def get_transfers_data_service(session: Session, user_id: int) -> Dict[str, Any]
         },
         "team_players": team_players_data,
         "all_players": players_by_position,
-        "transfer_window": {
-            "is_open": is_window_open,
-            "next_gameweek": next_gameweek.number if next_gameweek else None,
-            "next_gameweek_id": next_gameweek.id if next_gameweek else None
-        },
+        "transfer_window": transfer_window_data,
         "transfers_info": {
             "transfers_this_week": transfers_this_week,
             "free_transfers": free_transfers,
-            "remaining_free_transfers": max(0, free_transfers - transfers_this_week),
+            "remaining_free_transfers": remaining_free_transfers,
             "penalty": penalty
         },
         "is_draft_mode": len(team_players) == 0
@@ -223,6 +248,7 @@ def save_transfers_service(session: Session, user_id: int, transfer_data: dict) 
     # ).first()
     
     is_draft_mode = transfer_data.get("is_draft_mode", False)
+    print(f"DEBUG save_transfers: Received is_draft_mode: {is_draft_mode}")
     selected_players = transfer_data.get("selected_players", {})
     formation = transfer_data.get("formation", "4-3-3")
     captain_id = transfer_data.get("captain_id")
@@ -277,17 +303,101 @@ def save_transfers_service(session: Session, user_id: int, transfer_data: dict) 
         raise HTTPException(status_code=400, detail="Kapiten i vice-kapiten ne mogu biti isti igrač")
     
     try:
-        # Penal logika je sada isključena jer se transfer window i penal računaju dinamički
-        # (možeš vratiti ako budeš želeo da penal upisuješ u log)
-        # if not is_draft_mode and ...
-        #     ...
-        #     if transfers_this_week >= 3:
-        #         ... penal log ...
-
+        # Dohvati sledeće kolo za transfer log
+        gameweeks = session.exec(select(Gameweek)).all()
+        next_gameweek = None
+        scheduled_gameweeks = [gw for gw in gameweeks if gw.status.value == "scheduled"]
+        if scheduled_gameweeks:
+            next_gameweek = min(scheduled_gameweeks, key=lambda x: x.number)
+        else:
+            # Ako nema SCHEDULED kola, uzmi prvo kolo koje nije COMPLETED
+            non_completed_gameweeks = [gw for gw in gameweeks if gw.status.value != "completed"]
+            if non_completed_gameweeks:
+                next_gameweek = min(non_completed_gameweeks, key=lambda x: x.number)
+        
+        # Debug informacije
+        print(f"DEBUG: Broj kola u bazi: {len(gameweeks)}")
+        print(f"DEBUG: Sva kola: {[(gw.number, gw.status.value) for gw in gameweeks]}")
+        print(f"DEBUG: Scheduled kola: {[gw.number for gw in scheduled_gameweeks]}")
+        non_completed_gameweeks = [gw for gw in gameweeks if gw.status.value != "completed"]
+        print(f"DEBUG: Non-completed kola: {[gw.number for gw in non_completed_gameweeks]}")
+        print(f"DEBUG: Next gameweek: {next_gameweek.number if next_gameweek else 'None'}")
+        print(f"DEBUG: Is draft mode: {is_draft_mode}")
+        
         # Obriši postojeće igrače u timu
         existing_players = session.exec(
             select(FantasyTeamPlayer).where(FantasyTeamPlayer.fantasy_team_id == fantasy_team.id)
         ).all()
+        
+        # Za transfere (ne draft), beleži promene u transfer log
+        print(f"DEBUG: Proveravam transfer log - is_draft_mode={is_draft_mode}, next_gameweek={next_gameweek}")
+        if not is_draft_mode and next_gameweek:
+            print(f"DEBUG: Beleženje transfera za kolo {next_gameweek.number}")
+            # Kreiraj mapu postojećih igrača po poziciji
+            existing_players_map = {}
+            for player in existing_players:
+                existing_players_map[player.formation_position] = player.player_id
+            
+            print(f"DEBUG: Broj postojećih igrača: {len(existing_players)}")
+            print(f"DEBUG: Postojeći igrači: {existing_players_map}")
+            print(f"DEBUG: Broj novih igrača: {len([p for p in selected_players.values() if p])}")
+            
+            # Broj transfera koji će se napraviti
+            transfer_count = 0
+            
+            # Uporedi sa novim igračima i beleži transfere
+            for position, player_data in selected_players.items():
+                if player_data:
+                    new_player_id = player_data["id"]
+                    old_player_id = existing_players_map.get(position)
+                    
+                    print(f"DEBUG: Pozicija {position}: stari={old_player_id}, novi={new_player_id}")
+                    
+                    if old_player_id and old_player_id != new_player_id:
+                        print(f"DEBUG: TRANSFER DETEKTIRAN na poziciji {position}!")
+                    else:
+                        print(f"DEBUG: Nema transfera na poziciji {position} (stari={old_player_id}, novi={new_player_id})")
+                    
+                    if old_player_id and old_player_id != new_player_id:
+                        # Transfer je napravljen
+                        transfer_count += 1
+                        print(f"DEBUG: Transfer napravljen na poziciji {position}")
+                        old_player = session.get(Player, old_player_id)
+                        new_player = session.get(Player, new_player_id)
+                        
+                        if old_player and new_player:
+                            # Beleži transfer OUT
+                            transfer_out = TransferLog(
+                                fantasy_team_id=fantasy_team.id,
+                                player_out_id=old_player_id,
+                                transfer_type=TransferType.OUT,
+                                gameweek=next_gameweek.number,
+                                cost=0,  # Besplatan transfer
+                                budget_before=fantasy_team.budget,
+                                budget_after=fantasy_team.budget
+                            )
+                            session.add(transfer_out)
+                            
+                            # Beleži transfer IN
+                            transfer_in = TransferLog(
+                                fantasy_team_id=fantasy_team.id,
+                                player_in_id=new_player_id,
+                                transfer_type=TransferType.IN,
+                                gameweek=next_gameweek.number,
+                                cost=0,  # Besplatan transfer
+                                budget_before=fantasy_team.budget,
+                                budget_after=fantasy_team.budget
+                            )
+                            session.add(transfer_in)
+                            print(f"DEBUG: Transfer log zapisi dodani za {old_player.name} -> {new_player.name}")
+            
+            # Ako su napravljeni transferi, dodaj informaciju u response
+            if transfer_count > 0:
+                print(f"Napravljeno {transfer_count} transfera za tim {fantasy_team.id} u kolu {next_gameweek.number}")
+            else:
+                print("DEBUG: Nema transfera za beleženje")
+        else:
+            print(f"DEBUG: Ne beleži se transfer log - draft_mode={is_draft_mode}, next_gameweek={next_gameweek}")
         
         for player in existing_players:
             session.delete(player)
@@ -325,12 +435,19 @@ def save_transfers_service(session: Session, user_id: int, transfer_data: dict) 
         session.add(fantasy_team)
         session.commit()
         
-        return {
+        response_data = {
             "message": "Tim uspješno ažuriran",
             "fantasy_team_id": fantasy_team.id,
             "total_cost": total_cost,
             "remaining_budget": fantasy_team.budget
         }
+        
+        # Dodaj informaciju o transferima ako nije draft mode
+        if not is_draft_mode and next_gameweek:
+            response_data["transfers_made"] = transfer_count
+            response_data["next_gameweek"] = next_gameweek.number
+        
+        return response_data
         
     except Exception as e:
         session.rollback()

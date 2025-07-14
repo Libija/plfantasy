@@ -78,6 +78,10 @@ export default function FantasyTransfers() {
       
       const data = await res.json()
       
+      console.log("DEBUG: Transfer data:", data)
+      console.log("DEBUG: Transfer window:", data.transfer_window)
+      console.log("DEBUG: Transfers info:", data.transfers_info)
+      
       setFantasyTeam(data.fantasy_team)
       setBudget(data.fantasy_team.budget)
       setSelectedFormation(data.fantasy_team.formation)
@@ -450,6 +454,8 @@ export default function FantasyTransfers() {
         captain_id: captainId,
         vice_captain_id: viceCaptainId
       }
+      
+      console.log("DEBUG: Sending transfer data:", transferData)
 
       const res = await fetch(`${apiUrl}/fantasy/transfers/${user.id}`, {
         method: "POST",
@@ -465,7 +471,13 @@ export default function FantasyTransfers() {
       }
 
       const result = await res.json()
-      alert("Tim uspješno sačuvan!")
+      
+      // Prikaži informaciju o transferima
+      if (result.transfers_made && result.transfers_made > 0) {
+        alert(`Tim uspješno sačuvan! Napravljeno ${result.transfers_made} transfera za kolo ${result.next_gameweek}.`)
+      } else {
+        alert("Tim uspješno sačuvan!")
+      }
       
       // Refresh data
       fetchTransfersData()
@@ -518,10 +530,10 @@ export default function FantasyTransfers() {
             <h3>Transfer Window</h3>
             <p>
               Status: {transferWindow.is_open ? "Otvoren" : "Zatvoren"}
-              {transferWindow.is_open && (
+              {transferWindow.is_open && transferWindow.next_gameweek_name && (
                 <>
                   <br />
-                  Sljedeće kolo: {transferWindow.next_gameweek}
+                  {transferWindow.next_gameweek_name}
                 </>
               )}
             </p>
@@ -533,6 +545,12 @@ export default function FantasyTransfers() {
                 )}
               </div>
             )}
+            {/* Debug info */}
+            <div style={{fontSize: '12px', color: 'red', marginTop: '10px'}}>
+              DEBUG: transferWindow = {JSON.stringify(transferWindow)}<br/>
+              DEBUG: transfersInfo = {JSON.stringify(transfersInfo)}<br/>
+              DEBUG: isDraftMode = {isDraftMode.toString()}
+            </div>
           </div>
         )}
 
