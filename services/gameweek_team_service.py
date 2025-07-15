@@ -177,7 +177,8 @@ class GameweekTeamService:
                     "is_bench": player.is_bench,
                     "points": player.points,
                     "is_captain": player.player_id == team.captain_id,
-                    "is_vice_captain": player.player_id == team.vice_captain_id
+                    "is_vice_captain": player.player_id == team.vice_captain_id,
+                    "price": player_details.price if player_details else 0.0
                 })
             
             results.append({

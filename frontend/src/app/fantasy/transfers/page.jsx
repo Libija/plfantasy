@@ -215,7 +215,7 @@ export default function FantasyTransfers() {
                       })()}
                     </div>
                   ) : (
-                    <div className={styles.playerPrice}>{selectedPlayers.GK.price}M</div>
+                    <div className={styles.playerPrice}>{Number(selectedPlayers.GK?.price).toFixed(2)}M</div>
                   )}
                 <div className={styles.playerTeam}>{selectedPlayers.GK.team}</div>
                   <div className={styles.captainIcons}>
@@ -273,7 +273,7 @@ export default function FantasyTransfers() {
                       })()}
                     </div>
                   ) : (
-                    <div className={styles.playerPrice}>{selectedPlayers[`DF${i + 1}`].price}M</div>
+                    <div className={styles.playerPrice}>{Number(selectedPlayers[`DF${i + 1}`]?.price).toFixed(2)}M</div>
                   )}
                   <div className={styles.playerTeam}>{selectedPlayers[`DF${i + 1}`].team}</div>
                   <div className={styles.captainIcons}>
@@ -332,7 +332,7 @@ export default function FantasyTransfers() {
                       })()}
                     </div>
                   ) : (
-                    <div className={styles.playerPrice}>{selectedPlayers[`MF${i + 1}`].price}M</div>
+                    <div className={styles.playerPrice}>{Number(selectedPlayers[`MF${i + 1}`]?.price).toFixed(2)}M</div>
                   )}
                   <div className={styles.playerTeam}>{selectedPlayers[`MF${i + 1}`].team}</div>
                   <div className={styles.captainIcons}>
@@ -391,7 +391,7 @@ export default function FantasyTransfers() {
                       })()}
                     </div>
                   ) : (
-                    <div className={styles.playerPrice}>{selectedPlayers[`FW${i + 1}`].price}M</div>
+                    <div className={styles.playerPrice}>{Number(selectedPlayers[`FW${i + 1}`]?.price).toFixed(2)}M</div>
                   )}
                   <div className={styles.playerTeam}>{selectedPlayers[`FW${i + 1}`].team}</div>
                   <div className={styles.captainIcons}>
@@ -624,6 +624,13 @@ export default function FantasyTransfers() {
       return
     }
 
+    // Prije spremanja tima, izračunaj novu vrijednost tima:
+    const newTeamValue = Object.values(selectedPlayers).reduce((acc, p) => acc + (p?.price || 0), 0)
+    if (newTeamValue > budget) {
+      alert('Vrijednost tima prelazi budžet!')
+      return
+    }
+
     try {
       const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"
       
@@ -824,7 +831,7 @@ export default function FantasyTransfers() {
                             })()}
                           </div>
                         ) : (
-                          <div className={styles.playerPrice}>{selectedPlayers[pos].price}M</div>
+                          <div className={styles.playerPrice}>{Number(selectedPlayers[pos]?.price).toFixed(2)}M</div>
                         )}
                         <div className={styles.playerTeam}>{selectedPlayers[pos].team}</div>
                         <div className={styles.captainIcons}>
@@ -1014,7 +1021,7 @@ export default function FantasyTransfers() {
                       <div key={player.id} className={`${styles.playerRow} ${isSelected ? styles.selectedRow : ""}`}>
                         <div className={styles.playerName}>{player.name}</div>
                         <div className={styles.playerTeam}>{player.club_name}</div>
-                        <div className={styles.playerPrice}>{player.price}M</div>
+                        <div className={styles.playerPrice}>{Number(player.price).toFixed(2)}M</div>
                         <div className={styles.playerPoints}>{player.points}</div>
                         <div className={styles.playerAction}>
                           <button

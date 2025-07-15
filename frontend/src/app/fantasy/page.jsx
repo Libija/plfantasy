@@ -18,6 +18,8 @@ export default function FantasyDashboard() {
   const [error, setError] = useState("")
   const router = useRouter()
   const { user, isLoggedIn, loading: authLoading } = useAuth()
+  const [userResults, setUserResults] = useState([])
+  const [leaderboard, setLeaderboard] = useState([])
 
   useEffect(() => {
     // Ako se još učitava auth, ne radi ništa
@@ -95,6 +97,58 @@ export default function FantasyDashboard() {
     }
   }, [authLoading, isLoggedIn, user, router])
 
+  useEffect(() => {
+    if (authLoading || !isLoggedIn) return
+    const fetchResultsAndLeaderboard = async () => {
+      try {
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"
+        const [resultsRes, leaderboardRes] = await Promise.all([
+          fetch(`${apiUrl}/fantasy/results/${user.id}`),
+          fetch(`${apiUrl}/fantasy/leaderboard`)
+        ])
+        const results = resultsRes.ok ? await resultsRes.json() : []
+        const leaderboardData = leaderboardRes.ok ? await leaderboardRes.json() : []
+        setUserResults(results)
+        setLeaderboard(leaderboardData)
+      } catch (err) {
+        console.error("Greška pri dohvatu rezultata ili leaderboarda:", err)
+      }
+    }
+    fetchResultsAndLeaderboard()
+  }, [authLoading, isLoggedIn, user])
+
+  // Pravi podaci za dashboard
+  let teamStats = {
+    name: fantasyTeam?.name || "",
+    points: 0,
+    rank: 0,
+    totalPlayers: leaderboard.length,
+    value: 0,
+    lastWeekPoints: 0,
+  }
+  let top3Players = []
+  if (userResults && userResults.length > 0) {
+    // Ukupni bodovi
+    teamStats.points = userResults.reduce((acc, gw) => acc + (gw.total_points || 0), 0)
+    // Zadnji snapshot (zadnje kolo)
+    const lastSnapshot = userResults.reduce((a, b) => (a.gameweek_number > b.gameweek_number ? a : b))
+    // Vrijednost tima (suma cijena igrača iz zadnjeg kola)
+    if (lastSnapshot && lastSnapshot.players) {
+      teamStats.value = lastSnapshot.players.reduce((acc, p) => acc + (p.price || 0), 0).toFixed(2)
+      teamStats.lastWeekPoints = lastSnapshot.total_points
+      // Top 3 igrača po poenima iz prošlog kola
+      top3Players = [...lastSnapshot.players]
+        .filter(p => !p.is_bench)
+        .sort((a, b) => b.points - a.points)
+        .slice(0, 3)
+    }
+    // Globalni rank
+    const myEntry = leaderboard.find(l => l.user_id === user.id)
+    if (myEntry) {
+      teamStats.rank = myEntry.rank
+    }
+  }
+
   // Simulirani podaci za lige
   const leagues = [
     {
@@ -168,17 +222,6 @@ export default function FantasyDashboard() {
     return null
   }
 
-  // Simulirani podaci za fantasy tim (trebat će se zamijeniti sa pravim podacima)
-  const teamStats = {
-    name: fantasyTeam.name,
-    points: 1245,
-    rank: 342,
-    totalPlayers: 5782,
-    value: 102.5,
-    lastWeekPoints: 78,
-    lastWeekRank: 356,
-  }
-
   return (
     <>
       <Head>
@@ -215,10 +258,7 @@ export default function FantasyDashboard() {
                 <span className={styles.weeklyStatValue}>{teamStats.lastWeekPoints}</span>
                 <span className={styles.weeklyStatLabel}>Bodova</span>
               </div>
-              <div className={styles.weeklyStatItem}>
-                <span className={styles.weeklyStatValue}>{teamStats.lastWeekRank}</span>
-                <span className={styles.weeklyStatLabel}>Rang</span>
-              </div>
+             
             </div>
           </div>
         </div>
@@ -244,88 +284,26 @@ export default function FantasyDashboard() {
                   <p>Pregled rezultata tima</p>
                 </div>
               </Link>
-              <Link href="/fantasy/history" className={styles.actionCard}>
-                <div className={styles.actionIcon}>
-                  <FaHistory />
-                </div>
-                <div className={styles.actionContent}>
-                  <h3>Historija</h3>
-                  <p>Pregled prethodnih sedmica</p>
-                </div>
-              </Link>
-              <Link href="/fantasy/settings" className={styles.actionCard}>
-                <div className={styles.actionIcon}>
-                  <FaCog />
-                </div>
-                <div className={styles.actionContent}>
-                  <h3>Postavke</h3>
-                  <p>Uredi postavke tima</p>
-                </div>
-              </Link>
             </div>
-
-            <div className={styles.leaguesSection}>
-              <div className={styles.sectionHeader}>
-                <h2>
-                  <FaUsers /> Moje lige
-                </h2>
-                <div className={styles.leagueActions}>
-                  <button className={styles.createLeagueBtn} onClick={() => setShowCreateLeagueModal(true)}>
-                    Kreiraj ligu
-                  </button>
-                  <button className={styles.joinLeagueBtn} onClick={() => setShowJoinLeagueModal(true)}>
-                    Pridruži se ligi
-                  </button>
-                </div>
-              </div>
-
-              <div className={styles.leaguesList}>
-                {leagues.map((league) => (
-                  <div key={league.id} className={styles.leagueCard}>
-                    <div className={styles.leagueInfo}>
-                      <h3 className={styles.leagueName}>{league.name}</h3>
-                      <div className={styles.leagueStats}>
-                        <span className={styles.leagueStat}>
-                          <strong>Članova:</strong> {league.members}
-                        </span>
-                        <span className={styles.leagueStat}>
-                          <strong>Vaš rang:</strong> {league.rank}
-                        </span>
-                      </div>
-                    </div>
-                    <div className={styles.leagueLeader}>
-                      <div className={styles.leaderLabel}>Vodeći</div>
-                      <div className={styles.leaderName}>{league.leader}</div>
-                      <div className={styles.leaderPoints}>{league.leaderPoints} bodova</div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
+            {/* Uklonjene sekcije za historiju i postavke */}
           </div>
-
           <div className={styles.sideSection}>
             <div className={styles.globalRanking}>
               <div className={styles.sectionHeader}>
-                <h2>
-                  <FaTrophy /> Top 5 igrača
-                </h2>
+                <h2>Top 3 igrača prošle sedmice</h2>
               </div>
               <div className={styles.rankingList}>
-                {topPlayers.map((player) => (
-                  <div key={player.rank} className={styles.rankingItem}>
-                    <div className={styles.rankingPosition}>{player.rank}</div>
+                {top3Players.map((player, idx) => (
+                  <div key={player.player_id} className={styles.rankingItem}>
+                    <div className={styles.rankingPosition}>{idx + 1}</div>
                     <div className={styles.rankingInfo}>
-                      <div className={styles.rankingName}>{player.name}</div>
-                      <div className={styles.rankingTeam}>{player.teamName}</div>
+                      <div className={styles.rankingName}>{player.player_name}</div>
+                      <div className={styles.rankingTeam}>{player.position}</div>
                     </div>
-                    <div className={styles.rankingPoints}>{player.points}</div>
+                    <div className={styles.rankingPoints}>{player.points} pts</div>
                   </div>
                 ))}
               </div>
-              <Link href="/fantasy/rankings" className={styles.viewAllLink}>
-                Pogledaj kompletnu tabelu
-              </Link>
             </div>
           </div>
         </div>

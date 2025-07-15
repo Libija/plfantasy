@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Depends, status, HTTPException
-from sqlmodel import Session
+from sqlmodel import Session, select
 from database import get_session
 from schemas.fantasy_team_schema import FantasyTeamCreate, FantasyTeamUpdate, FantasyTeamResponse
 from services.fantasy_team_service import (
@@ -14,6 +14,9 @@ from services.fantasy_team_service import (
     get_team_current_gameweek_points_service
 )
 from typing import List
+from services.gameweek_team_service import GameweekTeamService
+from models.gameweek_team_model import GameweekTeam
+from models.user_model import User
 
 router = APIRouter(prefix="/admin/fantasy", tags=["fantasy"])
 
@@ -61,6 +64,33 @@ def save_transfers(user_id: int, transfer_data: dict, session: Session = Depends
 def get_team_current_gameweek_points(fantasy_team_id: int, session: Session = Depends(get_session)):
     """Dohvata fantasy poene za tim u trenutnom kolu (IN_PROGRESS)"""
     return get_team_current_gameweek_points_service(session, fantasy_team_id)
+
+@public_router.get("/results/{user_id}")
+def get_user_fantasy_results(user_id: int, session: Session = Depends(get_session)):
+    """Dohvata sve snapshotove i rezultate za korisnika (za dashboard)"""
+    service = GameweekTeamService(session)
+    return service.get_user_results(user_id)
+
+@public_router.get("/leaderboard")
+def get_fantasy_leaderboard(session: Session = Depends(get_session)):
+    """Vraća globalni poredak korisnika po ukupnim bodovima (za dashboard)"""
+    # Suma svih bodova po user_id
+    statement = select(GameweekTeam.user_id, User.username, User.email).join(User, User.id == GameweekTeam.user_id)
+    teams = session.exec(statement).all()
+    # Suma bodova po user_id
+    leaderboard = {}
+    for user_id, username, email in teams:
+        if user_id not in leaderboard:
+            leaderboard[user_id] = {"user_id": user_id, "username": username, "email": email, "total_points": 0}
+        # Dohvati sve timove za usera
+        user_teams = session.exec(select(GameweekTeam).where(GameweekTeam.user_id == user_id)).all()
+        leaderboard[user_id]["total_points"] = sum(t.total_points for t in user_teams)
+    # Sortiraj po bodovima silazno
+    sorted_leaderboard = sorted(leaderboard.values(), key=lambda x: x["total_points"], reverse=True)
+    # Dodaj rank
+    for idx, entry in enumerate(sorted_leaderboard, 1):
+        entry["rank"] = idx
+    return sorted_leaderboard
 
 # Admin endpointi
 @router.get("/teams", response_model=List[FantasyTeamResponse])
