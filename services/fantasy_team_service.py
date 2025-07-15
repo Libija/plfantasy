@@ -5,6 +5,8 @@ from models.player_model import Player
 from models.club_model import Club
 from models.transfer_log_model import TransferLog, TransferType
 from models.gameweek_model import Gameweek
+from models.playerfantasypoints_model import PlayerFantasyPoints
+from models.match_model import Match
 from repositories.fantasy_team_repository import (
     create_fantasy_team, 
     get_fantasy_team_by_id, 
@@ -451,4 +453,104 @@ def save_transfers_service(session: Session, user_id: int, transfer_data: dict) 
         
     except Exception as e:
         session.rollback()
-        raise HTTPException(status_code=500, detail=f"Greška pri spremanju: {str(e)}") 
+        raise HTTPException(status_code=500, detail=f"Greška pri spremanju: {str(e)}")
+
+def get_team_current_gameweek_points_service(session: Session, fantasy_team_id: int) -> Dict[str, Any]:
+    """Dohvata fantasy poene za tim u trenutnom kolu (IN_PROGRESS)"""
+    
+    print(f"DEBUG get_team_current_gameweek_points: Tražim kolo za tim {fantasy_team_id}")
+    
+    # Dohvati sva kola da vidimo šta ima u bazi
+    all_gameweeks = session.exec(select(Gameweek)).all()
+    print(f"DEBUG get_team_current_gameweek_points: Sva kola u bazi: {[(gw.number, gw.status) for gw in all_gameweeks]}")
+    
+    # Pronađi trenutno kolo (IN_PROGRESS)
+    current_gameweek = session.exec(
+        select(Gameweek).where(Gameweek.status == "in_progress")
+    ).first()
+    
+    print(f"DEBUG get_team_current_gameweek_points: Trenutno kolo: {current_gameweek.number if current_gameweek else 'None'}")
+    
+    if not current_gameweek:
+        return {
+            "error": "Nema kola u toku",
+            "current_gameweek": None,
+            "players": []
+        }
+    
+    # Dohvati igrače u timu
+    team_players = session.exec(
+        select(FantasyTeamPlayer).where(FantasyTeamPlayer.fantasy_team_id == fantasy_team_id)
+    ).all()
+    
+    players_with_points = []
+    
+    for team_player in team_players:
+        player = session.get(Player, team_player.player_id)
+        if not player:
+            continue
+            
+        club = session.get(Club, player.club_id)
+        
+        # Dohvati fantasy poene za ovog igrača u trenutnom kolu
+        # Prvo pronađi sve mečeve u trenutnom kolu
+        matches_in_gameweek = session.exec(
+            select(Match).where(Match.gameweek_id == current_gameweek.id)
+        ).all()
+        
+        print(f"DEBUG get_team_current_gameweek_points: Igrač {player.name} - mečeva u kolu: {len(matches_in_gameweek)}")
+        
+        total_points = 0
+        
+        # Za svaki meč u kolu, pronađi poene igrača
+        for match in matches_in_gameweek:
+            # Provjeri da li je igrač igrao u ovom meču (provjeri klub)
+            if match.home_club_id == player.club_id or match.away_club_id == player.club_id:
+                print(f"DEBUG get_team_current_gameweek_points: Igrač {player.name} igra u meču {match.id}")
+                # Dohvati fantasy poene za ovog igrača u ovom meču
+                fantasy_points = session.exec(
+                    select(PlayerFantasyPoints).where(
+                        PlayerFantasyPoints.player_id == player.id,
+                        PlayerFantasyPoints.match_id == match.id
+                    )
+                ).first()
+                
+                if fantasy_points:
+                    print(f"DEBUG get_team_current_gameweek_points: Igrač {player.name} ima {fantasy_points.points} poena u meču {match.id}")
+                    total_points += fantasy_points.points
+                else:
+                    print(f"DEBUG get_team_current_gameweek_points: Igrač {player.name} nema poena u meču {match.id}")
+        
+        print(f"DEBUG get_team_current_gameweek_points: Igrač {player.name} - ukupno poena: {total_points}")
+        
+        # Izračunaj poene sa bonusom za kapiten i vice-kapiten
+        final_points = total_points
+        if team_player.is_captain:
+            final_points = total_points * 2
+        elif team_player.is_vice_captain:
+            final_points = total_points * 1.5
+        
+        players_with_points.append({
+            "player_id": player.id,
+            "player_name": player.name,
+            "position": player.position,
+            "club_name": club.name if club else "",
+            "formation_position": team_player.formation_position,
+            "is_captain": team_player.is_captain,
+            "is_vice_captain": team_player.is_vice_captain,
+            "points": total_points,
+            "final_points": final_points
+        })
+    
+    total_points_sum = sum(player["final_points"] for player in players_with_points)
+    print(f"DEBUG get_team_current_gameweek_points: Ukupno poena tima (sa bonusom): {total_points_sum}")
+    print(f"DEBUG get_team_current_gameweek_points: Broj igrača sa poenima: {len(players_with_points)}")
+    
+    return {
+        "current_gameweek": {
+            "number": current_gameweek.number,
+            "name": f"{current_gameweek.number}. kolo"
+        },
+        "players": players_with_points,
+        "total_points": total_points_sum
+    } 

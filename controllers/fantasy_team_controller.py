@@ -10,7 +10,8 @@ from services.fantasy_team_service import (
     delete_fantasy_team_service,
     list_fantasy_teams_service,
     get_transfers_data_service,
-    save_transfers_service
+    save_transfers_service,
+    get_team_current_gameweek_points_service
 )
 from typing import List
 
@@ -55,6 +56,11 @@ def get_transfers_data(user_id: int, session: Session = Depends(get_session)):
 def save_transfers(user_id: int, transfer_data: dict, session: Session = Depends(get_session)):
     """Sprema draft ili transfere za korisnika"""
     return save_transfers_service(session, user_id, transfer_data)
+
+@public_router.get("/team/{fantasy_team_id}/gameweek/current")
+def get_team_current_gameweek_points(fantasy_team_id: int, session: Session = Depends(get_session)):
+    """Dohvata fantasy poene za tim u trenutnom kolu (IN_PROGRESS)"""
+    return get_team_current_gameweek_points_service(session, fantasy_team_id)
 
 # Admin endpointi
 @router.get("/teams", response_model=List[FantasyTeamResponse])

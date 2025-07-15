@@ -45,6 +45,7 @@ export default function FantasyTransfers() {
     veznjaci: [],
     napadaci: []
   })
+  const [currentGameweekPoints, setCurrentGameweekPoints] = useState(null)
   const { user, isLoggedIn, loading: authLoading } = useAuth()
 
   // 1. Definiši konstante za broj igrača po poziciji
@@ -78,10 +79,6 @@ export default function FantasyTransfers() {
       
       const data = await res.json()
       
-      console.log("DEBUG: Transfer data:", data)
-      console.log("DEBUG: Transfer window:", data.transfer_window)
-      console.log("DEBUG: Transfers info:", data.transfers_info)
-      
       setFantasyTeam(data.fantasy_team)
       setBudget(data.fantasy_team.budget)
       setSelectedFormation(data.fantasy_team.formation)
@@ -89,6 +86,11 @@ export default function FantasyTransfers() {
       setTransfersInfo(data.transfers_info)
       setIsDraftMode(data.is_draft_mode)
       setAllPlayers(data.all_players)
+      
+      // Ako nije draft mode i transfer window je zatvoren, dohvati fantasy poene
+      if (!data.is_draft_mode && data.transfer_window && !data.transfer_window.is_open && data.fantasy_team) {
+        await fetchCurrentGameweekPoints(data.fantasy_team.id)
+      }
       
       // Ako nije draft mode, učitaj postojeće igrače
       if (!data.is_draft_mode && data.team_players.length > 0) {
@@ -111,12 +113,36 @@ export default function FantasyTransfers() {
       
     } catch (err) {
       setError("Greška pri dohvatu podataka: " + err.message)
-    } finally {
-      setLoading(false)
+          } finally {
+        setLoading(false)
+      }
+    }
+
+  const fetchCurrentGameweekPoints = async (fantasyTeamId) => {
+    try {
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"
+      
+      const res = await fetch(`${apiUrl}/fantasy/team/${fantasyTeamId}/gameweek/current`)
+      
+      if (!res.ok) {
+        throw new Error("Greška pri dohvatu fantasy poena")
+      }
+      
+      const data = await res.json()
+      console.log("DEBUG: Backend vraća podatke:", data)
+      setCurrentGameweekPoints(data)
+    } catch (err) {
+      console.error("Greška pri dohvatu fantasy poena:", err)
     }
   }
 
   const handleFormationChange = (formation) => {
+    // Ne dozvoli promenu formacije kada je transfer window zatvoren (osim za draft mode)
+    if (!isDraftMode && transferWindow && !transferWindow.is_open) {
+      alert("Transfer window je zatvoren. Ne možete menjati formaciju u ovom trenutku.")
+      return
+    }
+    
     setSelectedFormation(formation)
     // Reset players when changing formation
     const newPlayers = { ...selectedPlayers }
@@ -165,27 +191,52 @@ export default function FantasyTransfers() {
         {/* Golman */}
         <div className={styles.fieldRow}>
           <div
-            className={`${styles.playerPosition} ${styles.gkPosition} ${selectedPlayers.GK ? styles.filled : ""}`}
+            className={`${styles.playerPosition} ${styles.gkPosition} ${selectedPlayers.GK ? styles.filled : ""} ${!isDraftMode && transferWindow && !transferWindow.is_open ? styles.disabled : ""}`}
             onClick={() => openPlayerSelection("GK")}
+            title={!isDraftMode && transferWindow && !transferWindow.is_open ? "Transfer window je zatvoren" : (selectedPlayers.GK ? `Odaberi golmana (trenutno: ${selectedPlayers.GK.name})` : "Odaberi golmana")}
           >
-            {selectedPlayers.GK ? (
-              <div className={styles.selectedPlayerInfo}>
-                <div className={styles.playerName}>{selectedPlayers.GK.name}</div>
-                <div className={styles.playerPrice}>{selectedPlayers.GK.price}M</div>
-                <div className={styles.playerTeam}>{selectedPlayers.GK.team}</div>
-                <div className={styles.captainIcons}>
-                  {captainId === selectedPlayers.GK.id && <FaCrown className={styles.captainIcon} />}
-                  {viceCaptainId === selectedPlayers.GK.id && <FaStar className={styles.viceCaptainIcon} />}
-                </div>
-                <button
-                  className={styles.removePlayerBtn}
-                  onClick={(e) => {
-                    e.stopPropagation()
-                    removePlayer("GK")
-                  }}
-                >
-                  ×
-                </button>
+                          {selectedPlayers.GK ? (
+                <div className={styles.selectedPlayerInfo}>
+                  <div className={styles.playerName}>{selectedPlayers.GK.name}</div>
+                  {!isDraftMode && transferWindow && !transferWindow.is_open ? (
+                    <div className={styles.playerPoints}>
+                      {(() => {
+                        const pointsInfo = getPlayerPointsInfo(selectedPlayers.GK.id)
+                        console.log(`DEBUG: PointsInfo za GK ${selectedPlayers.GK.id}:`, pointsInfo)
+                        if (pointsInfo) {
+                          const className = pointsInfo.is_captain ? styles.pointsValue + ' ' + styles.captain :
+                                           pointsInfo.is_vice_captain ? styles.pointsValue + ' ' + styles.viceCaptain :
+                                           styles.pointsValue
+                          const bonusText = pointsInfo.is_captain ? ' (C)' : pointsInfo.is_vice_captain ? ' (VC)' : ''
+                          return (
+                            <span className={className} title={`Osnovni poeni: ${pointsInfo.points}${bonusText}`}>
+                              {pointsInfo.final_points} pts
+                            </span>
+                          )
+                        } else {
+                          return <span className={styles.noPoints}>N/A</span>
+                        }
+                      })()}
+                    </div>
+                  ) : (
+                    <div className={styles.playerPrice}>{selectedPlayers.GK.price}M</div>
+                  )}
+                  <div className={styles.playerTeam}>{selectedPlayers.GK.team}</div>
+                  <div className={styles.captainIcons}>
+                    {captainId === selectedPlayers.GK.id && <FaCrown className={styles.captainIcon} />}
+                    {viceCaptainId === selectedPlayers.GK.id && <FaStar className={styles.viceCaptainIcon} />}
+                  </div>
+                                        <button
+                          className={styles.removePlayerBtn}
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            removePlayer("GK")
+                          }}
+                          disabled={!isDraftMode && transferWindow && !transferWindow.is_open}
+                          title={!isDraftMode && transferWindow && !transferWindow.is_open ? "Transfer window je zatvoren" : "Ukloni igrača"}
+                        >
+                          ×
+                        </button>
               </div>
             ) : (
               <div className={styles.emptyPosition}>
@@ -201,27 +252,51 @@ export default function FantasyTransfers() {
           {Array.from({ length: positions.DF }, (_, i) => (
             <div
               key={`DF${i + 1}`}
-              className={`${styles.playerPosition} ${styles.dfPosition} ${selectedPlayers[`DF${i + 1}`] ? styles.filled : ""}`}
+              className={`${styles.playerPosition} ${styles.dfPosition} ${selectedPlayers[`DF${i + 1}`] ? styles.filled : ""} ${!isDraftMode && transferWindow && !transferWindow.is_open ? styles.disabled : ""}`}
               onClick={() => openPlayerSelection(`DF${i + 1}`)}
+              title={!isDraftMode && transferWindow && !transferWindow.is_open ? "Transfer window je zatvoren" : (selectedPlayers[`DF${i + 1}`] ? `Odaberi odbrambenog igrača (trenutno: ${selectedPlayers[`DF${i + 1}`].name})` : "Odaberi odbrambenog igrača")}
             >
               {selectedPlayers[`DF${i + 1}`] ? (
                 <div className={styles.selectedPlayerInfo}>
                   <div className={styles.playerName}>{selectedPlayers[`DF${i + 1}`].name}</div>
-                  <div className={styles.playerPrice}>{selectedPlayers[`DF${i + 1}`].price}M</div>
+                  {!isDraftMode && transferWindow && !transferWindow.is_open ? (
+                    <div className={styles.playerPoints}>
+                      {(() => {
+                        const pointsInfo = getPlayerPointsInfo(selectedPlayers[`DF${i + 1}`].id)
+                        if (pointsInfo) {
+                          const className = pointsInfo.is_captain ? styles.pointsValue + ' ' + styles.captain :
+                                           pointsInfo.is_vice_captain ? styles.pointsValue + ' ' + styles.viceCaptain :
+                                           styles.pointsValue
+                          const bonusText = pointsInfo.is_captain ? ' (C)' : pointsInfo.is_vice_captain ? ' (VC)' : ''
+                          return (
+                            <span className={className} title={`Osnovni poeni: ${pointsInfo.points}${bonusText}`}>
+                              {pointsInfo.final_points} pts
+                            </span>
+                          )
+                        } else {
+                          return <span className={styles.noPoints}>N/A</span>
+                        }
+                      })()}
+                    </div>
+                  ) : (
+                    <div className={styles.playerPrice}>{selectedPlayers[`DF${i + 1}`].price}M</div>
+                  )}
                   <div className={styles.playerTeam}>{selectedPlayers[`DF${i + 1}`].team}</div>
                   <div className={styles.captainIcons}>
                     {captainId === selectedPlayers[`DF${i + 1}`].id && <FaCrown className={styles.captainIcon} />}
                     {viceCaptainId === selectedPlayers[`DF${i + 1}`].id && <FaStar className={styles.viceCaptainIcon} />}
                   </div>
-                  <button
-                    className={styles.removePlayerBtn}
-                    onClick={(e) => {
-                      e.stopPropagation()
-                      removePlayer(`DF${i + 1}`)
-                    }}
-                  >
-                    ×
-                  </button>
+                                          <button
+                          className={styles.removePlayerBtn}
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            removePlayer(`DF${i + 1}`)
+                          }}
+                          disabled={!isDraftMode && transferWindow && !transferWindow.is_open}
+                          title={!isDraftMode && transferWindow && !transferWindow.is_open ? "Transfer window je zatvoren" : "Ukloni igrača"}
+                        >
+                          ×
+                        </button>
                 </div>
               ) : (
                 <div className={styles.emptyPosition}>
@@ -238,27 +313,51 @@ export default function FantasyTransfers() {
           {Array.from({ length: positions.MF }, (_, i) => (
             <div
               key={`MF${i + 1}`}
-              className={`${styles.playerPosition} ${styles.mfPosition} ${selectedPlayers[`MF${i + 1}`] ? styles.filled : ""}`}
+              className={`${styles.playerPosition} ${styles.mfPosition} ${selectedPlayers[`MF${i + 1}`] ? styles.filled : ""} ${!isDraftMode && transferWindow && !transferWindow.is_open ? styles.disabled : ""}`}
               onClick={() => openPlayerSelection(`MF${i + 1}`)}
+              title={!isDraftMode && transferWindow && !transferWindow.is_open ? "Transfer window je zatvoren" : (selectedPlayers[`MF${i + 1}`] ? `Odaberi veznjaka (trenutno: ${selectedPlayers[`MF${i + 1}`].name})` : "Odaberi veznjaka")}
             >
               {selectedPlayers[`MF${i + 1}`] ? (
                 <div className={styles.selectedPlayerInfo}>
                   <div className={styles.playerName}>{selectedPlayers[`MF${i + 1}`].name}</div>
-                  <div className={styles.playerPrice}>{selectedPlayers[`MF${i + 1}`].price}M</div>
+                  {!isDraftMode && transferWindow && !transferWindow.is_open ? (
+                    <div className={styles.playerPoints}>
+                      {(() => {
+                        const pointsInfo = getPlayerPointsInfo(selectedPlayers[`MF${i + 1}`].id)
+                        if (pointsInfo) {
+                          const className = pointsInfo.is_captain ? styles.pointsValue + ' ' + styles.captain :
+                                           pointsInfo.is_vice_captain ? styles.pointsValue + ' ' + styles.viceCaptain :
+                                           styles.pointsValue
+                          const bonusText = pointsInfo.is_captain ? ' (C)' : pointsInfo.is_vice_captain ? ' (VC)' : ''
+                          return (
+                            <span className={className} title={`Osnovni poeni: ${pointsInfo.points}${bonusText}`}>
+                              {pointsInfo.final_points} pts
+                            </span>
+                          )
+                        } else {
+                          return <span className={styles.noPoints}>N/A</span>
+                        }
+                      })()}
+                    </div>
+                  ) : (
+                    <div className={styles.playerPrice}>{selectedPlayers[`MF${i + 1}`].price}M</div>
+                  )}
                   <div className={styles.playerTeam}>{selectedPlayers[`MF${i + 1}`].team}</div>
                   <div className={styles.captainIcons}>
                     {captainId === selectedPlayers[`MF${i + 1}`].id && <FaCrown className={styles.captainIcon} />}
                     {viceCaptainId === selectedPlayers[`MF${i + 1}`].id && <FaStar className={styles.viceCaptainIcon} />}
                   </div>
-                  <button
-                    className={styles.removePlayerBtn}
-                    onClick={(e) => {
-                      e.stopPropagation()
-                      removePlayer(`MF${i + 1}`)
-                    }}
-                  >
-                    ×
-                  </button>
+                                          <button
+                          className={styles.removePlayerBtn}
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            removePlayer(`MF${i + 1}`)
+                          }}
+                          disabled={!isDraftMode && transferWindow && !transferWindow.is_open}
+                          title={!isDraftMode && transferWindow && !transferWindow.is_open ? "Transfer window je zatvoren" : "Ukloni igrača"}
+                        >
+                          ×
+                        </button>
                 </div>
               ) : (
                 <div className={styles.emptyPosition}>
@@ -275,27 +374,51 @@ export default function FantasyTransfers() {
           {Array.from({ length: positions.FW }, (_, i) => (
             <div
               key={`FW${i + 1}`}
-              className={`${styles.playerPosition} ${styles.fwPosition} ${selectedPlayers[`FW${i + 1}`] ? styles.filled : ""}`}
+              className={`${styles.playerPosition} ${styles.fwPosition} ${selectedPlayers[`FW${i + 1}`] ? styles.filled : ""} ${!isDraftMode && transferWindow && !transferWindow.is_open ? styles.disabled : ""}`}
               onClick={() => openPlayerSelection(`FW${i + 1}`)}
+              title={!isDraftMode && transferWindow && !transferWindow.is_open ? "Transfer window je zatvoren" : (selectedPlayers[`FW${i + 1}`] ? `Odaberi napadača (trenutno: ${selectedPlayers[`FW${i + 1}`].name})` : "Odaberi napadača")}
             >
               {selectedPlayers[`FW${i + 1}`] ? (
                 <div className={styles.selectedPlayerInfo}>
                   <div className={styles.playerName}>{selectedPlayers[`FW${i + 1}`].name}</div>
-                  <div className={styles.playerPrice}>{selectedPlayers[`FW${i + 1}`].price}M</div>
+                  {!isDraftMode && transferWindow && !transferWindow.is_open ? (
+                    <div className={styles.playerPoints}>
+                      {(() => {
+                        const pointsInfo = getPlayerPointsInfo(selectedPlayers[`FW${i + 1}`].id)
+                        if (pointsInfo) {
+                          const className = pointsInfo.is_captain ? styles.pointsValue + ' ' + styles.captain :
+                                           pointsInfo.is_vice_captain ? styles.pointsValue + ' ' + styles.viceCaptain :
+                                           styles.pointsValue
+                          const bonusText = pointsInfo.is_captain ? ' (C)' : pointsInfo.is_vice_captain ? ' (VC)' : ''
+                          return (
+                            <span className={className} title={`Osnovni poeni: ${pointsInfo.points}${bonusText}`}>
+                              {pointsInfo.final_points} pts
+                            </span>
+                          )
+                        } else {
+                          return <span className={styles.noPoints}>N/A</span>
+                        }
+                      })()}
+                    </div>
+                  ) : (
+                    <div className={styles.playerPrice}>{selectedPlayers[`FW${i + 1}`].price}M</div>
+                  )}
                   <div className={styles.playerTeam}>{selectedPlayers[`FW${i + 1}`].team}</div>
                   <div className={styles.captainIcons}>
                     {captainId === selectedPlayers[`FW${i + 1}`].id && <FaCrown className={styles.captainIcon} />}
                     {viceCaptainId === selectedPlayers[`FW${i + 1}`].id && <FaStar className={styles.viceCaptainIcon} />}
                   </div>
-                  <button
-                    className={styles.removePlayerBtn}
-                    onClick={(e) => {
-                      e.stopPropagation()
-                      removePlayer(`FW${i + 1}`)
-                    }}
-                  >
-                    ×
-                  </button>
+                                          <button
+                          className={styles.removePlayerBtn}
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            removePlayer(`FW${i + 1}`)
+                          }}
+                          disabled={!isDraftMode && transferWindow && !transferWindow.is_open}
+                          title={!isDraftMode && transferWindow && !transferWindow.is_open ? "Transfer window je zatvoren" : "Ukloni igrača"}
+                        >
+                          ×
+                        </button>
                 </div>
               ) : (
                 <div className={styles.emptyPosition}>
@@ -312,6 +435,12 @@ export default function FantasyTransfers() {
 
   // Prilagodi openPlayerSelection i selectPlayer za bench slotove
   const openPlayerSelection = (position) => {
+    // Ne dozvoli odabir igrača kada je transfer window zatvoren (osim za draft mode)
+    if (!isDraftMode && transferWindow && !transferWindow.is_open) {
+      alert("Transfer window je zatvoren. Ne možete menjati igrače u ovom trenutku.")
+      return
+    }
+    
     setCurrentPosition(position)
     setShowModal(true)
 
@@ -361,6 +490,12 @@ export default function FantasyTransfers() {
   }
 
   const removePlayer = (position) => {
+    // Ne dozvoli uklanjanje igrača kada je transfer window zatvoren (osim za draft mode)
+    if (!isDraftMode && transferWindow && !transferWindow.is_open) {
+      alert("Transfer window je zatvoren. Ne možete menjati igrače u ovom trenutku.")
+      return
+    }
+    
     const player = selectedPlayers[position]
     if (player) {
       setSelectedPlayers({
@@ -384,32 +519,30 @@ export default function FantasyTransfers() {
   }
 
   const calculateTotalPoints = () => {
+    // Ako je transfer window zatvoren, koristi fantasy poene iz trenutnog kola
+    if (!isDraftMode && transferWindow && !transferWindow.is_open && currentGameweekPoints) {
+      // Saberi final_points (sa bonusom za kapiten i vice-kapiten)
+      return currentGameweekPoints.players.reduce((total, player) => total + player.final_points, 0)
+    }
+    
+    // Inače koristi poene iz player objekta (za draft mode ili kada transfer window nije zatvoren)
     return Object.values(selectedPlayers)
       .filter((player) => player !== null)
-      .reduce((total, player) => total + player.points, 0)
+      .reduce((total, player) => total + (player.points || 0), 0)
   }
 
   // U funkciji countSelectedPlayers, napravi posebnu funkciju countByPosition koja broji po pozicijama
   const countByPosition = () => {
     const counts = { GK: 0, DF: 0, MF: 0, FW: 0 };
     
-    console.log("=== DEBUG: countByPosition ===");
-    console.log("All selectedPlayers:", selectedPlayers);
-    
-    Object.values(selectedPlayers).forEach((player, idx) => {
+    Object.values(selectedPlayers).forEach((player) => {
       if (player && player.position) {
-        console.log(`Player ${idx}: ${player.name} - Position: "${player.position}"`);
         if (player.position === "GK") counts.GK++;
         if (player.position === "DEF") counts.DF++;
         if (player.position === "MID") counts.MF++;
         if (player.position === "FWD") counts.FW++;
-      } else if (player) {
-        console.log(`Player ${idx}: ${player.name} - NO POSITION!`);
       }
     });
-    
-    console.log("Final counts:", counts);
-    console.log("=== END DEBUG ===");
     
     return counts;
   };
@@ -426,7 +559,40 @@ export default function FantasyTransfers() {
     return ""
   }
 
+  const getPlayerCurrentPoints = (playerId) => {
+    if (!currentGameweekPoints || !currentGameweekPoints.players) {
+      return null
+    }
+    
+    const player = currentGameweekPoints.players.find(p => p.player_id === playerId)
+    return player ? player.final_points : null
+  }
+
+  const getPlayerPointsInfo = (playerId) => {
+    if (!currentGameweekPoints || !currentGameweekPoints.players) {
+      console.log(`DEBUG: Nema currentGameweekPoints za igrača ${playerId}`)
+      return null
+    }
+    
+    const player = currentGameweekPoints.players.find(p => p.player_id === playerId)
+    console.log(`DEBUG: Tražim igrača ${playerId}, pronađen:`, player)
+    if (!player) return null
+    
+    return {
+      points: player.points,
+      final_points: player.final_points,
+      is_captain: player.is_captain,
+      is_vice_captain: player.is_vice_captain
+    }
+  }
+
   const handleSaveTeam = async () => {
+    // Proveri da li je transfer window otvoren (osim za draft mode)
+    if (!isDraftMode && transferWindow && !transferWindow.is_open) {
+      alert("Transfer window je zatvoren. Transferi nisu dozvoljeni u ovom trenutku.")
+      return
+    }
+
     // 2. Prilagodi prikaz klupe i validaciju
     const posCounts = countByPosition();
     if (posCounts.GK !== 2 || posCounts.DF !== 5 || posCounts.MF !== 5 || posCounts.FW !== 3) {
@@ -454,8 +620,6 @@ export default function FantasyTransfers() {
         captain_id: captainId,
         vice_captain_id: viceCaptainId
       }
-      
-      console.log("DEBUG: Sending transfer data:", transferData)
 
       const res = await fetch(`${apiUrl}/fantasy/transfers/${user.id}`, {
         method: "POST",
@@ -537,20 +701,31 @@ export default function FantasyTransfers() {
                 </>
               )}
             </p>
-            {transfersInfo && (
+            {/* Prikaži informacije o transferima samo kada je transfer window otvoren */}
+            {transferWindow.is_open && transfersInfo && (
               <div className={styles.transfersInfo}>
                 <p>Besplatni transferi: {transfersInfo.remaining_free_transfers}/3</p>
                 {transfersInfo.penalty > 0 && (
                   <p className={styles.penalty}>Penal: -{transfersInfo.penalty} poena</p>
                 )}
+                {/* Upozorenje o -4 poena kada su besplatni transferi iscrpljeni */}
+                {transfersInfo.remaining_free_transfers === 0 && (
+                  <div className={styles.transferWarning}>
+                    <p>⚠️ Upozorenje: Svaki sledeći transfer vam donosi -4 poena!</p>
+                  </div>
+                )}
               </div>
             )}
-            {/* Debug info */}
-            <div style={{fontSize: '12px', color: 'red', marginTop: '10px'}}>
-              DEBUG: transferWindow = {JSON.stringify(transferWindow)}<br/>
-              DEBUG: transfersInfo = {JSON.stringify(transfersInfo)}<br/>
-              DEBUG: isDraftMode = {isDraftMode.toString()}
-            </div>
+            {/* Poruka kada je transfer window zatvoren */}
+            {!transferWindow.is_open && (
+              <div className={styles.transferWindowClosed}>
+                <p>Transfer window je trenutno zatvoren. Transferi nisu dozvoljeni.</p>
+                {currentGameweekPoints && currentGameweekPoints.current_gameweek && (
+                  <p>Prikazuju se poeni za {currentGameweekPoints.current_gameweek.name} (kapiten x2, vice-kapiten x1.5)</p>
+                )}
+              </div>
+            )}
+
           </div>
         )}
 
@@ -567,8 +742,19 @@ export default function FantasyTransfers() {
                 <span className={styles.statValue}>{countSelectedPlayers()}/15</span>
               </div>
               <div className={styles.statItem}>
-                <span className={styles.statLabel}>Bodovi:</span>
-                <span className={styles.statValue}>{calculateTotalPoints()}</span>
+                <span className={styles.statLabel}>
+                  {!isDraftMode && transferWindow && !transferWindow.is_open && currentGameweekPoints?.current_gameweek 
+                    ? `Bodovi (${currentGameweekPoints.current_gameweek.name}):` 
+                    : "Bodovi:"}
+                </span>
+                <span className={styles.statValue}>
+                  {calculateTotalPoints()}
+                  {!isDraftMode && transferWindow && !transferWindow.is_open && currentGameweekPoints && (
+                    <span style={{fontSize: '0.8rem', color: '#6c757d', marginLeft: '0.5rem'}}>
+                      (sa bonusom)
+                    </span>
+                  )}
+                </span>
               </div>
             </div>
           </div>
@@ -581,8 +767,10 @@ export default function FantasyTransfers() {
                   key={formation.value}
                   className={`${styles.formationButton} ${selectedFormation === formation.value ? styles.active : ""}`}
                   onClick={() => handleFormationChange(formation.value)}
+                  disabled={!isDraftMode && transferWindow && !transferWindow.is_open}
+                  title={!isDraftMode && transferWindow && !transferWindow.is_open ? "Transfer window je zatvoren" : `Promeni formaciju na ${formation.label}`}
                 >
-                  {formation.label}
+                  {!isDraftMode && transferWindow && !transferWindow.is_open ? "Zatvoren" : formation.label}
                 </button>
               ))}
             </div>
@@ -597,14 +785,36 @@ export default function FantasyTransfers() {
                 {getBenchSlots().map((pos, idx) => (
                   <div
                     key={pos}
-                    className={`${styles.benchPosition} ${selectedPlayers[pos] ? styles.filled : ""}`}
+                    className={`${styles.benchPosition} ${selectedPlayers[pos] ? styles.filled : ""} ${!isDraftMode && transferWindow && !transferWindow.is_open ? styles.disabled : ""}`}
                     onClick={() => openPlayerSelection(pos)}
+                    title={!isDraftMode && transferWindow && !transferWindow.is_open ? "Transfer window je zatvoren" : (selectedPlayers[pos] ? `Odaberi ${getPositionName(pos.split("_")[0])} (trenutno: ${selectedPlayers[pos].name})` : `Odaberi ${getPositionName(pos.split("_")[0])}`)}
                   >
                     {selectedPlayers[pos] ? (
                       <div className={styles.selectedPlayerInfo}>
                         <div className={styles.playerName}>{selectedPlayers[pos].name}</div>
+                        {!isDraftMode && transferWindow && !transferWindow.is_open ? (
+                          <div className={styles.playerPoints}>
+                            {(() => {
+                              const pointsInfo = getPlayerPointsInfo(selectedPlayers[pos].id)
+                              if (pointsInfo) {
+                                const className = pointsInfo.is_captain ? styles.pointsValue + ' ' + styles.captain :
+                                                 pointsInfo.is_vice_captain ? styles.pointsValue + ' ' + styles.viceCaptain :
+                                                 styles.pointsValue
+                                const bonusText = pointsInfo.is_captain ? ' (C)' : pointsInfo.is_vice_captain ? ' (VC)' : ''
+                                return (
+                                  <span className={className} title={`Osnovni poeni: ${pointsInfo.points}${bonusText}`}>
+                                    {pointsInfo.final_points} pts
+                                  </span>
+                                )
+                              } else {
+                                return <span className={styles.noPoints}>N/A</span>
+                              }
+                            })()}
+                          </div>
+                        ) : (
+                          <div className={styles.playerPrice}>{selectedPlayers[pos].price}M</div>
+                        )}
                         <div className={styles.playerTeam}>{selectedPlayers[pos].team}</div>
-                        <div className={styles.playerPrice}>{selectedPlayers[pos].price}M</div>
                         <div className={styles.captainIcons}>
                           {captainId === selectedPlayers[pos].id && <FaCrown className={styles.captainIcon} />}
                           {viceCaptainId === selectedPlayers[pos].id && <FaStar className={styles.viceCaptainIcon} />}
@@ -615,6 +825,8 @@ export default function FantasyTransfers() {
                             e.stopPropagation()
                             removePlayer(pos)
                           }}
+                          disabled={!isDraftMode && transferWindow && !transferWindow.is_open}
+                          title={!isDraftMode && transferWindow && !transferWindow.is_open ? "Transfer window je zatvoren" : "Ukloni igrača"}
                         >
                           ×
                         </button>
@@ -645,14 +857,18 @@ export default function FantasyTransfers() {
                     <button
                       className={`${styles.captainBtn} ${captainId === player.id ? styles.active : ""}`}
                       onClick={() => setCaptain(player.id)}
+                      disabled={!isDraftMode && transferWindow && !transferWindow.is_open}
+                      title={!isDraftMode && transferWindow && !transferWindow.is_open ? "Transfer window je zatvoren" : "Postavi kao kapiten"}
                     >
-                      <FaCrown /> Kapiten
+                      <FaCrown /> {!isDraftMode && transferWindow && !transferWindow.is_open ? "Zatvoren" : "Kapiten"}
                     </button>
                     <button
                       className={`${styles.captainBtn} ${viceCaptainId === player.id ? styles.active : ""}`}
                       onClick={() => setViceCaptain(player.id)}
+                      disabled={!isDraftMode && transferWindow && !transferWindow.is_open}
+                      title={!isDraftMode && transferWindow && !transferWindow.is_open ? "Transfer window je zatvoren" : "Postavi kao vice-kapiten"}
                     >
-                      <FaStar /> Vice
+                      <FaStar /> {!isDraftMode && transferWindow && !transferWindow.is_open ? "Zatvoren" : "Vice"}
                     </button>
                   </div>
                 </div>
@@ -661,15 +877,55 @@ export default function FantasyTransfers() {
           </div>
 
           <div className={styles.actionButtons}>
-            <button className={styles.resetButton}>Resetuj tim</button>
+            <button 
+              className={styles.resetButton}
+              disabled={!isDraftMode && transferWindow && !transferWindow.is_open}
+              title={!isDraftMode && transferWindow && !transferWindow.is_open ? "Transfer window je zatvoren" : (isDraftMode ? "Resetuj tim na početno stanje" : "Resetuj na postojeće igrače")}
+              onClick={() => {
+                if (!isDraftMode && transferWindow && !transferWindow.is_open) {
+                  alert("Transfer window je zatvoren. Ne možete resetovati tim u ovom trenutku.")
+                  return
+                }
+                
+                if (isDraftMode) {
+                  // Reset tima na početno stanje za draft mode
+                  setSelectedPlayers({
+                    GK: null,
+                    DF1: null,
+                    DF2: null,
+                    DF3: null,
+                    DF4: null,
+                    MF1: null,
+                    MF2: null,
+                    MF3: null,
+                    FW1: null,
+                    FW2: null,
+                    FW3: null,
+                    GK_BENCH: null,
+                    DF_BENCH: null,
+                    MF_BENCH: null,
+                    FW_BENCH: null,
+                  })
+                  setCaptainId(null)
+                  setViceCaptainId(null)
+                  setBudget(100)
+                } else {
+                  // Reset na postojeće igrače za transfer mode
+                  fetchTransfersData()
+                }
+              }}
+            >
+              {!isDraftMode && transferWindow && !transferWindow.is_open ? "Transfer Window Zatvoren" : (isDraftMode ? "Resetuj tim" : "Resetuj na postojeće")}
+            </button>
             <button 
               className={styles.saveTeamButton} 
-              disabled={countSelectedPlayers() !== 15 || !captainId || !viceCaptainId}
+              disabled={countSelectedPlayers() !== 15 || !captainId || !viceCaptainId || (!isDraftMode && transferWindow && !transferWindow.is_open)}
               onClick={handleSaveTeam}
+              title={!isDraftMode && transferWindow && !transferWindow.is_open ? "Transfer window je zatvoren" : (isDraftMode ? "Kreiraj novi tim" : "Sačuvaj transfer")}
             >
               <FaSave />{" "}
               {countSelectedPlayers() === 15 && captainId && viceCaptainId 
-                ? (isDraftMode ? "Kreiraj Tim" : "Sačuvaj Transfer") 
+                ? (isDraftMode ? "Kreiraj Tim" : (transferWindow && !transferWindow.is_open ? "Transfer Window Zatvoren" : "Sačuvaj Transfer"))
                 : `Odaberite još ${15 - countSelectedPlayers()} igrača, kapiten i vice-kapiten`}
             </button>
           </div>
@@ -691,30 +947,34 @@ export default function FantasyTransfers() {
                   <button
                     className={`${styles.tabButton} ${activeTab === "golmani" ? styles.activeTab : ""}`}
                     onClick={() => setActiveTab("golmani")}
-                    disabled={!currentPosition?.includes("GK")}
+                    disabled={!currentPosition?.includes("GK") || (!isDraftMode && transferWindow && !transferWindow.is_open)}
+                    title={!isDraftMode && transferWindow && !transferWindow.is_open ? "Transfer window je zatvoren" : "Prikaži golmane"}
                   >
-                    Golmani
+                    {!isDraftMode && transferWindow && !transferWindow.is_open ? "Zatvoren" : "Golmani"}
                   </button>
                   <button
                     className={`${styles.tabButton} ${activeTab === "odbrana" ? styles.activeTab : ""}`}
                     onClick={() => setActiveTab("odbrana")}
-                    disabled={!currentPosition?.includes("DF")}
+                    disabled={!currentPosition?.includes("DF") || (!isDraftMode && transferWindow && !transferWindow.is_open)}
+                    title={!isDraftMode && transferWindow && !transferWindow.is_open ? "Transfer window je zatvoren" : "Prikaži odbrambene igrače"}
                   >
-                    Odbrana
+                    {!isDraftMode && transferWindow && !transferWindow.is_open ? "Zatvoren" : "Odbrana"}
                   </button>
                   <button
                     className={`${styles.tabButton} ${activeTab === "veznjaci" ? styles.activeTab : ""}`}
                     onClick={() => setActiveTab("veznjaci")}
-                    disabled={!currentPosition?.includes("MF")}
+                    disabled={!currentPosition?.includes("MF") || (!isDraftMode && transferWindow && !transferWindow.is_open)}
+                    title={!isDraftMode && transferWindow && !transferWindow.is_open ? "Transfer window je zatvoren" : "Prikaži veznjake"}
                   >
-                    Veznjaci
+                    {!isDraftMode && transferWindow && !transferWindow.is_open ? "Zatvoren" : "Veznjaci"}
                   </button>
                   <button
                     className={`${styles.tabButton} ${activeTab === "napadaci" ? styles.activeTab : ""}`}
                     onClick={() => setActiveTab("napadaci")}
-                    disabled={!currentPosition?.includes("FW")}
+                    disabled={!currentPosition?.includes("FW") || (!isDraftMode && transferWindow && !transferWindow.is_open)}
+                    title={!isDraftMode && transferWindow && !transferWindow.is_open ? "Transfer window je zatvoren" : "Prikaži napadače"}
                   >
-                    Napadači
+                    {!isDraftMode && transferWindow && !transferWindow.is_open ? "Zatvoren" : "Napadači"}
                   </button>
                 </div>
 
@@ -740,9 +1000,10 @@ export default function FantasyTransfers() {
                           <button
                             className={`${styles.actionButton} ${styles.addButton}`}
                             onClick={() => selectPlayer(player)}
-                            disabled={isSelected}
+                            disabled={isSelected || (!isDraftMode && transferWindow && !transferWindow.is_open)}
+                            title={isSelected ? "Igrač je već odabran" : (!isDraftMode && transferWindow && !transferWindow.is_open ? "Transfer window je zatvoren" : `Odaberi ${player.name}`)}
                           >
-                            {isSelected ? "Odabran" : "Odaberi"}
+                            {isSelected ? "Odabran" : (!isDraftMode && transferWindow && !transferWindow.is_open ? "Zatvoren" : "Odaberi")}
                           </button>
                         </div>
                       </div>
