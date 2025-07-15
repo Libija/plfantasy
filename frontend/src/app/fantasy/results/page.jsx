@@ -1,268 +1,315 @@
-"use client"
+'use client';
 
-import { useState } from "react"
-import Head from "next/head"
-import Link from "next/link"
-import { FaArrowLeft, FaTrophy, FaChartLine } from "react-icons/fa"
-import styles from "../../../styles/FantasyResults.module.css"
+import { useState, useEffect } from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { useAuth } from '@/hooks/use-auth';
+import { useToast } from '@/hooks/use-toast';
 
 export default function FantasyResults() {
-  const [selectedRound, setSelectedRound] = useState(15)
-  const [viewMode, setViewMode] = useState("my-team") // my-team, all-players
+  const [results, setResults] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [selectedGameweek, setSelectedGameweek] = useState(null);
+  const { user } = useAuth();
+  const { toast } = useToast();
 
-  const rounds = Array.from({ length: 30 }, (_, i) => i + 1)
+  useEffect(() => {
+    if (user) {
+      fetchResults();
+    }
+  }, [user]);
 
-  const [myTeamResults] = useState([
-    { id: 1, name: "Kenan Pirić", position: "GK", team: "Sarajevo", points: 6, price: 8.0, status: "played" },
-    { id: 2, name: "Siniša Stevanović", position: "DF", team: "Sarajevo", points: 8, price: 6.0, status: "played" },
-    { id: 3, name: "Amar Rahmanović", position: "MF", team: "Sarajevo", points: 12, price: 9.0, status: "played" },
-    { id: 4, name: "Benjamin Tatar", position: "FW", team: "Sarajevo", points: 15, price: 10.0, status: "played" },
-    { id: 5, name: "Nihad Mujakić", position: "DF", team: "Borac", points: 2, price: 5.0, status: "played" },
-    { id: 6, name: "Srđan Grahovac", position: "MF", team: "Borac", points: 7, price: 8.0, status: "played" },
-    { id: 7, name: "Stojan Vranješ", position: "FW", team: "Borac", points: 9, price: 9.0, status: "played" },
-    { id: 8, name: "Ermin Zec", position: "DF", team: "Željezničar", points: 0, price: 5.0, status: "not-played" },
-    { id: 9, name: "Dino Beširović", position: "MF", team: "Željezničar", points: 0, price: 7.0, status: "not-played" },
-    {
-      id: 10,
-      name: "Sulejman Krpić",
-      position: "FW",
-      team: "Željezničar",
-      points: 0,
-      price: 8.0,
-      status: "not-played",
-    },
-    { id: 11, name: "Hrvoje Barišić", position: "DF", team: "Zrinjski", points: 5, price: 6.0, status: "played" },
-  ])
+  const fetchResults = async () => {
+    try {
+      setLoading(true);
+      const response = await fetch(`/gameweek-teams/results/${user.id}`);
+      if (response.ok) {
+        const data = await response.json();
+        setResults(data);
+      } else {
+        toast({
+          title: "Greška",
+          description: "Nije moguće učitati rezultate",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      console.error('Error fetching results:', error);
+      toast({
+        title: "Greška",
+        description: "Greška pri učitavanju rezultata",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
 
-  const [topPerformers] = useState([
-    { id: 17, name: "Benjamin Tatar", position: "FW", team: "Sarajevo", points: 15, reason: "2 gola, 1 asistencija" },
-    { id: 11, name: "Amar Rahmanović", position: "MF", team: "Sarajevo", points: 12, reason: "1 gol, 2 asistencije" },
-    { id: 18, name: "Stojan Vranješ", position: "FW", team: "Borac", points: 11, reason: "1 gol, 1 asistencija" },
-    { id: 1, name: "Kenan Pirić", position: "GK", team: "Sarajevo", points: 10, reason: "Čist list, 3 odbrane" },
-    { id: 12, name: "Srđan Grahovac", position: "MF", team: "Borac", points: 9, reason: "1 gol" },
-  ])
+  const fetchGameweekResult = async (gameweekId) => {
+    try {
+      const response = await fetch(`/gameweek-teams/results/${user.id}/${gameweekId}`);
+      if (response.ok) {
+        const data = await response.json();
+        setSelectedGameweek(data);
+      } else {
+        toast({
+          title: "Greška",
+          description: "Nije moguće učitati rezultat za ovo kolo",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      console.error('Error fetching gameweek result:', error);
+      toast({
+        title: "Greška",
+        description: "Greška pri učitavanju rezultata kola",
+        variant: "destructive",
+      });
+    }
+  };
 
-  const calculateTotalPoints = () => {
-    return myTeamResults.reduce((total, player) => total + player.points, 0)
-  }
+  const createSnapshot = async (gameweekId) => {
+    try {
+      const response = await fetch(`/gameweek-teams/snapshot/${user.id}/${gameweekId}`, {
+        method: 'POST',
+      });
+      if (response.ok) {
+        toast({
+          title: "Uspješno",
+          description: "Snapshot tima je kreiran",
+        });
+        fetchResults(); // Refresh results
+      } else {
+        toast({
+          title: "Greška",
+          description: "Nije moguće kreirati snapshot",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      console.error('Error creating snapshot:', error);
+      toast({
+        title: "Greška",
+        description: "Greška pri kreiranju snapshot-a",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const createAutoSnapshots = async (gameweekId) => {
+    try {
+      const response = await fetch(`/gameweek-teams/auto-snapshot/${gameweekId}`, {
+        method: 'POST',
+      });
+      if (response.ok) {
+        const result = await response.json();
+        toast({
+          title: "Uspješno",
+          description: `Kreirano ${result.created_snapshots} snapshot-a`,
+        });
+        fetchResults(); // Refresh results
+      } else {
+        toast({
+          title: "Greška",
+          description: "Nije moguće kreirati automatske snapshote",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      console.error('Error creating auto snapshots:', error);
+      toast({
+        title: "Greška",
+        description: "Greška pri kreiranju automatskih snapshot-a",
+        variant: "destructive",
+      });
+    }
+  };
 
   const getPositionColor = (position) => {
     switch (position) {
-      case "GK":
-        return "#f39c12"
-      case "DF":
-        return "#3498db"
-      case "MF":
-        return "#2ecc71"
-      case "FW":
-        return "#e74c3c"
-      default:
-        return "#95a5a6"
+      case 'GK': return 'bg-yellow-100 text-yellow-800';
+      case 'DF': return 'bg-blue-100 text-blue-800';
+      case 'MF': return 'bg-green-100 text-green-800';
+      case 'FW': return 'bg-red-100 text-red-800';
+      default: return 'bg-gray-100 text-gray-800';
     }
-  }
+  };
 
-  const getStatusIcon = (status) => {
-    switch (status) {
-      case "played":
-        return "✓"
-      case "not-played":
-        return "○"
-      case "injured":
-        return "⚕"
-      case "suspended":
-        return "⚠"
-      default:
-        return "○"
-    }
-  }
+  const getCaptainBadge = (isCaptain, isViceCaptain) => {
+    if (isCaptain) return <Badge className="bg-yellow-500 text-white">C</Badge>;
+    if (isViceCaptain) return <Badge className="bg-orange-500 text-white">VC</Badge>;
+    return null;
+  };
 
-  const getStatusColor = (status) => {
-    switch (status) {
-      case "played":
-        return "#2ecc71"
-      case "not-played":
-        return "#95a5a6"
-      case "injured":
-        return "#e74c3c"
-      case "suspended":
-        return "#f39c12"
-      default:
-        return "#95a5a6"
-    }
+  if (loading) {
+    return (
+      <div className="container mx-auto px-4 py-8">
+        <h1 className="text-3xl font-bold mb-8">Fantasy Rezultati</h1>
+        <div className="text-center">Učitavanje...</div>
+      </div>
+    );
   }
 
   return (
-    <>
-      <Head>
-        <title>Fantasy Rezultati | PLKutak</title>
-        <meta name="description" content="Pregled fantasy rezultata po kolima" />
-      </Head>
-
-      <div className={styles.container}>
-        <div className={styles.pageHeader}>
-          <Link href="/fantasy" className={styles.backButton}>
-            <FaArrowLeft /> Nazad na dashboard
-          </Link>
-          <h1 className={styles.title}>Fantasy Rezultati</h1>
-        </div>
-
-        <div className={styles.controls}>
-          <div className={styles.roundSelector}>
-            <label htmlFor="round">Kolo:</label>
-            <select
-              id="round"
-              value={selectedRound}
-              onChange={(e) => setSelectedRound(Number.parseInt(e.target.value))}
-              className={styles.roundSelect}
-            >
-              {rounds.map((round) => (
-                <option key={round} value={round}>
-                  {round}. kolo
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div className={styles.viewModeSelector}>
-            <button
-              className={`${styles.viewModeButton} ${viewMode === "my-team" ? styles.active : ""}`}
-              onClick={() => setViewMode("my-team")}
-            >
-              Moj tim
-            </button>
-            <button
-              className={`${styles.viewModeButton} ${viewMode === "all-players" ? styles.active : ""}`}
-              onClick={() => setViewMode("all-players")}
-            >
-              Svi igrači
-            </button>
-          </div>
-        </div>
-
-        {viewMode === "my-team" && (
-          <div className={styles.myTeamSection}>
-            <div className={styles.teamSummary}>
-              <div className={styles.summaryCard}>
-                <div className={styles.summaryIcon}>
-                  <FaTrophy />
-                </div>
-                <div className={styles.summaryContent}>
-                  <h3>Ukupno bodova</h3>
-                  <div className={styles.summaryValue}>{calculateTotalPoints()}</div>
-                  <div className={styles.summarySubtext}>{selectedRound}. kolo</div>
-                </div>
-              </div>
-
-              <div className={styles.summaryCard}>
-                <div className={styles.summaryIcon}>
-                  <FaChartLine />
-                </div>
-                <div className={styles.summaryContent}>
-                  <h3>Prosječno po igraču</h3>
-                  <div className={styles.summaryValue}>
-                    {(calculateTotalPoints() / myTeamResults.length).toFixed(1)}
-                  </div>
-                  <div className={styles.summarySubtext}>bodova</div>
-                </div>
-              </div>
-            </div>
-
-            <div className={styles.playersResults}>
-              <h2 className={styles.sectionTitle}>Rezultati vašeg tima - {selectedRound}. kolo</h2>
-
-              <div className={styles.resultsTable}>
-                <div className={styles.tableHeader}>
-                  <div className={styles.headerCell}>Igrač</div>
-                  <div className={styles.headerCell}>Pozicija</div>
-                  <div className={styles.headerCell}>Tim</div>
-                  <div className={styles.headerCell}>Status</div>
-                  <div className={styles.headerCell}>Bodovi</div>
-                  <div className={styles.headerCell}>Cijena</div>
-                </div>
-
-                {myTeamResults.map((player) => (
-                  <div key={player.id} className={styles.tableRow}>
-                    <div className={styles.tableCell}>
-                      <div className={styles.playerInfo}>
-                        <div className={styles.playerName}>{player.name}</div>
-                      </div>
-                    </div>
-                    <div className={styles.tableCell}>
-                      <span className={styles.position} style={{ backgroundColor: getPositionColor(player.position) }}>
-                        {player.position}
-                      </span>
-                    </div>
-                    <div className={styles.tableCell}>{player.team}</div>
-                    <div className={styles.tableCell}>
-                      <span className={styles.status} style={{ color: getStatusColor(player.status) }}>
-                        {getStatusIcon(player.status)}
-                      </span>
-                    </div>
-                    <div className={styles.tableCell}>
-                      <span
-                        className={`${styles.points} ${player.points > 8 ? styles.highPoints : player.points < 3 ? styles.lowPoints : ""}`}
-                      >
-                        {player.points}
-                      </span>
-                    </div>
-                    <div className={styles.tableCell}>
-                      <span className={styles.price}>{player.price}M</span>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        )}
-
-        {viewMode === "all-players" && (
-          <div className={styles.allPlayersSection}>
-            <div className={styles.topPerformers}>
-              <h2 className={styles.sectionTitle}>Najbolji igrači {selectedRound}. kola</h2>
-
-              <div className={styles.performersGrid}>
-                {topPerformers.map((player, index) => (
-                  <div key={player.id} className={styles.performerCard}>
-                    <div className={styles.performerRank}>#{index + 1}</div>
-                    <div className={styles.performerInfo}>
-                      <div className={styles.performerName}>{player.name}</div>
-                      <div className={styles.performerTeam}>{player.team}</div>
-                      <div className={styles.performerReason}>{player.reason}</div>
-                    </div>
-                    <div className={styles.performerStats}>
-                      <span
-                        className={styles.performerPosition}
-                        style={{ backgroundColor: getPositionColor(player.position) }}
-                      >
-                        {player.position}
-                      </span>
-                      <div className={styles.performerPoints}>{player.points}</div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        )}
-
-        <div className={styles.roundNavigation}>
-          <button
-            className={styles.navButton}
-            disabled={selectedRound <= 1}
-            onClick={() => setSelectedRound(selectedRound - 1)}
+    <div className="container mx-auto px-4 py-8">
+      <div className="flex justify-between items-center mb-8">
+        <h1 className="text-3xl font-bold">Fantasy Rezultati</h1>
+        <div className="flex gap-2">
+          <Button 
+            onClick={() => createSnapshot(1)} 
+            variant="outline"
+            size="sm"
           >
-            ← Prethodno kolo
-          </button>
-          <span className={styles.currentRound}>{selectedRound}. kolo</span>
-          <button
-            className={styles.navButton}
-            disabled={selectedRound >= 30}
-            onClick={() => setSelectedRound(selectedRound + 1)}
+            Kreiraj Snapshot (Kolo 1)
+          </Button>
+          <Button 
+            onClick={() => createSnapshot(2)} 
+            variant="outline"
+            size="sm"
           >
-            Sljedeće kolo →
-          </button>
+            Kreiraj Snapshot (Kolo 2)
+          </Button>
+          <Button 
+            onClick={() => createAutoSnapshots(1)} 
+            variant="outline"
+            size="sm"
+          >
+            Auto Snapshot (Kolo 1)
+          </Button>
         </div>
       </div>
-    </>
-  )
+
+      {results.length === 0 ? (
+        <Card>
+          <CardContent className="pt-6">
+            <p className="text-center text-gray-500">
+              Još nema rezultata iz završenih kola.
+            </p>
+          </CardContent>
+        </Card>
+      ) : (
+        <Tabs defaultValue="overview" className="space-y-4">
+          <TabsList>
+            <TabsTrigger value="overview">Pregled</TabsTrigger>
+            <TabsTrigger value="details">Detalji</TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="overview" className="space-y-4">
+            <div className="grid gap-4">
+              {results.map((result) => (
+                <Card key={result.id} className="cursor-pointer hover:shadow-md transition-shadow"
+                      onClick={() => fetchGameweekResult(result.gameweek_id)}>
+                  <CardHeader>
+                    <div className="flex justify-between items-center">
+                      <CardTitle className="text-lg">
+                        Kolo {result.gameweek_number}
+                      </CardTitle>
+                      <div className="flex items-center gap-2">
+                        <Badge variant="outline">{result.formation}</Badge>
+                        <Badge className="bg-green-500 text-white">
+                          {result.total_points.toFixed(1)} pts
+                        </Badge>
+                      </div>
+                    </div>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-sm text-gray-500">
+                      {new Date(result.created_at).toLocaleDateString('hr-HR')}
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </TabsContent>
+
+          <TabsContent value="details" className="space-y-4">
+            {selectedGameweek ? (
+              <div className="space-y-6">
+                <Card>
+                  <CardHeader>
+                    <div className="flex justify-between items-center">
+                      <CardTitle>Kolo {selectedGameweek.gameweek_number}</CardTitle>
+                      <div className="flex items-center gap-2">
+                        <Badge variant="outline">{selectedGameweek.formation}</Badge>
+                        <Badge className="bg-green-500 text-white">
+                          {selectedGameweek.total_points.toFixed(1)} pts
+                        </Badge>
+                      </div>
+                    </div>
+                  </CardHeader>
+                </Card>
+
+                <div className="grid gap-4">
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>Početnih 11</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="grid gap-2">
+                        {selectedGameweek.players
+                          .filter(player => !player.is_bench)
+                          .map((player) => (
+                            <div key={player.id} className="flex justify-between items-center p-2 border rounded">
+                              <div className="flex items-center gap-2">
+                                <Badge className={getPositionColor(player.position)}>
+                                  {player.position}
+                                </Badge>
+                                <span className="font-medium">{player.player_name}</span>
+                                {getCaptainBadge(player.is_captain, player.is_vice_captain)}
+                              </div>
+                              <div className="flex items-center gap-2">
+                                <span className={`font-bold ${player.points > 0 ? 'text-green-600' : 'text-red-600'}`}>
+                                  {player.points.toFixed(1)}
+                                </span>
+                              </div>
+                            </div>
+                          ))}
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>Klupa</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="grid gap-2">
+                        {selectedGameweek.players
+                          .filter(player => player.is_bench)
+                          .map((player) => (
+                            <div key={player.id} className="flex justify-between items-center p-2 border rounded">
+                              <div className="flex items-center gap-2">
+                                <Badge className={getPositionColor(player.position)}>
+                                  {player.position}
+                                </Badge>
+                                <span className="font-medium">{player.player_name}</span>
+                              </div>
+                              <div className="flex items-center gap-2">
+                                <span className={`font-bold ${player.points > 0 ? 'text-green-600' : 'text-red-600'}`}>
+                                  {player.points.toFixed(1)}
+                                </span>
+                              </div>
+                            </div>
+                          ))}
+                      </div>
+                    </CardContent>
+                  </Card>
+                </div>
+              </div>
+            ) : (
+              <Card>
+                <CardContent className="pt-6">
+                  <p className="text-center text-gray-500">
+                    Kliknite na kolo iz pregleda da vidite detalje.
+                  </p>
+                </CardContent>
+              </Card>
+            )}
+          </TabsContent>
+        </Tabs>
+      )}
+    </div>
+  );
 }

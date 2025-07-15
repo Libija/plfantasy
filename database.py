@@ -18,6 +18,8 @@ from models.gameweekscore_model import GameweekScore
 from models.playerfantasypoints_model import PlayerFantasyPoints
 from models.transfer_window_model import TransferWindow
 from models.transfer_log_model import TransferLog
+from models.gameweek_team_model import GameweekTeam
+from models.gameweek_player_model import GameweekPlayer
 
 # Naziv fajla i URL za SQLite bazu
 sqlite_file_name = "database.db"

@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react"
 import Head from "next/head"
 import Link from "next/link"
-import { FaPlus, FaEdit, FaTrash, FaCalendarAlt, FaFutbol } from "react-icons/fa"
+import { FaPlus, FaEdit, FaTrash, FaCalendarAlt, FaFutbol, FaCamera } from "react-icons/fa"
 import styles from "../../../styles/AdminRounds.module.css"
 
 export default function AdminRounds() {
@@ -68,6 +68,7 @@ export default function AdminRounds() {
   const [roundToDelete, setRoundToDelete] = useState(null)
   const [showEditModal, setShowEditModal] = useState(false)
   const [editingRound, setEditingRound] = useState(null)
+  const [creatingSnapshots, setCreatingSnapshots] = useState(false)
 
   const handleDeleteClick = (round) => {
     setRoundToDelete(round)
@@ -117,6 +118,9 @@ export default function AdminRounds() {
   const saveEditChanges = async () => {
     try {
       const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"
+      const newStatus = editingRound.status === 'Zakazano' ? 'scheduled' : 
+                       editingRound.status === 'U toku' ? 'in_progress' : 'completed'
+      
       const response = await fetch(`${apiUrl}/admin/gameweeks/${editingRound.id}`, {
         method: 'PUT',
         headers: {
@@ -127,8 +131,7 @@ export default function AdminRounds() {
           season: editingRound.season,
           start_date: editingRound.startDate + 'T00:00:00',
           end_date: editingRound.endDate + 'T00:00:00',
-          status: editingRound.status === 'Zakazano' ? 'scheduled' : 
-                 editingRound.status === 'U toku' ? 'in_progress' : 'completed'
+          status: newStatus
         }),
       })
       
@@ -143,8 +146,7 @@ export default function AdminRounds() {
                 season: editingRound.season,
                 start_date: editingRound.startDate + 'T00:00:00',
                 end_date: editingRound.endDate + 'T00:00:00',
-                status: editingRound.status === 'Zakazano' ? 'scheduled' : 
-                       editingRound.status === 'U toku' ? 'in_progress' : 'completed'
+                status: newStatus
               }
             }
             return round
@@ -152,6 +154,14 @@ export default function AdminRounds() {
         )
         setShowEditModal(false)
         setEditingRound(null)
+        
+        // Ako je status promijenjen na "Završeno", automatski kreiraj snapshote
+        if (newStatus === 'completed') {
+          const shouldCreateSnapshots = confirm('Kolo je završeno. Želiš li automatski kreirati snapshote za sve korisnike?')
+          if (shouldCreateSnapshots) {
+            await createSnapshots(editingRound.id)
+          }
+        }
       } else {
         const errorData = await response.json()
         alert(`Greška: ${errorData.detail}`)
@@ -159,6 +169,32 @@ export default function AdminRounds() {
     } catch (error) {
       console.error('Greška pri ažuriranju kola:', error)
       alert('Greška pri ažuriranju kola')
+    }
+  }
+
+  const createSnapshots = async (gameweekId) => {
+    try {
+      setCreatingSnapshots(true)
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"
+      const response = await fetch(`${apiUrl}/gameweek-teams/auto-snapshot/${gameweekId}`, {
+        method: 'POST',
+      })
+      
+      if (response.ok) {
+        const result = await response.json()
+        alert(`Uspješno kreirano ${result.created_snapshots} snapshot-a!`)
+        if (result.errors && result.errors.length > 0) {
+          console.warn('Greške pri kreiranju snapshot-a:', result.errors)
+        }
+      } else {
+        const errorData = await response.json()
+        alert(`Greška: ${errorData.detail}`)
+      }
+    } catch (error) {
+      console.error('Greška pri kreiranju snapshot-a:', error)
+      alert('Greška pri kreiranju snapshot-a')
+    } finally {
+      setCreatingSnapshots(false)
     }
   }
 
@@ -257,6 +293,16 @@ export default function AdminRounds() {
                     Pregledaj utakmice
                   </Link>
                   <div className={styles.actionButtons}>
+                    {round.status === 'completed' && (
+                      <button 
+                        className={styles.snapshotButton} 
+                        onClick={() => createSnapshots(round.id)}
+                        disabled={creatingSnapshots}
+                        title="Kreiraj snapshote za sve korisnike"
+                      >
+                        <FaCamera />
+                      </button>
+                    )}
                     <button className={styles.editButton} onClick={() => handleEditClick(round)}>
                       <FaEdit />
                     </button>
