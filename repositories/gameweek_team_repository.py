@@ -6,11 +6,12 @@ from models.gameweek_model import Gameweek
 from typing import List, Optional
 from datetime import datetime
 
-def create_gameweek_team(session: Session, gameweek_team: GameweekTeam) -> GameweekTeam:
+def create_gameweek_team(session: Session, gameweek_team: GameweekTeam, commit=True) -> GameweekTeam:
     """Kreira novi gameweek tim"""
     session.add(gameweek_team)
-    session.commit()
-    session.refresh(gameweek_team)
+    if commit:
+        session.commit()
+        session.refresh(gameweek_team)
     return gameweek_team
 
 def get_gameweek_team_by_id(session: Session, team_id: int) -> Optional[GameweekTeam]:
@@ -39,11 +40,12 @@ def get_completed_gameweek_teams(session: Session, user_id: int) -> List[Gamewee
     )
     return list(session.exec(statement).all())
 
-def create_gameweek_player(session: Session, gameweek_player: GameweekPlayer) -> GameweekPlayer:
+def create_gameweek_player(session: Session, gameweek_player: GameweekPlayer, commit=True) -> GameweekPlayer:
     """Kreira novog gameweek igrača"""
     session.add(gameweek_player)
-    session.commit()
-    session.refresh(gameweek_player)
+    if commit:
+        session.commit()
+        session.refresh(gameweek_player)
     return gameweek_player
 
 def get_gameweek_team_players(session: Session, gameweek_team_id: int) -> List[GameweekPlayer]:

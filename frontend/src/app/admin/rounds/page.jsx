@@ -118,9 +118,9 @@ export default function AdminRounds() {
   const saveEditChanges = async () => {
     try {
       const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"
+      // Status šaljemo malim slovima
       const newStatus = editingRound.status === 'Zakazano' ? 'scheduled' : 
                        editingRound.status === 'U toku' ? 'in_progress' : 'completed'
-      
       const response = await fetch(`${apiUrl}/admin/gameweeks/${editingRound.id}`, {
         method: 'PUT',
         headers: {
@@ -134,9 +134,7 @@ export default function AdminRounds() {
           status: newStatus
         }),
       })
-      
       if (response.ok) {
-        // Ažuriraj lokalno stanje sa ispravnim formatom podataka
         setRounds(
           rounds.map((round) => {
             if (round.id === editingRound.id) {
@@ -154,8 +152,6 @@ export default function AdminRounds() {
         )
         setShowEditModal(false)
         setEditingRound(null)
-        
-        // Ako je status promijenjen na "Završeno", automatski kreiraj snapshote
         if (newStatus === 'completed') {
           const shouldCreateSnapshots = confirm('Kolo je završeno. Želiš li automatski kreirati snapshote za sve korisnike?')
           if (shouldCreateSnapshots) {
@@ -176,23 +172,27 @@ export default function AdminRounds() {
     try {
       setCreatingSnapshots(true)
       const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"
-      const response = await fetch(`${apiUrl}/gameweek-teams/auto-snapshot/${gameweekId}`, {
-        method: 'POST',
+      // Status šaljemo malim slovima
+      const response = await fetch(`${apiUrl}/admin/gameweeks/${gameweekId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ status: 'completed' }),
       })
-      
       if (response.ok) {
         const result = await response.json()
-        alert(`Uspješno kreirano ${result.created_snapshots} snapshot-a!`)
-        if (result.errors && result.errors.length > 0) {
-          console.warn('Greške pri kreiranju snapshot-a:', result.errors)
+        alert(`Snapshoti su automatski kreirani!`)
+        if (result.fantasy_snapshot && result.fantasy_snapshot.errors && result.fantasy_snapshot.errors.length > 0) {
+          console.warn('Greške pri kreiranju snapshot-a:', result.fantasy_snapshot.errors)
         }
       } else {
         const errorData = await response.json()
         alert(`Greška: ${errorData.detail}`)
       }
     } catch (error) {
-      console.error('Greška pri kreiranju snapshot-a:', error)
-      alert('Greška pri kreiranju snapshot-a')
+      console.error('Greška pri snapshotanju kola:', error)
+      alert('Greška pri snapshotanju kola')
     } finally {
       setCreatingSnapshots(false)
     }

@@ -22,42 +22,55 @@ class GameweekTeamService:
         self.session = session
     
     def create_snapshots_for_completed_gameweek(self, gameweek_id: int) -> Dict[str, Any]:
-        """Kreira snapshote za sve korisnike kada se kolo završi"""
+        print("[DEBUG] === POZVANA create_snapshots_for_completed_gameweek ===")
         # Provjeri da li kolo postoji i da li je završeno
         gameweek_statement = select(Gameweek).where(Gameweek.id == gameweek_id)
         gameweek = self.session.exec(gameweek_statement).first()
+        print(f"[DEBUG] gameweek_id: {gameweek_id}, gameweek: {gameweek}")
         
         if not gameweek:
+            print("[DEBUG] Kolo nije pronađeno!")
             return {"success": False, "message": "Kolo nije pronađeno"}
         
-        # Debug: ispiši status kola
-        print(f"Gameweek {gameweek.id} status: {gameweek.status} (type: {type(gameweek.status)})")
-        
-        if getattr(gameweek.status, 'name', str(gameweek.status)) != "COMPLETED":
-            return {"success": False, "message": f"Kolo nije završeno. Status: {getattr(gameweek.status, 'name', str(gameweek.status))}"}
+        print(f"[DEBUG] STATUS U SNAPSHOT SERVISU: {gameweek.status} (type: {type(gameweek.status)})")
+        status_str = getattr(gameweek.status, 'name', str(gameweek.status)).lower()
+        print(f"[DEBUG] status_str (lower): {status_str}")
+        if status_str != "completed":
+            print(f"[DEBUG] Kolo nije završeno. Status: {status_str}")
+            return {"success": False, "message": f"Kolo nije završeno. Status: {status_str}"}
+        else:
+            print("[DEBUG] === SNAPSHOT LOGIKA SE IZVRŠAVA ===")
         
         # Dohvati sve fantasy timove
         fantasy_teams_statement = select(FantasyTeam)
         fantasy_teams = list(self.session.exec(fantasy_teams_statement).all())
+        print(f"[DEBUG] FANTASY TEAMS COUNT: {len(fantasy_teams)} | IDS: {[ft.id for ft in fantasy_teams]}")
         
         created_snapshots = 0
         errors = []
-        
         for fantasy_team in fantasy_teams:
             try:
-                with Session(engine) as session:
-                    # Svaki korisnik ima svoju sesiju
-                    service = GameweekTeamService(session)
-                    existing_snapshot = get_user_gameweek_team(session, fantasy_team.user_id, gameweek_id)
-                    if existing_snapshot:
-                        continue
-                    snapshot = service.create_team_snapshot(fantasy_team.user_id, gameweek_id, commit=True)
-                    if snapshot:
-                        created_snapshots += 1
-                    else:
-                        errors.append(f"Greška pri kreiranju snapshot-a za korisnika {fantasy_team.user_id}")
+                print(f"[DEBUG] --- User {fantasy_team.user_id} ---")
+                existing_snapshot = get_user_gameweek_team(self.session, fantasy_team.user_id, gameweek_id)
+                print(f"[DEBUG] Postoji snapshot? {existing_snapshot}")
+                if existing_snapshot:
+                    print(f"[DEBUG] Preskačem user {fantasy_team.user_id} (već postoji snapshot)")
+                    continue
+                snapshot = self.create_team_snapshot(fantasy_team.user_id, gameweek_id, commit=False)
+                print(f"[DEBUG] Kreiran snapshot: {snapshot}")
+                if snapshot:
+                    created_snapshots += 1
+                else:
+                    errors.append(f"Greška pri kreiranju snapshot-a za korisnika {fantasy_team.user_id}")
             except Exception as e:
+                print(f"[DEBUG] Greška za korisnika {fantasy_team.user_id}: {str(e)}")
                 errors.append(f"Greška za korisnika {fantasy_team.user_id}: {str(e)}")
+        print(f"[DEBUG] SESSION DIRTY: {self.session.dirty}, NEW: {self.session.new}, DELETED: {self.session.deleted}")
+        self.session.flush()
+        print(f"[DEBUG] SESSION FLUSHED")
+        self.session.commit()
+        print(f"[DEBUG] SESSION COMMIT DONE")
+        print(f"[DEBUG] === POVRATNA VRIJEDNOST: Kreirano {created_snapshots} snapshot-a, errors: {errors} ===")
         return {
             "success": True,
             "message": f"Kreirano {created_snapshots} snapshot-a za kolo {gameweek_id}",
@@ -79,11 +92,11 @@ class GameweekTeamService:
             return None
         
         # Dohvati igrače tima sa informacijama o kapitenima
-        team_players_statement = select(FantasyTeamPlayer, Player).join(Player).where(
+        team_players_statement = select(FantasyTeamPlayer, Player).join(Player, Player.id == FantasyTeamPlayer.player_id).where(
             FantasyTeamPlayer.fantasy_team_id == fantasy_team.id
         )
         team_players_data = self.session.exec(team_players_statement).all()
-        
+        print(f"[DEBUG] team_players_data: {team_players_data}")
         # Pronađi kapiten i vice-kapiten
         captain_id = None
         vice_captain_id = None
@@ -103,10 +116,11 @@ class GameweekTeamService:
             total_points=0.0
         )
         
-        created_team = create_gameweek_team(self.session, gameweek_team)
-        
+        created_team = create_gameweek_team(self.session, gameweek_team, commit=commit)
+        self.session.flush()  # Osiguraj da team ima ID prije upisa igrača
         # Dodaj igrače u snapshot
         for ftp, player in team_players_data:
+            print(f"[DEBUG] Dodajem igrača {player.id} ({player.name}) u snapshot tima {created_team.id}")
             if player.id is not None and created_team.id is not None:
                 # Dohvati poene igrača za ovo kolo
                 points = self._get_player_points_for_gameweek(player.id, gameweek_id)
@@ -118,7 +132,7 @@ class GameweekTeamService:
                     is_bench=ftp.role == "BENCH",
                     points=points
                 )
-                create_gameweek_player(self.session, gameweek_player)
+                create_gameweek_player(self.session, gameweek_player, commit=commit)
         
         # Izračunaj ukupne poene
         if created_team.id is not None:
