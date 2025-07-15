@@ -2,6 +2,7 @@ from sqlmodel import SQLModel, Field
 from typing import Optional
 from enum import Enum
 from datetime import datetime
+from sqlalchemy import Column, Enum as PgEnum
 
 class NewsCategory(str, Enum):
     transfer = "transfer"
@@ -15,6 +16,6 @@ class News(SQLModel, table=True):
     title: str
     content: str
     image_url: Optional[str]
-    category: NewsCategory
+    category: NewsCategory = Field(sa_column=Column(PgEnum(NewsCategory, name="newscategory_enum"), name="category"))
     club_id: Optional[int] = Field(default=None, foreign_key="club.id")
     date_posted: datetime
