@@ -523,12 +523,10 @@ def get_team_current_gameweek_points_service(session: Session, fantasy_team_id: 
         
         print(f"DEBUG get_team_current_gameweek_points: Igrač {player.name} - ukupno poena: {total_points}")
         
-        # Izračunaj poene sa bonusom za kapiten i vice-kapiten
+        # Izračunaj poene sa bonusom samo za kapiten (vice-kapiten ostaje normalno)
         final_points = total_points
         if team_player.is_captain:
             final_points = total_points * 2
-        elif team_player.is_vice_captain:
-            final_points = total_points * 1.5
         
         players_with_points.append({
             "player_id": player.id,

@@ -925,3 +925,15 @@
   border-radius: 6px;
   border: 1px dashed #6c757d;
 }
+
+.benchPlayer {
+  opacity: 0.6;
+  background: #f8f9fa;
+}
+
+.benchLabel {
+  font-size: 0.7rem;
+  color: #6c757d;
+  font-style: italic;
+  margin-top: 0.2rem;
+}
