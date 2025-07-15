@@ -347,3 +347,151 @@
     display: none;
   }
 }
+
+.editModal {
+  background: #182952;
+  color: #e2e8f0;
+  border-radius: 12px;
+  min-width: 320px;
+  max-width: 460px;
+  padding: 1.5rem;
+  box-shadow: 0 2px 16px #0008;
+}
+
+.modalHeader {
+  background: #213b64;
+  padding: 1rem;
+  border-radius: 12px 12px 0 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.modalHeader h3 {
+  margin: 0;
+  color: #cfd7ff;
+  font-size: 1.25rem;
+  font-weight: 600;
+}
+
+.modalHeader button {
+  background: none;
+  border: none;
+  color: #cfd7ff;
+  font-size: 1.5rem;
+  cursor: pointer;
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.formGroup label {
+  display: block;
+  margin-bottom: 0.25rem;
+  font-weight: 500;
+  color: #e2e8f0;
+}
+
+.formGroup input,
+.formGroup select,
+.formGroup textarea {
+  width: 100%;
+  padding: 0.6rem 0.8rem;
+  background: #222b44;
+  color: #fff;
+  border: 1px solid #2f3e6e;
+  border-radius: 6px;
+  font-size: 0.95rem;
+}
+
+.formGroup input:focus,
+.formGroup select:focus,
+.formGroup textarea:focus {
+  outline: none;
+  border-color: #3f51b5;
+}
+
+.saveButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #28a745;
+  color: white;
+  padding: 0.7rem 1.2rem;
+  border-radius: 6px;
+  border: none;
+  font-size: 0.95rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.3s;
+}
+
+.saveButton:hover {
+  background: #218838;
+}
+
+.cancelButton {
+  background: #6c757d;
+  color: white;
+  padding: 0.6rem 1.2rem;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.95rem;
+  font-weight: 500;
+  transition: background 0.3s;
+}
+
+.cancelButton:hover {
+  background: #5a6268;
+}
+
+.formRow {
+  display: flex;
+  gap: 1rem;
+  justify-content: space-between;
+}
+
+.formRow .formGroup {
+  flex: 1;
+}
+
+
+.playersTable {
+  background: #182952;
+  color: #e2e8f0;
+}
+
+.tableHeader {
+  background: #213b64;
+  border-bottom: 1px solid #2f4369;
+}
+
+.headerCell {
+  color: #cfd7ff;
+}
+
+.tableRow {
+  background: #182952;
+}
+
+.zebraRow {
+  background: #1f3256;
+}
+
+.tableRow:hover {
+  background: #2a4370;
+}
+
+.playerName {
+  color: #e2e8f0;
+}
+
+.playerNationality {
+  color: #b0bbd1;
+}
+

@@ -5,6 +5,8 @@ from database import get_session
 from models.gameweek_model import GameweekStatus
 from schemas.gameweek_schema import GameweekCreate, GameweekUpdate, GameweekResponse, GameweekListResponse
 from services.gameweek_service import GameweekService
+from services.transfer_service import TransferService
+from services.gameweek_team_service import GameweekTeamService
 
 router = APIRouter(prefix="/admin/gameweeks", tags=["gameweeks"])
 
@@ -107,10 +109,32 @@ def update_gameweek(
     """Ažurira kolo"""
     try:
         service = GameweekService(db)
+        # Pronađi trenutno stanje prije update-a
+        old_gameweek = service.get_gameweek(gameweek_id)
         gameweek = service.update_gameweek(gameweek_id, gameweek_data)
         if not gameweek:
             raise HTTPException(status_code=404, detail="Kolo nije pronađeno")
-        return gameweek
+        
+        # Ako je status Enum GameweekStatus.COMPLETED, pokreni snapshot
+        snapshot_result = None
+        db_status = getattr(gameweek, 'status', None)
+        print(f"[DEBUG] db_status nakon update-a: {db_status} (type: {type(db_status)})")
+        if db_status == GameweekStatus.COMPLETED:
+            print("[DEBUG] === SNAPSHOT IF BLOK (GameweekStatus.COMPLETED) ===")
+            snapshot_service = GameweekTeamService(db)
+            snapshot_result = snapshot_service.create_snapshots_for_completed_gameweek(gameweek_id)
+        
+        # Automatski ažuriraj transfer window status ako se promijenio status kola
+        if gameweek_data.status is not None:
+            try:
+                transfer_service = TransferService(db)
+                transfer_service.check_and_update_transfer_window_status("2024/25")
+            except Exception as e:
+                print(f"Transfer window update error: {e}")
+                # Ne prekidaj ažuriranje kola ako transfer window update ne uspije
+        
+        # Vraćamo i snapshot rezultat radi lakšeg testiranja
+        return {**gameweek.dict(), "fantasy_snapshot": snapshot_result}
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
     except HTTPException:
@@ -149,7 +173,22 @@ def change_gameweek_status(
         gameweek = service.change_gameweek_status(gameweek_id, status)
         if not gameweek:
             raise HTTPException(status_code=404, detail="Kolo nije pronađeno")
-        return gameweek
+        
+        # Ako je kolo sada COMPLETED, kreiraj snapshot za sve fantasy timove
+        snapshot_result = None
+        if status == GameweekStatus.COMPLETED:
+            snapshot_service = GameweekTeamService(db)
+            snapshot_result = snapshot_service.create_snapshots_for_completed_gameweek(gameweek_id)
+        
+        # Automatski ažuriraj transfer window status nakon promjene statusa kola
+        transfer_service = TransferService(db)
+        auto_update_result = transfer_service.check_and_update_transfer_window_status("2024/25")
+        
+        return {
+            "gameweek": gameweek,
+            "transfer_window_update": auto_update_result,
+            "fantasy_snapshot": snapshot_result
+        }
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
     except HTTPException:

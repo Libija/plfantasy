@@ -5,11 +5,13 @@ import { useState, useEffect } from "react"
 export default function useAuth() {
   const [user, setUser] = useState(null)
   const [token, setToken] = useState(null)
+  const [loading, setLoading] = useState(true)
 
   // Funkcija za učitavanje auth stanja
   const loadAuth = () => {
     const storedUser = localStorage.getItem("user")
     const storedToken = localStorage.getItem("access_token")
+    console.log("Loading auth:", { storedUser: !!storedUser, storedToken: !!storedToken })
     if (storedUser && storedToken) {
       setUser(JSON.parse(storedUser))
       setToken(storedToken)
@@ -17,6 +19,7 @@ export default function useAuth() {
       setUser(null)
       setToken(null)
     }
+    setLoading(false)
   }
 
   useEffect(() => {
@@ -49,5 +52,5 @@ export default function useAuth() {
     window.location.href = "/"
   }
 
-  return { user, token, isLoggedIn, role, logout }
+  return { user, token, isLoggedIn, role, logout, loading }
 } 

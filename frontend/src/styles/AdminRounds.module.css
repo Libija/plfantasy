@@ -172,7 +172,8 @@
 }
 
 .editButton,
-.deleteButton {
+.deleteButton,
+.snapshotButton {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -203,6 +204,20 @@
 }
 
 .deleteButton:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.snapshotButton {
+  background-color: #f0f8ff;
+  color: #0066cc;
+}
+
+.snapshotButton:hover:not(:disabled) {
+  background-color: #e6f3ff;
+}
+
+.snapshotButton:disabled {
   opacity: 0.5;
   cursor: not-allowed;
 }

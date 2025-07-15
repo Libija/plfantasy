@@ -2,6 +2,7 @@ from sqlmodel import SQLModel, Field
 from typing import Optional
 from datetime import datetime
 from enum import Enum
+from sqlalchemy import Column, Enum as PgEnum
 
 class MatchStatus(str, Enum):
     SCHEDULED = "scheduled"      # Zakazana
@@ -18,6 +19,6 @@ class Match(SQLModel, table=True):
     referee: Optional[str] = Field(default=None, description="Ime i prezime sudije")
     home_score: Optional[int] = Field(default=None, description="Golovi domaćeg tima")
     away_score: Optional[int] = Field(default=None, description="Golovi gostujućeg tima")
-    status: MatchStatus = Field(default=MatchStatus.SCHEDULED, description="Status utakmice")
+    status: MatchStatus = Field(default=MatchStatus.SCHEDULED, sa_column=Column(PgEnum(MatchStatus, name="matchstatus_enum"), name="status"), description="Status utakmice")
     created_at: datetime = Field(default_factory=datetime.utcnow)
     updated_at: datetime = Field(default_factory=datetime.utcnow)

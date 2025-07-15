@@ -98,24 +98,31 @@
 
 .weeklyStats {
   display: flex;
-  gap: 1.5rem;
+  justify-content: center;
+  align-items: center;
+  gap: 0;
 }
 
 .weeklyStatItem {
   display: flex;
   flex-direction: column;
   align-items: center;
+  justify-content: center;
+  width: 100%;
 }
 
 .weeklyStatValue {
-  font-size: 1.5rem;
-  font-weight: 700;
+  font-size: 2.2rem;
+  font-weight: 800;
   color: var(--accent-color);
+  text-align: center;
 }
 
 .weeklyStatLabel {
-  font-size: 0.8rem;
-  color: var(--text-muted);
+  font-size: 1rem;
+  color: var(--text-light);
+  text-align: center;
+  margin-top: 0.2rem;
 }
 
 .dashboardGrid {
@@ -298,8 +305,6 @@
   border-radius: var(--border-radius-md);
   padding: 1.5rem;
   box-shadow: var(--shadow-md);
-  animation: slideUp 0.5s ease 0.4s forwards;
-  opacity: 0;
 }
 
 .rankingList {

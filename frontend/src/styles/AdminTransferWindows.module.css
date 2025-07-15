@@ -1,0 +1,386 @@
+.container {
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 2rem;
+}
+
+.pageHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2rem;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.backButton {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1rem;
+  background: #f8f9fa;
+  color: #495057;
+  text-decoration: none;
+  border-radius: 8px;
+  transition: all 0.2s ease;
+}
+
+.backButton:hover {
+  background: #e9ecef;
+  transform: translateY(-1px);
+}
+
+.title {
+  font-size: 2.5rem;
+  font-weight: bold;
+  color: #2c3e50;
+  margin: 0;
+}
+
+.createButton {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.5rem;
+  background: #28a745;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-weight: 500;
+}
+
+.createButton:hover {
+  background: #218838;
+  transform: translateY(-1px);
+}
+
+.headerActions {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+}
+
+.autoUpdateButton {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.5rem;
+  background: #17a2b8;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-weight: 500;
+}
+
+.autoUpdateButton:hover {
+  background: #138496;
+  transform: translateY(-1px);
+}
+
+.content {
+  background: white;
+  border-radius: 12px;
+  padding: 2rem;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+.autoUpdateStatus {
+  background: #e3f2fd;
+  border: 1px solid #2196f3;
+  border-radius: 8px;
+  padding: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.autoUpdateStatus h3 {
+  margin: 0 0 1rem 0;
+  color: #1976d2;
+  font-size: 1.2rem;
+}
+
+.autoUpdateStatus p {
+  margin: 0.5rem 0;
+  color: #424242;
+}
+
+.windowsList h2 {
+  margin: 0 0 2rem 0;
+  color: #2c3e50;
+  font-size: 1.8rem;
+}
+
+.emptyState {
+  text-align: center;
+  padding: 3rem;
+  color: #6c757d;
+}
+
+.emptyState p {
+  margin-bottom: 1rem;
+  font-size: 1.1rem;
+}
+
+.windowsGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+  gap: 1.5rem;
+}
+
+.windowCard {
+  background: #f8f9fa;
+  border-radius: 12px;
+  padding: 1.5rem;
+  border: 1px solid #dee2e6;
+  transition: all 0.2s ease;
+}
+
+.windowCard:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+}
+
+.windowHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.windowHeader h3 {
+  margin: 0;
+  color: #2c3e50;
+  font-size: 1.3rem;
+}
+
+.windowDetails {
+  margin-bottom: 1.5rem;
+}
+
+.windowDetails p {
+  margin: 0.5rem 0;
+  color: #495057;
+}
+
+.windowActions {
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.openButton,
+.closeButton,
+.viewButton {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-size: 0.9rem;
+  text-decoration: none;
+}
+
+.openButton {
+  background: #28a745;
+  color: white;
+}
+
+.openButton:hover {
+  background: #218838;
+}
+
+.closeButton {
+  background: #dc3545;
+  color: white;
+}
+
+.closeButton:hover {
+  background: #c82333;
+}
+
+.viewButton {
+  background: #17a2b8;
+  color: white;
+}
+
+.viewButton:hover {
+  background: #138496;
+}
+
+.openBadge {
+  background: #28a745;
+  color: white;
+  padding: 0.25rem 0.75rem;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  font-weight: 500;
+}
+
+.closedBadge {
+  background: #6c757d;
+  color: white;
+  padding: 0.25rem 0.75rem;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  font-weight: 500;
+}
+
+.testModeBadge {
+  background: #ffc107;
+  color: #212529;
+  padding: 0.25rem 0.75rem;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  font-weight: 500;
+}
+
+.unknownBadge {
+  background: #6c757d;
+  color: white;
+  padding: 0.25rem 0.75rem;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  font-weight: 500;
+}
+
+/* Modal Styles */
+.modalOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.modal {
+  background: white;
+  border-radius: 12px;
+  width: 90%;
+  max-width: 500px;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+}
+
+.modalHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.5rem;
+  border-bottom: 1px solid #dee2e6;
+}
+
+.modalHeader h3 {
+  margin: 0;
+  color: #2c3e50;
+}
+
+.closeModalBtn {
+  width: 32px;
+  height: 32px;
+  border: none;
+  background: #f8f9fa;
+  border-radius: 50%;
+  cursor: pointer;
+  font-size: 1.2rem;
+  color: #6c757d;
+}
+
+.modalForm {
+  padding: 1.5rem;
+}
+
+.formGroup {
+  margin-bottom: 1.5rem;
+}
+
+.formGroup label {
+  display: block;
+  margin-bottom: 0.5rem;
+  color: #495057;
+  font-weight: 500;
+}
+
+.formGroup input[type="text"],
+.formGroup input[type="number"],
+.formGroup input[type="datetime-local"] {
+  width: 100%;
+  padding: 0.75rem;
+  border: 1px solid #dee2e6;
+  border-radius: 6px;
+  font-size: 1rem;
+}
+
+.formGroup input:focus {
+  outline: none;
+  border-color: #667eea;
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+.checkboxLabel {
+  display: flex !important;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+}
+
+.checkboxLabel input[type="checkbox"] {
+  width: auto;
+  margin: 0;
+}
+
+.modalActions {
+  display: flex;
+  gap: 1rem;
+  justify-content: flex-end;
+  margin-top: 2rem;
+}
+
+.cancelButton {
+  padding: 0.75rem 1.5rem;
+  background: #6c757d;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.cancelButton:hover {
+  background: #5a6268;
+}
+
+.submitButton {
+  padding: 0.75rem 1.5rem;
+  background: #28a745;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.submitButton:hover {
+  background: #218838;
+}
+
+.loading {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 50vh;
+  font-size: 1.2rem;
+  color: #6c757d;
+} 

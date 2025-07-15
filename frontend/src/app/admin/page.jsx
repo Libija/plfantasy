@@ -1,18 +1,47 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import Head from "next/head"
 import Link from "next/link"
-import { FaNewspaper, FaUsers, FaUserTie, FaFutbol, FaChartBar, FaTrophy } from "react-icons/fa"
+import { FaNewspaper, FaUsers, FaUserTie, FaFutbol, FaChartBar, FaTrophy, FaExchangeAlt } from "react-icons/fa"
 import styles from "../../styles/AdminDashboard.module.css"
 
 export default function AdminDashboard() {
-  const [stats] = useState({
-    news: { total: 45, published: 38, drafts: 7 },
-    clubs: { total: 12, active: 12 },
-    players: { total: 284, active: 268, injured: 16 },
-    matches: { total: 180, completed: 165, upcoming: 15 },
+  const [stats, setStats] = useState({
+    news: { total: 0 },
+    clubs: { total: 0 },
+    players: { total: 0 },
+    matches: { total: 0 },
   })
+
+  useEffect(() => {
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"
+    const fetchStats = async () => {
+      try {
+        const [newsRes, clubsRes, playersRes, matchesRes] = await Promise.all([
+          fetch(`${apiUrl}/admin/news/`),
+          fetch(`${apiUrl}/admin/clubs/`),
+          fetch(`${apiUrl}/admin/players/`),
+          fetch(`${apiUrl}/admin/matches/`),
+        ])
+        const [news, clubs, players, matches] = await Promise.all([
+          newsRes.ok ? newsRes.json() : [],
+          clubsRes.ok ? clubsRes.json() : [],
+          playersRes.ok ? playersRes.json() : [],
+          matchesRes.ok ? matchesRes.json() : [],
+        ])
+        setStats({
+          news: { total: news.length },
+          clubs: { total: clubs.length },
+          players: { total: players.length },
+          matches: { total: matches.length },
+        })
+      } catch (err) {
+        // fallback: ne prikazuj ništa
+      }
+    }
+    fetchStats()
+  }, [])
 
   const [recentActivity] = useState([
     { id: 1, type: "news", action: "Kreirana nova vijest", item: "Sarajevo pobjedilo Zrinjski", time: "prije 2 sata" },
@@ -42,10 +71,6 @@ export default function AdminDashboard() {
             <div className={styles.statContent}>
               <h3 className={styles.statNumber}>{stats.news.total}</h3>
               <p className={styles.statLabel}>Ukupno vijesti</p>
-              <div className={styles.statDetails}>
-                <span>{stats.news.published} objavljeno</span>
-                <span>{stats.news.drafts} draft</span>
-              </div>
             </div>
           </div>
 
@@ -56,9 +81,6 @@ export default function AdminDashboard() {
             <div className={styles.statContent}>
               <h3 className={styles.statNumber}>{stats.clubs.total}</h3>
               <p className={styles.statLabel}>Klubovi</p>
-              <div className={styles.statDetails}>
-                <span>{stats.clubs.active} aktivno</span>
-              </div>
             </div>
           </div>
 
@@ -69,10 +91,6 @@ export default function AdminDashboard() {
             <div className={styles.statContent}>
               <h3 className={styles.statNumber}>{stats.players.total}</h3>
               <p className={styles.statLabel}>Igrači</p>
-              <div className={styles.statDetails}>
-                <span>{stats.players.active} aktivno</span>
-                <span>{stats.players.injured} povrijeđeno</span>
-              </div>
             </div>
           </div>
 
@@ -83,21 +101,18 @@ export default function AdminDashboard() {
             <div className={styles.statContent}>
               <h3 className={styles.statNumber}>{stats.matches.total}</h3>
               <p className={styles.statLabel}>Utakmice</p>
-              <div className={styles.statDetails}>
-                <span>{stats.matches.completed} završeno</span>
-                <span>{stats.matches.upcoming} predstoji</span>
-              </div>
             </div>
           </div>
         </div>
 
         
 
-        <div className={styles.mainContent}>
-          <div className={styles.leftColumn}>
-            <div className={styles.section}>
+        {/* Centrirani blok za upravljanje sadržajem */}
+        <div style={{ display: 'flex', justifyContent: 'center', width: '100%', marginTop: 32 }}>
+          <div style={{ maxWidth: 1050, width: '100%' }}>
+            <div className={styles.section} style={{ margin: 0 }}>
               <h2 className={styles.sectionTitle}>Upravljanje sadržajem</h2>
-              <div className={styles.menuGrid}>
+              <div className={styles.menuGrid} style={{ justifyContent: 'center', display: 'flex', flexWrap: 'wrap', gap: '1.5rem', maxWidth: '900px', margin: '0 auto' }}>
                 <Link href="/admin/news" className={styles.menuCard}>
                   <div className={styles.menuIcon}>
                     <FaNewspaper />
@@ -128,58 +143,25 @@ export default function AdminDashboard() {
                   </div>
                 </Link>
 
-                <Link href="/admin/matches" className={styles.menuCard}>
-                  <div className={styles.menuIcon}>
-                    <FaFutbol />
-                  </div>
-                  <div className={styles.menuContent}>
-                    <h3>Utakmice</h3>
-                    <p>Rezultati i događaji utakmica</p>
-                  </div>
-                </Link>
-
-                <Link href="/admin/statistics" className={styles.menuCard}>
+                <Link href="/admin/rounds" className={styles.menuCard}>
                   <div className={styles.menuIcon}>
                     <FaChartBar />
                   </div>
                   <div className={styles.menuContent}>
-                    <h3>Statistike</h3>
-                    <p>Pregled svih statistika lige</p>
+                    <h3>Kola</h3>
+                    <p>Upravljanje kolima i rasporedom</p>
                   </div>
                 </Link>
 
-                <Link href="/admin/fantasy" className={styles.menuCard}>
+                <Link href="/admin/transfer-windows" className={styles.menuCard}>
                   <div className={styles.menuIcon}>
-                    <FaTrophy />
+                    <FaExchangeAlt />
                   </div>
                   <div className={styles.menuContent}>
-                    <h3>Fantasy</h3>
-                    <p>Upravljanje fantasy sistemom</p>
+                    <h3>Transfer Windows</h3>
+                    <p>Upravljanje transfer window-ima</p>
                   </div>
                 </Link>
-              </div>
-            </div>
-          </div>
-
-          <div className={styles.rightColumn}>
-            <div className={styles.section}>
-              <h2 className={styles.sectionTitle}>Nedavne aktivnosti</h2>
-              <div className={styles.activityList}>
-                {recentActivity.map((activity) => (
-                  <div key={activity.id} className={styles.activityItem}>
-                    <div className={styles.activityIcon}>
-                      {activity.type === "news" && <FaNewspaper />}
-                      {activity.type === "match" && <FaFutbol />}
-                      {activity.type === "player" && <FaUserTie />}
-                      {activity.type === "club" && <FaUsers />}
-                    </div>
-                    <div className={styles.activityContent}>
-                      <p className={styles.activityAction}>{activity.action}</p>
-                      <p className={styles.activityItem}>{activity.item}</p>
-                      <span className={styles.activityTime}>{activity.time}</span>
-                    </div>
-                  </div>
-                ))}
               </div>
             </div>
           </div>

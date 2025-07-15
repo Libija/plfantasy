@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react"
 import Head from "next/head"
 import Link from "next/link"
-import { FaPlus, FaEdit, FaTrash, FaCalendarAlt, FaFutbol } from "react-icons/fa"
+import { FaPlus, FaEdit, FaTrash, FaCalendarAlt, FaFutbol, FaCamera } from "react-icons/fa"
 import styles from "../../../styles/AdminRounds.module.css"
 
 export default function AdminRounds() {
@@ -68,6 +68,7 @@ export default function AdminRounds() {
   const [roundToDelete, setRoundToDelete] = useState(null)
   const [showEditModal, setShowEditModal] = useState(false)
   const [editingRound, setEditingRound] = useState(null)
+  const [creatingSnapshots, setCreatingSnapshots] = useState(false)
 
   const handleDeleteClick = (round) => {
     setRoundToDelete(round)
@@ -117,6 +118,9 @@ export default function AdminRounds() {
   const saveEditChanges = async () => {
     try {
       const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"
+      // Status šaljemo malim slovima
+      const newStatus = editingRound.status === 'Zakazano' ? 'scheduled' : 
+                       editingRound.status === 'U toku' ? 'in_progress' : 'completed'
       const response = await fetch(`${apiUrl}/admin/gameweeks/${editingRound.id}`, {
         method: 'PUT',
         headers: {
@@ -127,13 +131,10 @@ export default function AdminRounds() {
           season: editingRound.season,
           start_date: editingRound.startDate + 'T00:00:00',
           end_date: editingRound.endDate + 'T00:00:00',
-          status: editingRound.status === 'Zakazano' ? 'scheduled' : 
-                 editingRound.status === 'U toku' ? 'in_progress' : 'completed'
+          status: newStatus
         }),
       })
-      
       if (response.ok) {
-        // Ažuriraj lokalno stanje sa ispravnim formatom podataka
         setRounds(
           rounds.map((round) => {
             if (round.id === editingRound.id) {
@@ -143,8 +144,7 @@ export default function AdminRounds() {
                 season: editingRound.season,
                 start_date: editingRound.startDate + 'T00:00:00',
                 end_date: editingRound.endDate + 'T00:00:00',
-                status: editingRound.status === 'Zakazano' ? 'scheduled' : 
-                       editingRound.status === 'U toku' ? 'in_progress' : 'completed'
+                status: newStatus
               }
             }
             return round
@@ -152,6 +152,12 @@ export default function AdminRounds() {
         )
         setShowEditModal(false)
         setEditingRound(null)
+        if (newStatus === 'completed') {
+          const shouldCreateSnapshots = confirm('Kolo je završeno. Želiš li automatski kreirati snapshote za sve korisnike?')
+          if (shouldCreateSnapshots) {
+            await createSnapshots(editingRound.id)
+          }
+        }
       } else {
         const errorData = await response.json()
         alert(`Greška: ${errorData.detail}`)
@@ -159,6 +165,36 @@ export default function AdminRounds() {
     } catch (error) {
       console.error('Greška pri ažuriranju kola:', error)
       alert('Greška pri ažuriranju kola')
+    }
+  }
+
+  const createSnapshots = async (gameweekId) => {
+    try {
+      setCreatingSnapshots(true)
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"
+      // Status šaljemo malim slovima
+      const response = await fetch(`${apiUrl}/admin/gameweeks/${gameweekId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ status: 'completed' }),
+      })
+      if (response.ok) {
+        const result = await response.json()
+        alert(`Snapshoti su automatski kreirani!`)
+        if (result.fantasy_snapshot && result.fantasy_snapshot.errors && result.fantasy_snapshot.errors.length > 0) {
+          console.warn('Greške pri kreiranju snapshot-a:', result.fantasy_snapshot.errors)
+        }
+      } else {
+        const errorData = await response.json()
+        alert(`Greška: ${errorData.detail}`)
+      }
+    } catch (error) {
+      console.error('Greška pri snapshotanju kola:', error)
+      alert('Greška pri snapshotanju kola')
+    } finally {
+      setCreatingSnapshots(false)
     }
   }
 
@@ -257,6 +293,16 @@ export default function AdminRounds() {
                     Pregledaj utakmice
                   </Link>
                   <div className={styles.actionButtons}>
+                    {round.status === 'completed' && (
+                      <button 
+                        className={styles.snapshotButton} 
+                        onClick={() => createSnapshots(round.id)}
+                        disabled={creatingSnapshots}
+                        title="Kreiraj snapshote za sve korisnike"
+                      >
+                        <FaCamera />
+                      </button>
+                    )}
                     <button className={styles.editButton} onClick={() => handleEditClick(round)}>
                       <FaEdit />
                     </button>

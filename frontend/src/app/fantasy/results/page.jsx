@@ -1,268 +1,155 @@
-"use client"
+'use client';
 
-import { useState } from "react"
-import Head from "next/head"
-import Link from "next/link"
-import { FaArrowLeft, FaTrophy, FaChartLine } from "react-icons/fa"
-import styles from "../../../styles/FantasyResults.module.css"
+import React, { useState, useEffect } from 'react';
+import useAuth from '../../../hooks/use-auth';
 
 export default function FantasyResults() {
-  const [selectedRound, setSelectedRound] = useState(15)
-  const [viewMode, setViewMode] = useState("my-team") // my-team, all-players
+  const [results, setResults] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [selectedIdx, setSelectedIdx] = useState(0); // index za izabrano kolo
+  const { user, isLoggedIn, loading: authLoading } = useAuth();
 
-  const rounds = Array.from({ length: 30 }, (_, i) => i + 1)
-
-  const [myTeamResults] = useState([
-    { id: 1, name: "Kenan Pirić", position: "GK", team: "Sarajevo", points: 6, price: 8.0, status: "played" },
-    { id: 2, name: "Siniša Stevanović", position: "DF", team: "Sarajevo", points: 8, price: 6.0, status: "played" },
-    { id: 3, name: "Amar Rahmanović", position: "MF", team: "Sarajevo", points: 12, price: 9.0, status: "played" },
-    { id: 4, name: "Benjamin Tatar", position: "FW", team: "Sarajevo", points: 15, price: 10.0, status: "played" },
-    { id: 5, name: "Nihad Mujakić", position: "DF", team: "Borac", points: 2, price: 5.0, status: "played" },
-    { id: 6, name: "Srđan Grahovac", position: "MF", team: "Borac", points: 7, price: 8.0, status: "played" },
-    { id: 7, name: "Stojan Vranješ", position: "FW", team: "Borac", points: 9, price: 9.0, status: "played" },
-    { id: 8, name: "Ermin Zec", position: "DF", team: "Željezničar", points: 0, price: 5.0, status: "not-played" },
-    { id: 9, name: "Dino Beširović", position: "MF", team: "Željezničar", points: 0, price: 7.0, status: "not-played" },
-    {
-      id: 10,
-      name: "Sulejman Krpić",
-      position: "FW",
-      team: "Željezničar",
-      points: 0,
-      price: 8.0,
-      status: "not-played",
-    },
-    { id: 11, name: "Hrvoje Barišić", position: "DF", team: "Zrinjski", points: 5, price: 6.0, status: "played" },
-  ])
-
-  const [topPerformers] = useState([
-    { id: 17, name: "Benjamin Tatar", position: "FW", team: "Sarajevo", points: 15, reason: "2 gola, 1 asistencija" },
-    { id: 11, name: "Amar Rahmanović", position: "MF", team: "Sarajevo", points: 12, reason: "1 gol, 2 asistencije" },
-    { id: 18, name: "Stojan Vranješ", position: "FW", team: "Borac", points: 11, reason: "1 gol, 1 asistencija" },
-    { id: 1, name: "Kenan Pirić", position: "GK", team: "Sarajevo", points: 10, reason: "Čist list, 3 odbrane" },
-    { id: 12, name: "Srđan Grahovac", position: "MF", team: "Borac", points: 9, reason: "1 gol" },
-  ])
-
-  const calculateTotalPoints = () => {
-    return myTeamResults.reduce((total, player) => total + player.points, 0)
-  }
-
-  const getPositionColor = (position) => {
-    switch (position) {
-      case "GK":
-        return "#f39c12"
-      case "DF":
-        return "#3498db"
-      case "MF":
-        return "#2ecc71"
-      case "FW":
-        return "#e74c3c"
-      default:
-        return "#95a5a6"
+  useEffect(() => {
+    if (authLoading) return;
+    if (!isLoggedIn) return;
+    if (user && user.id) {
+      fetchResults(user.id);
     }
+  }, [authLoading, isLoggedIn, user]);
+
+  const fetchResults = async (userId) => {
+    try {
+      setLoading(true);
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+      const response = await fetch(`${apiUrl}/fantasy/results/${userId}`);
+      if (response.ok) {
+        const data = await response.json();
+        setResults(data.sort((a, b) => a.gameweek_number - b.gameweek_number));
+        setSelectedIdx(data.length - 1); // default na zadnje kolo
+      } else {
+        alert('Greška: Nije moguće učitati rezultate');
+      }
+    } catch (error) {
+      console.error('Error fetching results:', error);
+      alert('Greška pri učitavanju rezultata');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (authLoading || loading) {
+    return (
+      <div className="container mx-auto px-4 py-8">
+        <h1 className="text-3xl font-bold mb-8">Fantasy Rezultati</h1>
+        <div className="text-center">Učitavanje...</div>
+      </div>
+    );
   }
 
-  const getStatusIcon = (status) => {
-    switch (status) {
-      case "played":
-        return "✓"
-      case "not-played":
-        return "○"
-      case "injured":
-        return "⚕"
-      case "suspended":
-        return "⚠"
-      default:
-        return "○"
-    }
+  if (!isLoggedIn) {
+  return (
+    <div className="container mx-auto px-4 py-8">
+        <h1 className="text-3xl font-bold mb-8">Fantasy Rezultati</h1>
+        <div className="text-center text-red-500">Morate biti prijavljeni da biste vidjeli rezultate.</div>
+        </div>
+    );
   }
 
-  const getStatusColor = (status) => {
-    switch (status) {
-      case "played":
-        return "#2ecc71"
-      case "not-played":
-        return "#95a5a6"
-      case "injured":
-        return "#e74c3c"
-      case "suspended":
-        return "#f39c12"
-      default:
-        return "#95a5a6"
-    }
+  if (!results.length) {
+    return (
+      <div className="container mx-auto px-4 py-8">
+        <h1 className="text-3xl font-bold mb-8">Fantasy Rezultati</h1>
+        <div className="text-center text-gray-500">Još nema rezultata iz završenih kola.</div>
+      </div>
+    );
   }
+
+  // Navigacija kroz kola
+  const prevGameweek = () => setSelectedIdx(idx => Math.max(0, idx - 1));
+  const nextGameweek = () => setSelectedIdx(idx => Math.min(results.length - 1, idx + 1));
+  const selected = results[selectedIdx];
+
+  // Kartice: ukupno bodova i prosjek
+  const totalPoints = selected.total_points;
+  const avgPoints = (selected.players.reduce((acc, p) => acc + (p.points || 0), 0) / selected.players.length).toFixed(1);
+
+  // Helper za badge boje
+  const positionBadge = (pos) => {
+    switch (pos) {
+      case 'GK': return { background: '#ffe066', color: '#222' };
+      case 'DF': return { background: '#228be6', color: '#fff' };
+      case 'MF': return { background: '#51cf66', color: '#fff' };
+      case 'FW': return { background: '#fa5252', color: '#fff' };
+      default: return { background: '#dee2e6', color: '#222' };
+    }
+  };
+
+  // Helper za prikaz tima (ako nema, prikazi '-')
+  const getTeamName = (player) => player.team_name || '-';
+
+  // Helper za cijenu
+  const formatPrice = (price) => `${Number(price).toFixed(1)}M`;
+
+  // Helper za bodove
+  const pointsColor = (points) => points > 0 ? '#22c55e' : points < 0 ? '#ef4444' : '#222';
 
   return (
-    <>
-      <Head>
-        <title>Fantasy Rezultati | PLKutak</title>
-        <meta name="description" content="Pregled fantasy rezultata po kolima" />
-      </Head>
-
-      <div className={styles.container}>
-        <div className={styles.pageHeader}>
-          <Link href="/fantasy" className={styles.backButton}>
-            <FaArrowLeft /> Nazad na dashboard
-          </Link>
-          <h1 className={styles.title}>Fantasy Rezultati</h1>
-        </div>
-
-        <div className={styles.controls}>
-          <div className={styles.roundSelector}>
-            <label htmlFor="round">Kolo:</label>
-            <select
-              id="round"
-              value={selectedRound}
-              onChange={(e) => setSelectedRound(Number.parseInt(e.target.value))}
-              className={styles.roundSelect}
-            >
-              {rounds.map((round) => (
-                <option key={round} value={round}>
-                  {round}. kolo
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div className={styles.viewModeSelector}>
-            <button
-              className={`${styles.viewModeButton} ${viewMode === "my-team" ? styles.active : ""}`}
-              onClick={() => setViewMode("my-team")}
-            >
-              Moj tim
-            </button>
-            <button
-              className={`${styles.viewModeButton} ${viewMode === "all-players" ? styles.active : ""}`}
-              onClick={() => setViewMode("all-players")}
-            >
-              Svi igrači
-            </button>
-          </div>
-        </div>
-
-        {viewMode === "my-team" && (
-          <div className={styles.myTeamSection}>
-            <div className={styles.teamSummary}>
-              <div className={styles.summaryCard}>
-                <div className={styles.summaryIcon}>
-                  <FaTrophy />
-                </div>
-                <div className={styles.summaryContent}>
-                  <h3>Ukupno bodova</h3>
-                  <div className={styles.summaryValue}>{calculateTotalPoints()}</div>
-                  <div className={styles.summarySubtext}>{selectedRound}. kolo</div>
-                </div>
-              </div>
-
-              <div className={styles.summaryCard}>
-                <div className={styles.summaryIcon}>
-                  <FaChartLine />
-                </div>
-                <div className={styles.summaryContent}>
-                  <h3>Prosječno po igraču</h3>
-                  <div className={styles.summaryValue}>
-                    {(calculateTotalPoints() / myTeamResults.length).toFixed(1)}
-                  </div>
-                  <div className={styles.summarySubtext}>bodova</div>
-                </div>
-              </div>
-            </div>
-
-            <div className={styles.playersResults}>
-              <h2 className={styles.sectionTitle}>Rezultati vašeg tima - {selectedRound}. kolo</h2>
-
-              <div className={styles.resultsTable}>
-                <div className={styles.tableHeader}>
-                  <div className={styles.headerCell}>Igrač</div>
-                  <div className={styles.headerCell}>Pozicija</div>
-                  <div className={styles.headerCell}>Tim</div>
-                  <div className={styles.headerCell}>Status</div>
-                  <div className={styles.headerCell}>Bodovi</div>
-                  <div className={styles.headerCell}>Cijena</div>
-                </div>
-
-                {myTeamResults.map((player) => (
-                  <div key={player.id} className={styles.tableRow}>
-                    <div className={styles.tableCell}>
-                      <div className={styles.playerInfo}>
-                        <div className={styles.playerName}>{player.name}</div>
+    <div style={{ minHeight: '100vh', background: '#111', padding: '32px 0' }}>
+      <div style={{ maxWidth: 900, margin: '0 auto' }}>
+        {/* Navigacija */}
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 24, gap: 16 }}>
+          <button onClick={prevGameweek} disabled={selectedIdx === 0} style={{ padding: '8px 18px', background: '#222', color: '#fff', border: 'none', borderRadius: 6, opacity: selectedIdx === 0 ? 0.5 : 1, cursor: selectedIdx === 0 ? 'not-allowed' : 'pointer' }}>&larr; Prethodno kolo</button>
+          <span style={{ color: '#fff', fontWeight: 600, fontSize: 20 }}>{selected.gameweek_number}. kolo</span>
+          <button onClick={nextGameweek} disabled={selectedIdx === results.length - 1} style={{ padding: '8px 18px', background: '#222', color: '#fff', border: 'none', borderRadius: 6, opacity: selectedIdx === results.length - 1 ? 0.5 : 1, cursor: selectedIdx === results.length - 1 ? 'not-allowed' : 'pointer' }}>Sljedeće kolo &rarr;</button>
                       </div>
+        {/* Kartice */}
+        <div style={{ display: 'flex', gap: 32, marginBottom: 32, justifyContent: 'center' }}>
+          <div style={{ background: '#18181b', borderRadius: 12, padding: 28, minWidth: 220, textAlign: 'center', color: '#fff', boxShadow: '0 2px 8px #0002' }}>
+            <div style={{ fontSize: 36, fontWeight: 700 }}>{totalPoints}</div>
+            <div style={{ color: '#bdbdbd', fontSize: 16 }}>Ukupno bodova</div>
+            <div style={{ color: '#666', fontSize: 13, marginTop: 4 }}>{selected.gameweek_number}. kolo</div>
                     </div>
-                    <div className={styles.tableCell}>
-                      <span className={styles.position} style={{ backgroundColor: getPositionColor(player.position) }}>
-                        {player.position}
-                      </span>
-                    </div>
-                    <div className={styles.tableCell}>{player.team}</div>
-                    <div className={styles.tableCell}>
-                      <span className={styles.status} style={{ color: getStatusColor(player.status) }}>
-                        {getStatusIcon(player.status)}
-                      </span>
-                    </div>
-                    <div className={styles.tableCell}>
-                      <span
-                        className={`${styles.points} ${player.points > 8 ? styles.highPoints : player.points < 3 ? styles.lowPoints : ""}`}
-                      >
-                        {player.points}
-                      </span>
-                    </div>
-                    <div className={styles.tableCell}>
-                      <span className={styles.price}>{player.price}M</span>
-                    </div>
-                  </div>
+          <div style={{ background: '#18181b', borderRadius: 12, padding: 28, minWidth: 220, textAlign: 'center', color: '#fff', boxShadow: '0 2px 8px #0002' }}>
+            <div style={{ fontSize: 36, fontWeight: 700 }}>{avgPoints}</div>
+            <div style={{ color: '#bdbdbd', fontSize: 16 }}>Prosječno po igraču</div>
+            <div style={{ color: '#666', fontSize: 13, marginTop: 4 }}>bodova</div>
+                              </div>
+                            </div>
+        {/* Tabela */}
+        <div style={{ background: '#fff', borderRadius: 12, boxShadow: '0 2px 8px #0001', padding: 32 }}>
+          <div style={{ fontSize: 20, fontWeight: 600, marginBottom: 18, color: '#111' }}>Rezultati vašeg tima - {selected.gameweek_number}. kolo</div>
+          <div style={{ overflowX: 'auto' }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 16, color: '#111' }}>
+              <thead>
+                <tr style={{ background: '#f3f4f6', color: '#111', fontWeight: 700 }}>
+                  <th style={{ padding: '10px 8px', textAlign: 'left' }}>IGRAČ</th>
+                  <th style={{ padding: '10px 8px', textAlign: 'left' }}>POZICIJA</th>
+                  {/* <th style={{ padding: '10px 8px', textAlign: 'left' }}>TIM</th> */}
+                  <th style={{ padding: '10px 8px', textAlign: 'right' }}>BODOVI</th>
+                  <th style={{ padding: '10px 8px', textAlign: 'right' }}>CIJENA</th>
+                </tr>
+              </thead>
+              <tbody>
+                {selected.players.map((player) => (
+                  <tr key={player.id} style={{ borderBottom: '1px solid #eee' }}>
+                    <td style={{ padding: '10px 8px', fontWeight: 500, display: 'flex', alignItems: 'center', gap: 8 }}>
+                      {player.player_name}
+                      {player.is_captain && <span style={{ marginLeft: 6, padding: '2px 8px', background: '#ffe066', color: '#222', borderRadius: 6, fontSize: 13, fontWeight: 700 }}>C</span>}
+                      {player.is_vice_captain && <span style={{ marginLeft: 4, padding: '2px 8px', background: '#ffa94d', color: '#222', borderRadius: 6, fontSize: 13, fontWeight: 700 }}>VC</span>}
+                    </td>
+                    <td style={{ padding: '10px 8px' }}>
+                      <span style={{ ...positionBadge(player.position), padding: '2px 10px', borderRadius: 8, fontWeight: 700, fontSize: 14 }}>{player.position}</span>
+                    </td>
+                    {/* <td style={{ padding: '10px 8px' }}>{getTeamName(player)}</td> */}
+                    <td style={{ padding: '10px 8px', textAlign: 'right', fontWeight: 700, color: pointsColor(player.points) }}>{player.points}</td>
+                    <td style={{ padding: '10px 8px', textAlign: 'right' }}>{formatPrice(player.price)}</td>
+                  </tr>
                 ))}
-              </div>
-            </div>
+              </tbody>
+            </table>
           </div>
-        )}
-
-        {viewMode === "all-players" && (
-          <div className={styles.allPlayersSection}>
-            <div className={styles.topPerformers}>
-              <h2 className={styles.sectionTitle}>Najbolji igrači {selectedRound}. kola</h2>
-
-              <div className={styles.performersGrid}>
-                {topPerformers.map((player, index) => (
-                  <div key={player.id} className={styles.performerCard}>
-                    <div className={styles.performerRank}>#{index + 1}</div>
-                    <div className={styles.performerInfo}>
-                      <div className={styles.performerName}>{player.name}</div>
-                      <div className={styles.performerTeam}>{player.team}</div>
-                      <div className={styles.performerReason}>{player.reason}</div>
-                    </div>
-                    <div className={styles.performerStats}>
-                      <span
-                        className={styles.performerPosition}
-                        style={{ backgroundColor: getPositionColor(player.position) }}
-                      >
-                        {player.position}
-                      </span>
-                      <div className={styles.performerPoints}>{player.points}</div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        )}
-
-        <div className={styles.roundNavigation}>
-          <button
-            className={styles.navButton}
-            disabled={selectedRound <= 1}
-            onClick={() => setSelectedRound(selectedRound - 1)}
-          >
-            ← Prethodno kolo
-          </button>
-          <span className={styles.currentRound}>{selectedRound}. kolo</span>
-          <button
-            className={styles.navButton}
-            disabled={selectedRound >= 30}
-            onClick={() => setSelectedRound(selectedRound + 1)}
-          >
-            Sljedeće kolo →
-          </button>
         </div>
-      </div>
-    </>
-  )
+              </div>
+    </div>
+  );
 }

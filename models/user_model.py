@@ -1,6 +1,7 @@
 from sqlmodel import SQLModel, Field
 from typing import Optional
 from enum import Enum
+from sqlalchemy import Column, Enum as PgEnum
 
 class Role(str, Enum):
     user = "user"
@@ -11,4 +12,4 @@ class User(SQLModel, table=True):
     username: str
     email: str
     hashed_password: str
-    role: Role = Field(default=Role.user)
+    role: Role = Field(default=Role.user, sa_column=Column(PgEnum(Role, name="userrole"), name="role"))
