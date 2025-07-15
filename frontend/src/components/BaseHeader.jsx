@@ -16,7 +16,7 @@ export default function BaseHeader({ logoHref = "/", navLinks = [], children, cl
         <div className={styles.logoContainer}>
           <Link href={logoHref}>
             <div className={styles.logo}>
-              <Image src="/logo.png" alt="PLKutak Logo" width={150} height={50} priority />
+              <Image src="/PL.png" alt="PLKutak Logo" width={150} height={150} priority />
             </div>
           </Link>
         </div>
