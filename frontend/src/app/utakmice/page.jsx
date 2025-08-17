@@ -10,7 +10,7 @@ export default function Utakmice() {
   const [upcomingMatches, setUpcomingMatches] = useState([])
   const [recentResults, setRecentResults] = useState([])
   const [gameweeks, setGameweeks] = useState([])
-  const [selectedGameweek, setSelectedGameweek] = useState("all")
+  const [selectedGameweek, setSelectedGameweek] = useState(null)
   const [loading, setLoading] = useState(true)
   const [mounted, setMounted] = useState(false)
 
@@ -21,7 +21,9 @@ export default function Utakmice() {
   }, [])
 
   useEffect(() => {
-    fetchMatches()
+    if (selectedGameweek) {
+      fetchMatches()
+    }
   }, [activeTab, selectedGameweek])
 
   const fetchGameweeks = async () => {
@@ -45,32 +47,40 @@ export default function Utakmice() {
       let url = `${apiUrl}/matches`
       const params = new URLSearchParams()
       
-      if (activeTab === "upcoming") {
-        params.append('status', 'scheduled')
-      } else {
-        params.append('status', 'completed')
-      }
+      // Ne šaljemo status parametre - prikazujemo sve utakmice za kolo
+      // Filter po statusu je već uradjen na nivou kola
       
-      if (selectedGameweek !== 'all') {
-        params.append('gameweek_id', selectedGameweek)
-      }
+      // Uvijek je neko kolo odabrano
+      params.append('gameweek_id', selectedGameweek)
       
       if (params.toString()) {
         url += '?' + params.toString()
       }
       
+      console.log('🔍 API URL:', url)
+      console.log('🔍 Params:', params.toString())
+      console.log('🔍 Active tab:', activeTab)
+      console.log('🔍 Selected gameweek:', selectedGameweek)
+      
       const response = await fetch(url)
+      console.log('🔍 Response status:', response.status)
+      console.log('🔍 Response ok:', response.ok)
+      
       if (response.ok) {
         const data = await response.json()
+        console.log('🔍 Response data:', data)
+        console.log('🔍 Data length:', data.length)
         
         if (activeTab === "upcoming") {
           setUpcomingMatches(data)
         } else {
           setRecentResults(data)
         }
+      } else {
+        console.error('🔍 Response not ok:', response.status, response.statusText)
       }
     } catch (error) {
-      console.error('Greška pri učitavanju utakmica:', error)
+      console.error('🔍 Fetch error:', error)
     } finally {
       setLoading(false)
     }
@@ -90,6 +100,33 @@ export default function Utakmice() {
     const gameweek = gameweeks.find(gw => gw.id === gameweekId)
     return gameweek ? `${gameweek.number}. kolo` : "Nepoznato kolo"
   }
+
+  // Filtriraj kola prema aktivnom tab-u
+  const getFilteredGameweeks = () => {
+    if (activeTab === "upcoming") {
+      // Za nadolazeće utakmice: samo scheduled kola
+      const filtered = gameweeks
+        .filter(gw => gw.status === 'scheduled')
+        .sort((a, b) => a.number - b.number)
+      console.log('🔍 Upcoming gameweeks:', filtered)
+      return filtered
+    } else {
+      // Za rezultate: in_progress + completed kola
+      const filtered = gameweeks
+        .filter(gw => gw.status === 'in_progress' || gw.status === 'completed')
+        .sort((a, b) => b.number - a.number) // najnovija kola prva
+      console.log('🔍 Results gameweeks:', filtered)
+      return filtered
+    }
+  }
+
+  // Postavi prvo dostupno kolo kada se promijeni tab
+  useEffect(() => {
+    const filteredGameweeks = getFilteredGameweeks()
+    if (filteredGameweeks.length > 0) {
+      setSelectedGameweek(filteredGameweeks[0].id)
+    }
+  }, [activeTab, gameweeks])
 
   return (
     <>
@@ -123,8 +160,7 @@ export default function Utakmice() {
             onChange={(e) => setSelectedGameweek(e.target.value)}
             className={styles.gameweekFilter}
           >
-            <option value="all">Sva kola</option>
-            {gameweeks.map((gameweek) => (
+            {getFilteredGameweeks().map((gameweek) => (
               <option key={gameweek.id} value={gameweek.id}>
                 {gameweek.number}. kolo
               </option>
