@@ -11,6 +11,32 @@ router = APIRouter(prefix="/admin/matches", tags=["matches"])
 # Javni endpointi za utakmice
 public_router = APIRouter(prefix="/matches", tags=["public-matches"])
 
+@public_router.get("/club/{club_id}/recent", response_model=List[MatchListResponse])
+def get_recent_matches_by_club(
+    club_id: int,
+    limit: Optional[int] = Query(5, description="Broj utakmica za prikaz"),
+    db: Session = Depends(get_session)
+):
+    """Dohvata nedavne utakmice za određeni klub (zadnjih 5 završenih)"""
+    try:
+        service = MatchService(db)
+        return service.get_recent_matches_by_club(club_id, limit)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail="Greška pri dohvatanju nedavnih utakmica")
+
+@public_router.get("/club/{club_id}/upcoming", response_model=List[MatchListResponse])
+def get_upcoming_matches_by_club(
+    club_id: int,
+    limit: Optional[int] = Query(5, description="Broj utakmica za prikaz"),
+    db: Session = Depends(get_session)
+):
+    """Dohvata nadolazeće utakmice za određeni klub (sljedećih 5 zakazanih)"""
+    try:
+        service = MatchService(db)
+        return service.get_upcoming_matches_by_club(club_id, limit)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail="Greška pri dohvatanju nadolazećih utakmica")
+
 @public_router.get("/", response_model=List[MatchListResponse])
 def get_public_matches(
     gameweek_id: Optional[int] = Query(None, description="Filter po kolu"),

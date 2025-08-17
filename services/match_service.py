@@ -125,4 +125,14 @@ class MatchService:
         if not match_data:
             return None
         
-        return MatchWithClubsResponse(**match_data) 
+        return MatchWithClubsResponse(**match_data)
+
+    def get_recent_matches_by_club(self, club_id: int, limit: int = 5) -> List[MatchListResponse]:
+        """Dohvata nedavne utakmice za određeni klub (zadnjih N završenih)"""
+        matches_data = self.repository.get_recent_matches_by_club(club_id, limit)
+        return [MatchListResponse(**data) for data in matches_data]
+
+    def get_upcoming_matches_by_club(self, club_id: int, limit: int = 5) -> List[MatchListResponse]:
+        """Dohvata nadolazeće utakmice za određeni klub (sljedećih N zakazanih)"""
+        matches_data = self.repository.get_upcoming_matches_by_club(club_id, limit)
+        return [MatchListResponse(**data) for data in matches_data] 
