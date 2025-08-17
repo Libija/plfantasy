@@ -64,7 +64,7 @@ export default function VijestiDetalji() {
     (item) =>
       item.id !== news.id &&
       (item.category === news.category || (news.club_id && item.club_id === news.club_id))
-  ).slice(0, 4)
+  ).slice(0, 3)
 
   return (
     <>
@@ -107,7 +107,9 @@ export default function VijestiDetalji() {
                     {item.image_url ? (
                       <img src={item.image_url} alt={item.title} className={styles.relatedImageImg} />
                     ) : (
-                      <div className={styles.relatedImagePlaceholder}></div>
+                      <div className={styles.relatedImagePlaceholder}>
+                        <span>Nema slike</span>
+                      </div>
                     )}
                   </div>
                   <h3 className={styles.relatedCardTitle}>{item.title}</h3>
