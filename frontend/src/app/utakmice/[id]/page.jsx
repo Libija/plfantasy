@@ -18,7 +18,6 @@ export default function UtakmiceDetalji() {
   const [lineups, setLineups] = useState([])
   const [statistics, setStatistics] = useState([])
   const [substitutions, setSubstitutions] = useState([])
-  const [h2hMatches, setH2hMatches] = useState([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -89,31 +88,9 @@ export default function UtakmiceDetalji() {
           const subsData = await subsResponse.json()
           setSubstitutions(subsData)
         }
-
-        // Fetch H2H utakmice
-        fetchH2HMatches()
       }
     } catch (error) {
       console.error('Greška pri učitavanju detalja utakmice:', error)
-    }
-  }
-
-  const fetchH2HMatches = async () => {
-    try {
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"
-      // Dohvati sve utakmice između ova dva kluba
-      const response = await fetch(`${apiUrl}/matches?home_club_id=${match.home_club_id}&away_club_id=${match.away_club_id}`)
-      if (response.ok) {
-        const data = await response.json()
-        // Filtriraj samo završene utakmice i sortiraj po datumu
-        const completedMatches = data
-          .filter(m => m.status === 'completed' && m.id !== match.id)
-          .sort((a, b) => new Date(b.date) - new Date(a.date))
-          .slice(0, 5) // Zadrži samo zadnjih 5
-        setH2hMatches(completedMatches)
-      }
-    } catch (error) {
-      console.error('Greška pri učitavanju H2H utakmica:', error)
     }
   }
 
@@ -258,9 +235,12 @@ export default function UtakmiceDetalji() {
     const substitutionInfo = showSubstitutionInfo ? getSubstitutionInfo(player.player_id || player.id, clubId) : null
     const isSubstituted = isPlayerSubstituted(player.player_id || player.id, clubId)
     
+    // Prvo pokušaj shirt_number, pa number, pa 'N/A'
+    const playerNumber = player.shirt_number || player.number || 'N/A'
+    
     return (
       <li className={`${styles.player} ${isSubstituted ? styles.substitutedPlayer : ''} ${isUnusedPlayer ? styles.unusedPlayer : ''}`}>
-        <span className={styles.playerNumber}>{player.shirt_number || player.number || 'N/A'}</span>
+        <span className={styles.playerNumber}>{playerNumber}</span>
         <span className={styles.playerName}>{player.player_name || player.name}</span>
         <span className={styles.playerPosition}>{player.position || 'N/A'}</span>
         {substitutionInfo && (
@@ -361,7 +341,6 @@ export default function UtakmiceDetalji() {
             </div>
 
             <div className={styles.teamAway}>
-              <div className={styles.teamName}>{match.away_club?.name}</div>
               <div className={styles.teamLogo}>
                 {match.away_club?.logo_url ? (
                   <img src={match.away_club.logo_url} alt={match.away_club.name} />
@@ -369,6 +348,7 @@ export default function UtakmiceDetalji() {
                   <div className={styles.placeholderLogo}>{match.away_club?.name?.charAt(0)}</div>
                 )}
               </div>
+              <div className={styles.teamName}>{match.away_club?.name}</div>
             </div>
           </div>
 
@@ -424,12 +404,6 @@ export default function UtakmiceDetalji() {
                 onClick={() => setActiveTab("stats")}
               >
                 Statistika
-              </button>
-              <button
-                className={`${styles.tabButton} ${activeTab === "h2h" ? styles.active : ""}`}
-                onClick={() => setActiveTab("h2h")}
-              >
-                Head-to-Head
               </button>
             </>
           )}
@@ -609,70 +583,6 @@ export default function UtakmiceDetalji() {
                   </>
                 ) : (
                   <p>Statistike nisu dostupne.</p>
-                )}
-              </div>
-            </div>
-          )}
-
-          {activeTab === "h2h" && isCompleted && (
-            <div className={styles.h2h}>
-              <div className={styles.h2hHeader}>
-                <h2>Head-to-Head</h2>
-              </div>
-              <div className={styles.h2hContent}>
-                {h2hMatches.length > 0 ? (
-                  <>
-                    <div className={styles.h2hSummary}>
-                      <div className={styles.h2hStat}>
-                        <span className={styles.h2hTeam}>{match.home_club?.name}</span>
-                        <span className={styles.h2hValue}>
-                          {h2hMatches.filter(m => 
-                            (m.home_club_id === match.home_club_id && m.home_score > m.away_score) ||
-                            (m.away_club_id === match.home_club_id && m.away_score > m.home_score)
-                          ).length}
-                        </span>
-                      </div>
-                      <div className={styles.h2hStat}>
-                        <span className={styles.h2hLabel}>Neriješeno</span>
-                        <span className={styles.h2hValue}>
-                          {h2hMatches.filter(m => m.home_score === m.away_score).length}
-                        </span>
-                      </div>
-                      <div className={styles.h2hStat}>
-                        <span className={styles.h2hTeam}>{match.away_club?.name}</span>
-                        <span className={styles.h2hValue}>
-                          {h2hMatches.filter(m => 
-                            (m.home_club_id === match.away_club_id && m.home_score > m.away_score) ||
-                            (m.away_club_id === match.away_club_id && m.away_score > m.home_score)
-                          ).length}
-                        </span>
-                      </div>
-                    </div>
-
-                    <div className={styles.h2hMatches}>
-                      {h2hMatches.map((game, index) => (
-                        <div key={index} className={styles.h2hMatch}>
-                          <div className={styles.h2hMatchInfo}>
-                            <span className={styles.h2hMatchDate}>{formatDate(game.date)}</span>
-                            <span className={styles.h2hMatchCompetition}>Premijer liga BiH</span>
-                          </div>
-                          <div className={styles.h2hMatchTeams}>
-                            <span className={`${styles.h2hMatchTeam} ${game.home_club_id === match.home_club_id ? styles.homeTeam : ""}`}>
-                              {game.home_club_name}
-                            </span>
-                            <span className={styles.h2hMatchScore}>
-                              {game.home_score} - {game.away_score}
-                            </span>
-                            <span className={`${styles.h2hMatchTeam} ${game.away_club_id === match.home_club_id ? styles.homeTeam : ""}`}>
-                              {game.away_club_name}
-                            </span>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </>
-                ) : (
-                  <p>Nema prethodnih utakmica između ova dva kluba.</p>
                 )}
               </div>
             </div>
