@@ -93,6 +93,35 @@ export default function FantasyResults() {
   // Helper za bodove
   const pointsColor = (points) => points > 0 ? '#22c55e' : points < 0 ? '#ef4444' : '#222';
 
+  // Helper za računanje poena sa bonus-ima
+  const getPlayerDisplayPoints = (player) => {
+    if (player.is_captain) {
+      return player.points * 2; // Kapiten ×2
+    } else if (player.is_vice_captain) {
+      return player.points; // Vice-kapiten ×1
+    } else {
+      return player.points; // Ostali ×1
+    }
+  };
+
+  // Helper za prikaz poena sa objašnjenjem
+  const getPlayerPointsDisplay = (player) => {
+    const displayPoints = getPlayerDisplayPoints(player);
+    let explanation = '';
+    
+    if (player.is_captain) {
+      explanation = ` (${player.points} × 2)`;
+    } else if (player.is_vice_captain) {
+      explanation = ` (${player.points} × 1)`;
+    }
+    
+    return { displayPoints, explanation };
+  };
+
+  // Razdvoji igrače na starting 11 i klupu
+  const starting11Players = selected.players.filter(player => !player.is_bench);
+  const benchPlayers = selected.players.filter(player => player.is_bench);
+
   return (
     <div style={{ minHeight: '100vh', background: '#111', padding: '32px 0' }}>
       <div style={{ maxWidth: 900, margin: '0 auto' }}>
@@ -115,22 +144,24 @@ export default function FantasyResults() {
             <div style={{ color: '#666', fontSize: 13, marginTop: 4 }}>bodova</div>
                               </div>
                             </div>
-        {/* Tabela */}
-        <div style={{ background: '#fff', borderRadius: 12, boxShadow: '0 2px 8px #0001', padding: 32 }}>
-          <div style={{ fontSize: 20, fontWeight: 600, marginBottom: 18, color: '#111' }}>Rezultati vašeg tima - {selected.gameweek_number}. kolo</div>
+        {/* Starting 11 */}
+        <div style={{ background: '#fff', borderRadius: 12, boxShadow: '0 2px 8px #0001', padding: 32, marginBottom: 24 }}>
+          <div style={{ fontSize: 20, fontWeight: 600, marginBottom: 18, color: '#111', display: 'flex', alignItems: 'center', gap: 12 }}>
+            <span>⚽ Starting 11</span>
+            <span style={{ fontSize: 14, color: '#666', fontWeight: 400 }}>({starting11Players.length} igrača)</span>
+          </div>
           <div style={{ overflowX: 'auto' }}>
             <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 16, color: '#111' }}>
               <thead>
                 <tr style={{ background: '#f3f4f6', color: '#111', fontWeight: 700 }}>
                   <th style={{ padding: '10px 8px', textAlign: 'left' }}>IGRAČ</th>
                   <th style={{ padding: '10px 8px', textAlign: 'left' }}>POZICIJA</th>
-                  {/* <th style={{ padding: '10px 8px', textAlign: 'left' }}>TIM</th> */}
                   <th style={{ padding: '10px 8px', textAlign: 'right' }}>BODOVI</th>
                   <th style={{ padding: '10px 8px', textAlign: 'right' }}>CIJENA</th>
                 </tr>
               </thead>
               <tbody>
-                {selected.players.map((player) => (
+                {starting11Players.map((player) => (
                   <tr key={player.id} style={{ borderBottom: '1px solid #eee' }}>
                     <td style={{ padding: '10px 8px', fontWeight: 500, display: 'flex', alignItems: 'center', gap: 8 }}>
                       {player.player_name}
@@ -140,8 +171,16 @@ export default function FantasyResults() {
                     <td style={{ padding: '10px 8px' }}>
                       <span style={{ ...positionBadge(player.position), padding: '2px 10px', borderRadius: 8, fontWeight: 700, fontSize: 14 }}>{player.position}</span>
                     </td>
-                    {/* <td style={{ padding: '10px 8px' }}>{getTeamName(player)}</td> */}
-                    <td style={{ padding: '10px 8px', textAlign: 'right', fontWeight: 700, color: pointsColor(player.points) }}>{player.points}</td>
+                    <td style={{ padding: '10px 8px', textAlign: 'right', fontWeight: 700, color: pointsColor(player.points) }}>
+                      {(() => {
+                        const { displayPoints, explanation } = getPlayerPointsDisplay(player);
+                        return (
+                          <span title={`Osnovni poeni: ${player.points}${explanation}`}>
+                            {displayPoints}
+                          </span>
+                        );
+                      })()}
+                    </td>
                     <td style={{ padding: '10px 8px', textAlign: 'right' }}>{formatPrice(player.price)}</td>
                   </tr>
                 ))}
@@ -149,6 +188,51 @@ export default function FantasyResults() {
             </table>
           </div>
         </div>
+
+        {/* Klupa */}
+        {benchPlayers.length > 0 && (
+          <div style={{ background: '#f8f9fa', borderRadius: 12, boxShadow: '0 2px 8px #0001', padding: 32, border: '2px solid #e9ecef' }}>
+            <div style={{ fontSize: 20, fontWeight: 600, marginBottom: 18, color: '#111', display: 'flex', alignItems: 'center', gap: 12 }}>
+              <span>🪑 Klupa</span>
+              <span style={{ fontSize: 14, color: '#666', fontWeight: 400 }}>({benchPlayers.length} igrača)</span>
+            </div>
+            <div style={{ overflowX: 'auto' }}>
+              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 16, color: '#111' }}>
+                <thead>
+                  <tr style={{ background: '#e9ecef', color: '#111', fontWeight: 700 }}>
+                    <th style={{ padding: '10px 8px', textAlign: 'left' }}>IGRAČ</th>
+                    <th style={{ padding: '10px 8px', textAlign: 'left' }}>POZICIJA</th>
+                    <th style={{ padding: '10px 8px', textAlign: 'right' }}>BODOVI</th>
+                    <th style={{ padding: '10px 8px', textAlign: 'right' }}>CIJENA</th>
+                </tr>
+                </thead>
+                <tbody>
+                  {benchPlayers.map((player) => (
+                    <tr key={player.id} style={{ borderBottom: '1px solid #dee2e6' }}>
+                      <td style={{ padding: '10px 8px', fontWeight: 500, display: 'flex', alignItems: 'center', gap: 8 }}>
+                        {player.player_name}
+                      </td>
+                      <td style={{ padding: '10px 8px' }}>
+                        <span style={{ ...positionBadge(player.position), padding: '2px 10px', borderRadius: 8, fontWeight: 700, fontSize: 14, opacity: 0.7 }}>{player.position}</span>
+                      </td>
+                      <td style={{ padding: '10px 8px', textAlign: 'right', fontWeight: 700, color: pointsColor(player.points) }}>
+                        {(() => {
+                          const { displayPoints, explanation } = getPlayerPointsDisplay(player);
+                          return (
+                            <span title={`Osnovni poeni: ${player.points}${explanation}`}>
+                              {displayPoints}
+                            </span>
+                          );
+                        })()}
+                      </td>
+                      <td style={{ padding: '10px 8px', textAlign: 'right' }}>{formatPrice(player.price)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
               </div>
     </div>
   );

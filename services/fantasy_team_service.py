@@ -430,10 +430,13 @@ def save_transfers_service(session: Session, user_id: int, transfer_data: dict) 
                 is_captain = player_data["id"] == captain_id
                 is_vice_captain = player_data["id"] == vice_captain_id
                 
+                # Odredi role na osnovu pozicije
+                role = PlayerRole.BENCH if "_BENCH" in position else PlayerRole.REGULAR
+                
                 team_player = FantasyTeamPlayer(
                     fantasy_team_id=fantasy_team.id,
                     player_id=player_data["id"],
-                    role=PlayerRole.REGULAR,
+                    role=role,
                     formation_position=position,
                     squad_number=squad_number,
                     is_captain=is_captain,
