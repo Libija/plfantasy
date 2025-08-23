@@ -30,6 +30,7 @@ export default function FantasyTransfers() {
   const [captainId, setCaptainId] = useState(null)
   const [viceCaptainId, setViceCaptainId] = useState(null)
   const [budget, setBudget] = useState(100)
+  const [totalBudget, setTotalBudget] = useState(100)
   const [showModal, setShowModal] = useState(false)
   const [currentPosition, setCurrentPosition] = useState(null)
   const [activeTab, setActiveTab] = useState("golmani")
@@ -60,6 +61,7 @@ export default function FantasyTransfers() {
   ]
 
   useEffect(() => {
+
     if (authLoading) return
     if (!isLoggedIn) {
       window.location.href = "/login"
@@ -79,11 +81,20 @@ export default function FantasyTransfers() {
       
       const data = await res.json()
       
+
+      
       setFantasyTeam(data.fantasy_team)
+      // Budget logika: budget je dostupni budžet iz baze
       setBudget(data.fantasy_team.budget)
+      
+      // Izračunaj ukupan budžet na osnovu dostupnog budžeta + vrijednost tima
+      const currentTeamValue = data.team_players.reduce((acc, tp) => acc + (tp.price || 0), 0)
+      setTotalBudget(data.fantasy_team.budget + currentTeamValue)
+      
       setSelectedFormation(data.fantasy_team.formation)
       setTransferWindow(data.transfer_window)
       setTransfersInfo(data.transfers_info)
+      console.log('DEBUG fetchTransfersData - transfersInfo:', JSON.stringify(data.transfers_info, null, 2))
       setIsDraftMode(data.is_draft_mode)
       setAllPlayers(data.all_players)
       
@@ -96,6 +107,7 @@ export default function FantasyTransfers() {
       if (!data.is_draft_mode && data.team_players.length > 0) {
         const existingPlayers = {}
         data.team_players.forEach(tp => {
+  
           existingPlayers[tp.formation_position] = {
             id: tp.player_id,
             name: tp.player_name,
@@ -108,6 +120,7 @@ export default function FantasyTransfers() {
           if (tp.is_captain) setCaptainId(tp.player_id)
           if (tp.is_vice_captain) setViceCaptainId(tp.player_id)
         })
+
         setSelectedPlayers(existingPlayers)
       }
       
@@ -129,6 +142,7 @@ export default function FantasyTransfers() {
       }
       
       const data = await res.json()
+
       setCurrentGameweekPoints(data)
     } catch (err) {
       console.error("Greška pri dohvatu fantasy poena:", err)
@@ -136,6 +150,7 @@ export default function FantasyTransfers() {
   }
 
   const handleFormationChange = (formation) => {
+
     // Ne dozvoli promenu formacije kada je transfer window zatvoren (osim za draft mode)
     if (!isDraftMode && transferWindow && !transferWindow.is_open) {
       alert("Transfer window je zatvoren. Ne možete menjati formaciju u ovom trenutku.")
@@ -153,12 +168,15 @@ export default function FantasyTransfers() {
       }
     })
 
+
     setSelectedPlayers(newPlayers)
   }
 
   const getFormationPositions = () => {
     const formation = formations.find((f) => f.value === selectedFormation)
-    return formation ? formation.positions : { DF: 4, MF: 3, FW: 3 }
+    const positions = formation ? formation.positions : { DF: 4, MF: 3, FW: 3 }
+
+    return positions
   }
 
   // Funkcija za generisanje klupe na osnovu formacije, sa unikatnim ključevima
@@ -179,6 +197,8 @@ export default function FantasyTransfers() {
     if (benchCounts.DF > 0) for (let i = 1; i <= benchCounts.DF; i++) slots.push(`DF_BENCH_${i}`)
     if (benchCounts.MF > 0) for (let i = 1; i <= benchCounts.MF; i++) slots.push(`MF_BENCH_${i}`)
     if (benchCounts.FW > 0) for (let i = 1; i <= benchCounts.FW; i++) slots.push(`FW_BENCH_${i}`)
+    
+
     return slots
   }
 
@@ -189,11 +209,12 @@ export default function FantasyTransfers() {
       <div className={styles.field}>
         {/* Golman */}
         <div className={styles.fieldRow}>
-          <div
-            className={`${styles.playerPosition} ${styles.gkPosition} ${selectedPlayers.GK ? styles.filled : ""} ${!isDraftMode && transferWindow && !transferWindow.is_open ? styles.disabled : ""}`}
-            onClick={() => openPlayerSelection("GK")}
-            title={!isDraftMode && transferWindow && !transferWindow.is_open ? "Transfer window je zatvoren" : (selectedPlayers.GK ? `Odaberi golmana (trenutno: ${selectedPlayers.GK.name})` : "Odaberi golmana")}
-          >
+                  <div
+          className={`${styles.playerPosition} ${styles.gkPosition} ${selectedPlayers.GK ? styles.filled : ""} ${selectedPlayers.GK ? styles.positionGK : ""} ${!isDraftMode && transferWindow && !transferWindow.is_open ? styles.disabled : ""}`}
+          onClick={() => openPlayerSelection("GK")}
+          title={!isDraftMode && transferWindow && !transferWindow.is_open ? "Transfer window je zatvoren" : (selectedPlayers.GK ? `Odaberi golmana (trenutno: ${selectedPlayers.GK.name})` : "Odaberi golmana")}
+
+        >
             {selectedPlayers.GK ? (
               <div className={styles.selectedPlayerInfo}>
                 <div className={styles.playerName}>{selectedPlayers.GK.name}</div>
@@ -201,6 +222,7 @@ export default function FantasyTransfers() {
                     <div className={styles.playerPoints}>
                       {(() => {
                         const pointsInfo = getPlayerPointsInfo(selectedPlayers.GK.id)
+
                         if (pointsInfo) {
                           const className = pointsInfo.is_captain ? styles.pointsValue + ' ' + styles.captain : styles.pointsValue
                           const bonusText = pointsInfo.is_captain ? ' (C)' : pointsInfo.is_vice_captain ? ' (VC)' : ''
@@ -221,6 +243,7 @@ export default function FantasyTransfers() {
                   <div className={styles.captainIcons}>
                     {captainId === selectedPlayers.GK.id && <FaCrown className={styles.captainIcon} />}
                     {viceCaptainId === selectedPlayers.GK.id && <FaStar className={styles.viceCaptainIcon} />}
+
                   </div>
                 <button
                   className={styles.removePlayerBtn}
@@ -248,9 +271,10 @@ export default function FantasyTransfers() {
           {Array.from({ length: positions.DF }, (_, i) => (
             <div
               key={`DF${i + 1}`}
-              className={`${styles.playerPosition} ${styles.dfPosition} ${selectedPlayers[`DF${i + 1}`] ? styles.filled : ""} ${!isDraftMode && transferWindow && !transferWindow.is_open ? styles.disabled : ""}`}
+              className={`${styles.playerPosition} ${styles.dfPosition} ${selectedPlayers[`DF${i + 1}`] ? styles.filled : ""} ${selectedPlayers[`DF${i + 1}`] ? styles.positionDEF : ""} ${!isDraftMode && transferWindow && !transferWindow.is_open ? styles.disabled : ""}`}
               onClick={() => openPlayerSelection(`DF${i + 1}`)}
               title={!isDraftMode && transferWindow && !transferWindow.is_open ? "Transfer window je zatvoren" : (selectedPlayers[`DF${i + 1}`] ? `Odaberi odbrambenog igrača (trenutno: ${selectedPlayers[`DF${i + 1}`].name})` : "Odaberi odbrambenog igrača")}
+
             >
               {selectedPlayers[`DF${i + 1}`] ? (
                 <div className={styles.selectedPlayerInfo}>
@@ -259,6 +283,7 @@ export default function FantasyTransfers() {
                     <div className={styles.playerPoints}>
                       {(() => {
                         const pointsInfo = getPlayerPointsInfo(selectedPlayers[`DF${i + 1}`].id)
+
                         if (pointsInfo) {
                           const className = pointsInfo.is_captain ? styles.pointsValue + ' ' + styles.captain : styles.pointsValue
                           const bonusText = pointsInfo.is_captain ? ' (C)' : pointsInfo.is_vice_captain ? ' (VC)' : ''
@@ -279,6 +304,7 @@ export default function FantasyTransfers() {
                   <div className={styles.captainIcons}>
                     {captainId === selectedPlayers[`DF${i + 1}`].id && <FaCrown className={styles.captainIcon} />}
                     {viceCaptainId === selectedPlayers[`DF${i + 1}`].id && <FaStar className={styles.viceCaptainIcon} />}
+
                   </div>
                   <button
                     className={styles.removePlayerBtn}
@@ -307,9 +333,10 @@ export default function FantasyTransfers() {
           {Array.from({ length: positions.MF }, (_, i) => (
             <div
               key={`MF${i + 1}`}
-              className={`${styles.playerPosition} ${styles.mfPosition} ${selectedPlayers[`MF${i + 1}`] ? styles.filled : ""} ${!isDraftMode && transferWindow && !transferWindow.is_open ? styles.disabled : ""}`}
+              className={`${styles.playerPosition} ${styles.mfPosition} ${selectedPlayers[`MF${i + 1}`] ? styles.filled : ""} ${selectedPlayers[`MF${i + 1}`] ? styles.positionMID : ""} ${!isDraftMode && transferWindow && !transferWindow.is_open ? styles.disabled : ""}`}
               onClick={() => openPlayerSelection(`MF${i + 1}`)}
               title={!isDraftMode && transferWindow && !transferWindow.is_open ? "Transfer window je zatvoren" : (selectedPlayers[`MF${i + 1}`] ? `Odaberi veznjaka (trenutno: ${selectedPlayers[`MF${i + 1}`].name})` : "Odaberi veznjaka")}
+
             >
               {selectedPlayers[`MF${i + 1}`] ? (
                 <div className={styles.selectedPlayerInfo}>
@@ -318,6 +345,7 @@ export default function FantasyTransfers() {
                     <div className={styles.playerPoints}>
                       {(() => {
                         const pointsInfo = getPlayerPointsInfo(selectedPlayers[`MF${i + 1}`].id)
+
                         if (pointsInfo) {
                           const className = pointsInfo.is_captain ? styles.pointsValue + ' ' + styles.captain : styles.pointsValue
                           const bonusText = pointsInfo.is_captain ? ' (C)' : pointsInfo.is_vice_captain ? ' (VC)' : ''
@@ -338,6 +366,7 @@ export default function FantasyTransfers() {
                   <div className={styles.captainIcons}>
                     {captainId === selectedPlayers[`MF${i + 1}`].id && <FaCrown className={styles.captainIcon} />}
                     {viceCaptainId === selectedPlayers[`MF${i + 1}`].id && <FaStar className={styles.viceCaptainIcon} />}
+
                   </div>
                   <button
                     className={styles.removePlayerBtn}
@@ -366,9 +395,10 @@ export default function FantasyTransfers() {
           {Array.from({ length: positions.FW }, (_, i) => (
             <div
               key={`FW${i + 1}`}
-              className={`${styles.playerPosition} ${styles.fwPosition} ${selectedPlayers[`FW${i + 1}`] ? styles.filled : ""} ${!isDraftMode && transferWindow && !transferWindow.is_open ? styles.disabled : ""}`}
+              className={`${styles.playerPosition} ${styles.fwPosition} ${selectedPlayers[`FW${i + 1}`] ? styles.filled : ""} ${selectedPlayers[`FW${i + 1}`] ? styles.positionFWD : ""} ${!isDraftMode && transferWindow && !transferWindow.is_open ? styles.disabled : ""}`}
               onClick={() => openPlayerSelection(`FW${i + 1}`)}
               title={!isDraftMode && transferWindow && !transferWindow.is_open ? "Transfer window je zatvoren" : (selectedPlayers[`FW${i + 1}`] ? `Odaberi napadača (trenutno: ${selectedPlayers[`FW${i + 1}`].name})` : "Odaberi napadača")}
+
             >
               {selectedPlayers[`FW${i + 1}`] ? (
                 <div className={styles.selectedPlayerInfo}>
@@ -377,6 +407,7 @@ export default function FantasyTransfers() {
                     <div className={styles.playerPoints}>
                       {(() => {
                         const pointsInfo = getPlayerPointsInfo(selectedPlayers[`FW${i + 1}`].id)
+
                         if (pointsInfo) {
                           const className = pointsInfo.is_captain ? styles.pointsValue + ' ' + styles.captain : styles.pointsValue
                           const bonusText = pointsInfo.is_captain ? ' (C)' : pointsInfo.is_vice_captain ? ' (VC)' : ''
@@ -397,6 +428,7 @@ export default function FantasyTransfers() {
                   <div className={styles.captainIcons}>
                     {captainId === selectedPlayers[`FW${i + 1}`].id && <FaCrown className={styles.captainIcon} />}
                     {viceCaptainId === selectedPlayers[`FW${i + 1}`].id && <FaStar className={styles.viceCaptainIcon} />}
+
                   </div>
                   <button
                     className={styles.removePlayerBtn}
@@ -425,6 +457,7 @@ export default function FantasyTransfers() {
 
   // Prilagodi openPlayerSelection i selectPlayer za bench slotove
   const openPlayerSelection = (position) => {
+
     // Ne dozvoli odabir igrača kada je transfer window zatvoren (osim za draft mode)
     if (!isDraftMode && transferWindow && !transferWindow.is_open) {
       alert("Transfer window je zatvoren. Ne možete menjati igrače u ovom trenutku.")
@@ -434,24 +467,31 @@ export default function FantasyTransfers() {
     setCurrentPosition(position)
     setShowModal(true)
 
+    let newTab = "golmani"
     if (position.startsWith("GK")) {
-      setActiveTab("golmani")
+      newTab = "golmani"
     } else if (position.startsWith("DF")) {
-      setActiveTab("odbrana")
+      newTab = "odbrana"
     } else if (position.startsWith("MF")) {
-      setActiveTab("veznjaci")
+      newTab = "veznjaci"
     } else if (position.startsWith("FW")) {
-      setActiveTab("napadaci")
+      newTab = "napadaci"
     }
+    
+
+    setActiveTab(newTab)
   }
 
   const closeModal = () => {
+
     setShowModal(false)
     setCurrentPosition(null)
   }
 
   const selectPlayer = (player) => {
     if (!currentPosition) return
+
+
 
     // Provjeri da li je igrač već selektovan na nekoj poziciji
     const isPlayerAlreadySelected = Object.values(selectedPlayers).some((p) => p && p.id === player.id)
@@ -461,25 +501,46 @@ export default function FantasyTransfers() {
     }
 
     const oldPlayer = selectedPlayers[currentPosition]
-    const newBudget = oldPlayer ? budget + oldPlayer.price - player.price : budget - player.price
-
-    if (newBudget < 0) {
-      alert("Nemate dovoljno budžeta za ovog igrača!")
-      return
+    
+    // Za transfer mode, koristi dostupni budžet iz baze
+    if (!isDraftMode) {
+      const priceDifference = player.price - (oldPlayer?.price || 0)
+      const newBudget = budget - priceDifference
+      
+      if (newBudget < 0) {
+        alert("Nemate dovoljno budžeta za ovog igrača!")
+        return
+      }
+      
+      setBudget(newBudget)
+    } else {
+      // Za draft mode, koristi ukupnu vrijednost tima
+      const newBudget = oldPlayer ? budget + oldPlayer.price - player.price : budget - player.price
+      
+      if (newBudget < 0) {
+        alert("Nemate dovoljno budžeta za ovog igrača!")
+        return
+      }
+      
+      setBudget(newBudget)
     }
+
+    const newPlayerData = {
+      ...player,
+      team: player.club_name, // Dodaj ime kluba za prikaz na terenu
+      position: player.position // Osiguraj da se pozicija sačuva
+    }
+    
 
     setSelectedPlayers({
       ...selectedPlayers,
-      [currentPosition]: {
-        ...player,
-        team: player.club_name // Dodaj ime kluba za prikaz na terenu
-      },
+      [currentPosition]: newPlayerData,
     })
-    setBudget(newBudget)
     closeModal()
   }
 
   const removePlayer = (position) => {
+
     // Ne dozvoli uklanjanje igrača kada je transfer window zatvoren (osim za draft mode)
     if (!isDraftMode && transferWindow && !transferWindow.is_open) {
       alert("Transfer window je zatvoren. Ne možete menjati igrače u ovom trenutku.")
@@ -488,11 +549,19 @@ export default function FantasyTransfers() {
     
     const player = selectedPlayers[position]
     if (player) {
+
       setSelectedPlayers({
         ...selectedPlayers,
         [position]: null,
       })
-      setBudget(budget + player.price)
+      
+      // Za transfer mode, vrati cijenu igrača u dostupni budžet
+      if (!isDraftMode) {
+        setBudget(budget + player.price)
+      } else {
+        // Za draft mode, vrati cijenu u ukupni budžet
+        setBudget(budget + player.price)
+      }
       
       // Remove captain/vice captain if this player was one
       if (captainId === player.id) setCaptainId(null)
@@ -501,10 +570,12 @@ export default function FantasyTransfers() {
   }
 
   const setCaptain = (playerId) => {
+
     setCaptainId(playerId)
   }
 
   const setViceCaptain = (playerId) => {
+
     setViceCaptainId(playerId)
   }
 
@@ -512,13 +583,27 @@ export default function FantasyTransfers() {
     // Ako je transfer window zatvoren, koristi fantasy poene iz trenutnog kola
     if (!isDraftMode && transferWindow && !transferWindow.is_open && currentGameweekPoints) {
       // Saberi final_points (sa bonusom za kapiten i vice-kapiten)
-      return currentGameweekPoints.players.reduce((total, player) => total + player.final_points, 0)
+      const playerPoints = currentGameweekPoints.players.reduce((total, player) => total + player.final_points, 0)
+      
+      // Dodaj transfer penalty ako postoji
+      const penalty = transfersInfo?.penalty || 0
+      console.log('DEBUG calculateTotalPoints:', { 
+        playerPoints, 
+        penalty, 
+        transfersInfo: JSON.stringify(transfersInfo, null, 2), 
+        totalWithPenalty: playerPoints - penalty 
+      })
+      const totalWithPenalty = playerPoints - penalty
+      
+      return totalWithPenalty
     }
     
     // Inače koristi poene iz player objekta (za draft mode ili kada transfer window nije zatvoren)
-    return Object.values(selectedPlayers)
+    const total = Object.values(selectedPlayers)
       .filter((player) => player !== null)
       .reduce((total, player) => total + (player.points || 0), 0)
+
+    return total
   }
 
   // U funkciji countSelectedPlayers, napravi posebnu funkciju countByPosition koja broji po pozicijama
@@ -534,11 +619,14 @@ export default function FantasyTransfers() {
       }
     });
     
+
     return counts;
   };
 
   const countSelectedPlayers = () => {
-    return Object.values(selectedPlayers).filter((player) => player !== null).length
+    const count = Object.values(selectedPlayers).filter((player) => player !== null).length
+
+    return count
   }
 
   const getPositionName = (position) => {
@@ -555,7 +643,9 @@ export default function FantasyTransfers() {
     }
     
     const player = currentGameweekPoints.players.find(p => p.player_id === playerId)
-    return player ? player.final_points : null
+    const points = player ? player.final_points : null
+
+    return points
   }
 
   const getPlayerPointsInfo = (playerId) => {
@@ -566,6 +656,7 @@ export default function FantasyTransfers() {
     const player = currentGameweekPoints.players.find(p => p.player_id === playerId)
     if (!player) return null
     
+
     return {
       points: player.points,
       final_points: player.final_points,
@@ -597,10 +688,13 @@ export default function FantasyTransfers() {
     }
     
     // Provjeri da li je igrač na jednoj od starting pozicija
-    return startingPositions.some(pos => selectedPlayers[pos] && selectedPlayers[pos].id === playerId)
+    const isStarting = startingPositions.some(pos => selectedPlayers[pos] && selectedPlayers[pos].id === playerId)
+
+    return isStarting
   }
 
   const handleSaveTeam = async () => {
+
     // Proveri da li je transfer window otvoren (osim za draft mode)
     if (!isDraftMode && transferWindow && !transferWindow.is_open) {
       alert("Transfer window je zatvoren. Transferi nisu dozvoljeni u ovom trenutku.")
@@ -609,6 +703,7 @@ export default function FantasyTransfers() {
 
     // 2. Prilagodi prikaz klupe i validaciju
     const posCounts = countByPosition();
+
     if (posCounts.GK !== 2 || posCounts.DF !== 5 || posCounts.MF !== 5 || posCounts.FW !== 3) {
       alert("Ekipa mora imati 2 golmana, 5 odbrambenih, 5 veznih i 3 napadača!");
       return;
@@ -624,11 +719,22 @@ export default function FantasyTransfers() {
       return
     }
 
-    // Prije spremanja tima, izračunaj novu vrijednost tima:
-    const newTeamValue = Object.values(selectedPlayers).reduce((acc, p) => acc + (p?.price || 0), 0)
-    if (newTeamValue > budget) {
-      alert('Vrijednost tima prelazi budžet!')
-      return
+    // Validacija budžeta
+    if (isDraftMode) {
+      // Za draft mode: provjeri da li ukupna vrijednost tima ne prelazi 100M
+      const totalTeamValue = Object.values(selectedPlayers).reduce((acc, p) => acc + (p?.price || 0), 0)
+
+      if (totalTeamValue > 100.0) {
+        alert('Vrijednost tima prelazi budžet od 100M!')
+        return
+      }
+    } else {
+      // Za transfer mode: provjeri dostupni budžet
+
+      if (budget < 0) {
+        alert('Nemate dovoljno budžeta za ove transfere!')
+        return
+      }
     }
 
     try {
@@ -755,9 +861,25 @@ export default function FantasyTransfers() {
             <h2>{fantasyTeam?.name || "Vaš Tim"}</h2>
             <div className={styles.teamStats}>
               <div className={styles.statItem}>
-                <span className={styles.statLabel}>Budžet:</span>
+                <span className={styles.statLabel}>
+                  {isDraftMode ? "Budžet:" : "Dostupni budžet:"}
+                </span>
                 <span className={styles.statValue}>{budget.toFixed(1)} M</span>
               </div>
+              {!isDraftMode && (
+                <div className={styles.statItem}>
+                  <span className={styles.statLabel}>Ukupan budžet:</span>
+                  <span className={styles.statValue}>{totalBudget.toFixed(1)} M</span>
+                </div>
+              )}
+              {!isDraftMode && (
+                <div className={styles.statItem}>
+                  <span className={styles.statLabel}>Vrijednost tima:</span>
+                  <span className={styles.statValue}>
+                    {Object.values(selectedPlayers).reduce((acc, p) => acc + (p?.price || 0), 0).toFixed(1)} M
+                  </span>
+                </div>
+              )}
               <div className={styles.statItem}>
                 <span className={styles.statLabel}>Igrači:</span>
                 <span className={styles.statValue}>{countSelectedPlayers()}/15</span>
@@ -772,11 +894,17 @@ export default function FantasyTransfers() {
                   {calculateTotalPoints()}
                   {!isDraftMode && transferWindow && !transferWindow.is_open && currentGameweekPoints && (
                     <span style={{fontSize: '0.8rem', color: '#6c757d', marginLeft: '0.5rem'}}>
-                      (sa bonusom)
+                      (sa bonusom{transfersInfo?.penalty > 0 ? ` i penalom -${transfersInfo.penalty}` : ''})
                     </span>
                   )}
                 </span>
               </div>
+              {!isDraftMode && transferWindow && transferWindow.is_open && transfersInfo && (
+                <div className={styles.statItem}>
+                  <span className={styles.statLabel}>Besplatni transferi:</span>
+                  <span className={styles.statValue}>{transfersInfo.remaining_free_transfers}/3</span>
+                </div>
+              )}
             </div>
           </div>
 
@@ -803,12 +931,20 @@ export default function FantasyTransfers() {
             <div className={styles.benchContainer}>
               <h3>Klupa</h3>
               <div className={styles.benchPlayers}>
-                {getBenchSlots().map((pos, idx) => (
+                {getBenchSlots().map((pos, idx) => {
+                  const playerPositionClass = selectedPlayers[pos] ? 
+                    (selectedPlayers[pos].position === 'GK' ? styles.positionGK :
+                     selectedPlayers[pos].position === 'DEF' ? styles.positionDEF :
+                     selectedPlayers[pos].position === 'MID' ? styles.positionMID :
+                     selectedPlayers[pos].position === 'FWD' ? styles.positionFWD : '') : ''
+                  
+                  return (
                   <div
                     key={pos}
-                    className={`${styles.benchPosition} ${selectedPlayers[pos] ? styles.filled : ""} ${!isDraftMode && transferWindow && !transferWindow.is_open ? styles.disabled : ""}`}
+                    className={`${styles.benchPosition} ${selectedPlayers[pos] ? styles.filled : ""} ${playerPositionClass} ${!isDraftMode && transferWindow && !transferWindow.is_open ? styles.disabled : ""}`}
                     onClick={() => openPlayerSelection(pos)}
                     title={!isDraftMode && transferWindow && !transferWindow.is_open ? "Transfer window je zatvoren" : (selectedPlayers[pos] ? `Odaberi ${getPositionName(pos.split("_")[0])} (trenutno: ${selectedPlayers[pos].name})` : `Odaberi ${getPositionName(pos.split("_")[0])}`)}
+
                   >
                     {selectedPlayers[pos] ? (
                       <div className={styles.selectedPlayerInfo}>
@@ -817,6 +953,7 @@ export default function FantasyTransfers() {
                           <div className={styles.playerPoints}>
                             {(() => {
                               const pointsInfo = getPlayerPointsInfo(selectedPlayers[pos].id)
+
                               if (pointsInfo) {
                                 const className = pointsInfo.is_captain ? styles.pointsValue + ' ' + styles.captain : styles.pointsValue
                                 const bonusText = pointsInfo.is_captain ? ' (C)' : pointsInfo.is_vice_captain ? ' (VC)' : ''
@@ -837,6 +974,7 @@ export default function FantasyTransfers() {
                         <div className={styles.captainIcons}>
                           {captainId === selectedPlayers[pos].id && <FaCrown className={styles.captainIcon} />}
                           {viceCaptainId === selectedPlayers[pos].id && <FaStar className={styles.viceCaptainIcon} />}
+
                         </div>
                         <button
                           className={styles.removePlayerBtn}
@@ -857,7 +995,8 @@ export default function FantasyTransfers() {
                       </div>
                     )}
                   </div>
-                ))}
+                  )
+                })}
               </div>
             </div>
           </div>
@@ -878,7 +1017,10 @@ export default function FantasyTransfers() {
                     <div className={styles.captainButtons}>
                       <button
                         className={`${styles.captainBtn} ${captainId === player.id ? styles.active : ""}`}
-                        onClick={() => setCaptain(player.id)}
+                        onClick={() => {
+
+                          setCaptain(player.id)
+                        }}
                         disabled={!isDraftMode && transferWindow && !transferWindow.is_open || !isInStarting11}
                         title={!isInStarting11 ? "Samo igrači iz prvih 11 mogu biti kapiten" : 
                                !isDraftMode && transferWindow && !transferWindow.is_open ? "Transfer window je zatvoren" : 
@@ -888,7 +1030,10 @@ export default function FantasyTransfers() {
                       </button>
                       <button
                         className={`${styles.captainBtn} ${viceCaptainId === player.id ? styles.active : ""}`}
-                        onClick={() => setViceCaptain(player.id)}
+                        onClick={() => {
+
+                          setViceCaptain(player.id)
+                        }}
                         disabled={!isDraftMode && transferWindow && !transferWindow.is_open || !isInStarting11}
                         title={!isInStarting11 ? "Samo igrači iz prvih 11 mogu biti vice-kapiten" : 
                                !isDraftMode && transferWindow && !transferWindow.is_open ? "Transfer window je zatvoren" : 
@@ -973,7 +1118,10 @@ export default function FantasyTransfers() {
                 <div className={styles.tabs}>
                   <button
                     className={`${styles.tabButton} ${activeTab === "golmani" ? styles.activeTab : ""}`}
-                    onClick={() => setActiveTab("golmani")}
+                    onClick={() => {
+                      
+                      setActiveTab("golmani")
+                    }}
                     disabled={!currentPosition?.includes("GK") || (!isDraftMode && transferWindow && !transferWindow.is_open)}
                     title={!isDraftMode && transferWindow && !transferWindow.is_open ? "Transfer window je zatvoren" : "Prikaži golmane"}
                   >
@@ -981,7 +1129,10 @@ export default function FantasyTransfers() {
                   </button>
                   <button
                     className={`${styles.tabButton} ${activeTab === "odbrana" ? styles.activeTab : ""}`}
-                    onClick={() => setActiveTab("odbrana")}
+                    onClick={() => {
+                      
+                      setActiveTab("odbrana")
+                    }}
                     disabled={!currentPosition?.includes("DF") || (!isDraftMode && transferWindow && !transferWindow.is_open)}
                     title={!isDraftMode && transferWindow && !transferWindow.is_open ? "Transfer window je zatvoren" : "Prikaži odbrambene igrače"}
                   >
@@ -989,7 +1140,10 @@ export default function FantasyTransfers() {
                   </button>
                   <button
                     className={`${styles.tabButton} ${activeTab === "veznjaci" ? styles.activeTab : ""}`}
-                    onClick={() => setActiveTab("veznjaci")}
+                    onClick={() => {
+                      
+                      setActiveTab("veznjaci")
+                    }}
                     disabled={!currentPosition?.includes("MF") || (!isDraftMode && transferWindow && !transferWindow.is_open)}
                     title={!isDraftMode && transferWindow && !transferWindow.is_open ? "Transfer window je zatvoren" : "Prikaži veznjake"}
                   >
@@ -997,7 +1151,10 @@ export default function FantasyTransfers() {
                   </button>
                   <button
                     className={`${styles.tabButton} ${activeTab === "napadaci" ? styles.activeTab : ""}`}
-                    onClick={() => setActiveTab("napadaci")}
+                    onClick={() => {
+                      
+                      setActiveTab("napadaci")
+                    }}
                     disabled={!currentPosition?.includes("FW") || (!isDraftMode && transferWindow && !transferWindow.is_open)}
                     title={!isDraftMode && transferWindow && !transferWindow.is_open ? "Transfer window je zatvoren" : "Prikaži napadače"}
                   >

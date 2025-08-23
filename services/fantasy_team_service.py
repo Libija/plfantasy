@@ -140,12 +140,31 @@ def get_transfers_data_service(session: Session, user_id: int) -> Dict[str, Any]
     print(f"DEBUG get_transfers_data: Non-completed kola: {[gw.number for gw in non_completed_gameweeks]}")
     print(f"DEBUG get_transfers_data: Next gameweek: {next_gameweek.number if next_gameweek else 'None'}")
     
-    # Dohvati broj transfera za naredno kolo (ako postoji)
+    # Dohvati broj transfera za trenutno kolo (IN_PROGRESS) ili naredno kolo
     transfers_this_week = 0
-    if next_gameweek and fantasy_team.id is not None:
-        transfer_repo = TransferLogRepository(session)
-        # Broj transfera je broj IN transfera
-        transfers_this_week = transfer_repo.get_transfer_count_by_gameweek(fantasy_team.id, next_gameweek.number)
+    transfer_repo = TransferLogRepository(session)
+    
+    # Prvo provjeri da li postoji trenutno kolo (IN_PROGRESS)
+    current_gameweek = None
+    for gw in gameweeks:
+        if gw.status.value == "in_progress":
+            current_gameweek = gw
+            break
+    
+    if current_gameweek and fantasy_team.id is not None:
+        # Ako postoji trenutno kolo, dohvati transfer za njega
+        transfers_this_week = transfer_repo.get_transfer_count_by_gameweek(
+            fantasy_team.id, current_gameweek.number
+        )
+        print(f"DEBUG: Trenutno kolo {current_gameweek.number} (IN_PROGRESS) - transferi: {transfers_this_week}")
+    elif next_gameweek and fantasy_team.id is not None:
+        # Ako nema trenutnog kola, dohvati transfer za naredno kolo
+        transfers_this_week = transfer_repo.get_transfer_count_by_gameweek(
+            fantasy_team.id, next_gameweek.number
+        )
+        print(f"DEBUG: Naredno kolo {next_gameweek.number} - transferi: {transfers_this_week}")
+    else:
+        print(f"DEBUG: Nema trenutnog ili narednog kola za transfer")
     
     # Izračunaj besplatne transfere i penal
     free_transfers = 3

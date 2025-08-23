@@ -13,6 +13,7 @@ from repositories.gameweek_team_repository import (
     get_gameweek_team_players, get_gameweek_team_with_players
 )
 from repositories.fantasy_team_repository import get_fantasy_team_players
+from repositories.transfer_log_repository import TransferLogRepository
 from typing import List, Optional, Dict, Any
 from datetime import datetime
 from database import engine
@@ -260,7 +261,7 @@ class GameweekTeamService:
         return sum(record.points for record in points_records)
     
     def _calculate_total_points(self, team_id: int, captain_id: int, vice_captain_id: int) -> float:
-        """Izračunava ukupne poene tima sa bonusima za kapiten i vice-kapiten"""
+        """Izračunava ukupne poene tima sa bonusima za kapiten i vice-kapiten i transfer penalty"""
         players = get_gameweek_team_players(self.session, team_id)
         total_points = 0.0
         
@@ -274,5 +275,27 @@ class GameweekTeamService:
             else:
                 # Ostali igrači dobijaju normalne poene
                 total_points += player.points
+        
+        # Dohvati transfer penalty za ovo kolo
+        team = self.session.get(GameweekTeam, team_id)
+        if team and team.gameweek_id:
+            # Pronađi fantasy_team_id iz user_id
+            fantasy_team_statement = select(FantasyTeam).where(FantasyTeam.user_id == team.user_id)
+            fantasy_team = self.session.exec(fantasy_team_statement).first()
+            
+            if fantasy_team and fantasy_team.id:
+                transfer_repo = TransferLogRepository(self.session)
+                transfers_this_week = transfer_repo.get_transfer_count_by_gameweek(
+                    fantasy_team.id, team.gameweek_id
+                )
+                
+                # ISTA FORMULA KAO NA FRONTEND-U!
+                free_transfers = 3
+                penalty = max(0, transfers_this_week - free_transfers) * 4
+                
+                print(f"[DEBUG] _calculate_total_points: team_id={team_id}, gameweek={team.gameweek_id}, transfers={transfers_this_week}, penalty={penalty}")
+                
+                # FINALNI POENI = player_points - penalty
+                total_points -= penalty
         
         return total_points 
