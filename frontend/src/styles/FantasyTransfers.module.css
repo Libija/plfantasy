@@ -189,6 +189,28 @@
   color: white;
 }
 
+/* Pozicija boje na osnovu player.position iz baze */
+.positionGK {
+  background: linear-gradient(135deg, #f39c12 0%, #e67e22 100%);
+  color: white;
+}
+
+.positionDEF {
+  background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
+  color: white;
+}
+
+.positionMID {
+  background: linear-gradient(135deg, #2ecc71 0%, #27ae60 100%);
+  color: white;
+}
+
+.positionFWD {
+  background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
+  color: white;
+}
+
+/* Legacy klase za kompatibilnost */
 .gkPosition {
   background: rgba(255, 255, 255, 0.9);
 }
@@ -197,15 +219,15 @@
   color: white;
 }
 
-.dfPosition.filled {
+.defPosition.filled {
   background: linear-gradient(135deg, #3498db 0%, #2980b9 100%) !important;
 }
 
-.mfPosition.filled {
+.midPosition.filled {
   background: linear-gradient(135deg, #2ecc71 0%, #27ae60 100%) !important;
 }
 
-.fwPosition.filled {
+.fwdPosition.filled {
   background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%) !important;
 }
 

@@ -201,16 +201,31 @@ class TransferService:
         transfer_count = self.transfer_log_repo.get_transfer_count_by_gameweek(fantasy_team_id, gameweek)
         free_transfers = 3
         
+        penalty_points = 0
         if transfer_count >= free_transfers:
             # Dodaj penalizaciju od 4 boda za svaki dodatni transfer
             penalty_points = (transfer_count - free_transfers + 1) * 4
             transfer_cost += penalty_points
         
+        # Debug informacije za transfer
+        debug_info = {
+            "player_in_price": player_in.price,
+            "player_out_price": player_out.price,
+            "base_transfer_cost": player_in.price - player_out.price,
+            "transfer_count": transfer_count,
+            "free_transfers": free_transfers,
+            "penalty_points": penalty_points,
+            "final_transfer_cost": transfer_cost,
+            "current_budget": fantasy_team.budget,
+            "budget_after_transfer": fantasy_team.budget + transfer_cost
+        }
+        
         # Provjeri budžet
         if fantasy_team.budget + transfer_cost < 0:
             return {
                 "success": False,
-                "message": "Nemate dovoljno budžeta za ovaj transfer"
+                "message": f"Nemate dovoljno budžeta za ovaj transfer. {debug_info}",
+                "debug_info": debug_info
             }
 
         try:
@@ -262,7 +277,8 @@ class TransferService:
                 "success": True,
                 "message": f"Transfer uspješan: {player_out.name} → {player_in.name}",
                 "cost": transfer_cost,
-                "new_budget": new_budget
+                "new_budget": new_budget,
+                "debug_info": debug_info
             }
             
         except Exception as e:
