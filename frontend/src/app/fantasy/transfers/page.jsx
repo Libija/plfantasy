@@ -1004,12 +1004,36 @@ export default function FantasyTransfers() {
   const countByPosition = () => {
     const counts = { GK: 0, DF: 0, MF: 0, FW: 0 };
     
+    console.log('DEBUG countByPosition - selectedPlayers:', selectedPlayers)
+    
+    // Prvo broji na osnovu player.position svojstva
     Object.values(selectedPlayers).forEach((player) => {
       if (player && player.position) {
-        if (player.position === "GK") counts.GK++;
-        if (player.position === "DEF") counts.DF++;
-        if (player.position === "MID") counts.MF++;
-        if (player.position === "FWD") counts.FW++;
+        console.log('DEBUG countByPosition - igrač:', player.name, 'pozicija:', player.position)
+        
+        // Proveri različite moguće vrednosti pozicija
+        if (player.position === "GK" || player.position === "G") counts.GK++;
+        if (player.position === "DEF" || player.position === "D" || player.position === "DF") counts.DF++;
+        if (player.position === "MID" || player.position === "M" || player.position === "MF") counts.MF++;
+        if (player.position === "FWD" || player.position === "F" || player.position === "FW") counts.FW++;
+      }
+    });
+    
+    // Zatim broji na osnovu ključeva u selectedPlayers objektu
+    Object.entries(selectedPlayers).forEach(([position, player]) => {
+      if (player) {
+        // Ako igrač nema position svojstvo ili ima neobičnu vrednost, proveri poziciju na osnovu ključa
+        if (!player.position || (player.position !== "GK" && player.position !== "DEF" && player.position !== "MID" && player.position !== "FWD")) {
+          if (position === 'GK' || position === 'GK_BENCH_1') {
+            counts.GK++;
+          } else if (position.startsWith('DF') || position.startsWith('DF_BENCH')) {
+            counts.DF++;
+          } else if (position.startsWith('MF') || position.startsWith('MF_BENCH')) {
+            counts.MF++;
+          } else if (position.startsWith('FW') || position.startsWith('FW_BENCH')) {
+            counts.FW++;
+          }
+        }
       }
     });
     
