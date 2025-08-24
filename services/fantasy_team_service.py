@@ -478,7 +478,8 @@ def save_transfers_service(session: Session, user_id: int, transfer_data: dict) 
         raise HTTPException(status_code=500, detail=f"Greška pri spremanju: {str(e)}")
 
 def get_team_current_gameweek_points_service(session: Session, fantasy_team_id: int) -> Dict[str, Any]:
-    """Dohvata fantasy poene za tim u trenutnom kolu (IN_PROGRESS)"""
+    """Dohvata fantasy poene za tim u trenutnom kolu (IN_PROGRESS).
+    Napomena: Bodovi igrača sa klupe (formation_position sadrži '_BENCH') se NE računaju u total points."""
     
     print(f"DEBUG get_team_current_gameweek_points: Tražim kolo za tim {fantasy_team_id}")
     
@@ -545,6 +546,9 @@ def get_team_current_gameweek_points_service(session: Session, fantasy_team_id: 
         
         print(f"DEBUG get_team_current_gameweek_points: Igrač {player.name} - ukupno poena: {total_points}")
         
+        # Igrači sa klupe ne doprinose bodovima tima
+        is_bench = "_BENCH" in (team_player.formation_position or "")
+        
         # Izračunaj poene sa bonusom samo za kapiten (vice-kapiten ostaje normalno)
         final_points = total_points
         if team_player.is_captain:
@@ -558,12 +562,17 @@ def get_team_current_gameweek_points_service(session: Session, fantasy_team_id: 
             "formation_position": team_player.formation_position,
             "is_captain": team_player.is_captain,
             "is_vice_captain": team_player.is_vice_captain,
+            "is_bench": is_bench,
             "points": total_points,
             "final_points": final_points
         })
     
-    total_points_sum = sum(player["final_points"] for player in players_with_points)
+    # Računaj bodove samo za igrače iz prvih 11 (bez klupe)
+    total_points_sum = sum(player["final_points"] for player in players_with_points if not player["is_bench"])
+    bench_points_sum = sum(player["final_points"] for player in players_with_points if player["is_bench"])
+    
     print(f"DEBUG get_team_current_gameweek_points: Ukupno poena tima (sa bonusom): {total_points_sum}")
+    print(f"DEBUG get_team_current_gameweek_points: Bodovi klupe (ne računaju se): {bench_points_sum}")
     print(f"DEBUG get_team_current_gameweek_points: Broj igrača sa poenima: {len(players_with_points)}")
     
     return {

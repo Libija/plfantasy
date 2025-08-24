@@ -1,3 +1,7 @@
+:root {
+  --transition-fast: 0.15s ease;
+}
+
 .container {
   width: 100%;
   max-width: 1400px;
@@ -259,11 +263,8 @@
 }
 
 .removePlayerBtn {
-  position: absolute;
-  top: -5px;
-  right: -5px;
-  width: 24px;
-  height: 24px;
+  width: 20px;
+  height: 20px;
   border-radius: 50%;
   background: #dc3545;
   color: white;
@@ -273,6 +274,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  transition: all var(--transition-fast);
 }
 
 .removePlayerBtn:disabled {
@@ -958,4 +960,92 @@
   color: #6c757d;
   font-style: italic;
   margin-top: 0.2rem;
+}
+
+/* Player Buttons Container */
+.playerButtons {
+  display: flex;
+  gap: 0.25rem;
+  position: absolute;
+  top: 5px;
+  right: 5px;
+}
+
+/* Swap Button */
+.swapBtn {
+  background-color: rgba(52, 152, 219, 0.8);
+  color: white;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.8rem;
+  font-weight: 700;
+  border: none;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.swapBtn:hover {
+  background-color: #3498db;
+  transform: scale(1.1);
+}
+
+.swapBtn:disabled {
+  background-color: #adb5bd;
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.swapBtn:disabled:hover {
+  background-color: #adb5bd;
+  transform: none;
+}
+
+/* Swap Modal Styles */
+.swapInfo {
+  background: #e3f2fd;
+  border: 1px solid #2196f3;
+  border-radius: 8px;
+  padding: 1rem;
+  margin-bottom: 1rem;
+  text-align: center;
+}
+
+.swapInfo p {
+  margin: 0;
+  color: #1976d2;
+  font-weight: 500;
+}
+
+.swapButton {
+  background: linear-gradient(135deg, #2196f3 0%, #1976d2 100%);
+  color: white;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: all 0.2s ease;
+}
+
+.swapButton:hover {
+  background: linear-gradient(135deg, #1976d2 0%, #1565c0 100%);
+  transform: translateY(-1px);
+}
+
+.noSwapOptions {
+  text-align: center;
+  padding: 2rem;
+  color: #6c757d;
+  font-style: italic;
+}
+
+.removePlayerBtn:disabled {
+  background: #adb5bd;
+  color: #6c757d;
+  cursor: not-allowed;
+  opacity: 0.6;
 }

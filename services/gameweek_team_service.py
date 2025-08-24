@@ -261,11 +261,19 @@ class GameweekTeamService:
         return sum(record.points for record in points_records)
     
     def _calculate_total_points(self, team_id: int, captain_id: int, vice_captain_id: int) -> float:
-        """Izračunava ukupne poene tima sa bonusima za kapiten i vice-kapiten i transfer penalty"""
+        """Izračunava ukupne poene tima sa bonusima za kapiten i vice-kapiten i transfer penalty.
+        Napomena: Bodovi igrača sa klupe (is_bench=True) se NE računaju u total points."""
         players = get_gameweek_team_players(self.session, team_id)
         total_points = 0.0
         
+        bench_points = 0.0  # Bodovi igrača sa klupe (samo za debug)
+        
         for player in players:
+            # Igrači sa klupe ne doprinose bodovima tima
+            if player.is_bench:
+                bench_points += player.points
+                continue
+                
             if player.player_id == captain_id:
                 # Kapiten dobija duplo poene
                 total_points += player.points * 2
@@ -273,8 +281,10 @@ class GameweekTeamService:
                 # Vice-kapiten dobija normalne poene
                 total_points += player.points
             else:
-                # Ostali igrači dobijaju normalne poene
+                # Ostali igrači iz prvih 11 dobijaju normalne poene
                 total_points += player.points
+        
+        print(f"[DEBUG] _calculate_total_points: team_id={team_id}, starting11_points={total_points}, bench_points={bench_points}")
         
         # Dohvati transfer penalty za ovo kolo
         team = self.session.get(GameweekTeam, team_id)
