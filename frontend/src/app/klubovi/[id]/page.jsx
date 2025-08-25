@@ -24,6 +24,20 @@ export default function KluboviDetalji() {
   const [upcomingMatches, setUpcomingMatches] = useState([])
   const [error, setError] = useState("")
 
+  // Funkcija koja određuje da li koristiti crnu ili bijelu boju teksta
+  const getTextColor = (backgroundColor) => {
+    if (!backgroundColor) return '#ffffff';
+    
+    // Konvertuj hex u RGB i izračunaj svjetlost
+    const hex = backgroundColor.replace('#', '');
+    const r = parseInt(hex.substr(0, 2), 16);
+    const g = parseInt(hex.substr(2, 2), 16);
+    const b = parseInt(hex.substr(4, 2), 16);
+    const brightness = (r * 299 + g * 587 + b * 114) / 1000;
+    
+    return brightness > 128 ? '#000000' : '#ffffff';
+  };
+
   // Uklonjen hardkodirani podaci - sada se dohvaćaju iz baze
 
   useEffect(() => {
@@ -106,12 +120,15 @@ export default function KluboviDetalji() {
           <Link href="/">Početna</Link> / <Link href="/klubovi">Klubovi</Link> / <span>{club.name}</span>
         </div>
 
-        <div className={styles.clubHeader} style={{ backgroundColor: club.primary_color || "#1a1a2e" }}>
+        <div className={styles.clubHeader} style={{ 
+          background: `linear-gradient(135deg, ${club.primary_color || "#1a1a2e"} 0%, ${club.secondary_color || club.primary_color || "#1a1a2e"} 100%)`,
+          color: getTextColor(club.primary_color || "#1a1a2e")
+        }}>
           <div className={styles.clubLogo}>
             {club.logo_url ? (
               <img src={club.logo_url} alt={club.name} style={{ width: 120, height: 120, borderRadius: 16, objectFit: "cover" }} />
             ) : (
-              <div className={styles.logoPlaceholder} style={{ backgroundColor: club.primary_color || "#4361ee", color: club.secondary_color || "#fff" }}>
+              <div className={styles.logoPlaceholder} style={{ backgroundColor: club.primary_color || "#4361ee", color: getTextColor(club.primary_color || "#4361ee") }}>
                 {club.name.charAt(0)}
               </div>
             )}
@@ -145,7 +162,10 @@ export default function KluboviDetalji() {
 
         <div className={styles.clubContent}>
           <div className={styles.aboutClub}>
-            <div className={styles.sectionHeader} style={{ backgroundColor: club.primary_color || "#16213e" }}>
+            <div className={styles.sectionHeader} style={{ 
+              background: `linear-gradient(135deg, ${club.primary_color || "#16213e"} 0%, ${club.secondary_color || club.primary_color || "#16213e"} 100%)`,
+              color: getTextColor(club.primary_color || "#16213e")
+            }}>
               <h2>O klubu</h2>
             </div>
             <div className={styles.aboutContent}>
@@ -160,7 +180,10 @@ export default function KluboviDetalji() {
           
 
           <div className={styles.squad}>
-            <div className={styles.sectionHeader} style={{ backgroundColor: club.primary_color || "#16213e" }}>
+            <div className={styles.sectionHeader} style={{ 
+              background: `linear-gradient(135deg, ${club.primary_color || "#16213e"} 0%, ${club.secondary_color || club.primary_color || "#16213e"} 100%)`,
+              color: getTextColor(club.primary_color || "#16213e")
+            }}>
               <h2>Igrači</h2>
             </div>
             <div className={styles.squadContent}>
@@ -189,7 +212,10 @@ export default function KluboviDetalji() {
           </div>
 
           <div className={styles.matches}>
-            <div className={styles.sectionHeader} style={{ backgroundColor: club.primary_color || "#16213e" }}>
+            <div className={styles.sectionHeader} style={{ 
+              background: `linear-gradient(135deg, ${club.primary_color || "#16213e"} 0%, ${club.secondary_color || club.primary_color || "#16213e"} 100%)`,
+              color: getTextColor(club.primary_color || "#16213e")
+            }}>
               <h2>Utakmice</h2>
             </div>
             <div className={styles.matchesContent}>
