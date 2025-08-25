@@ -39,10 +39,8 @@ export default function Tabela() {
     if (position === 1) {
       return { type: "champions", label: "Liga prvaka", color: "#4cc9f0" }
     } else if (position === 2) {
-      return { type: "europa", label: "Evropska liga", color: "#4361ee" }
+      return { type: "conference", label: "Liga konferencije", color: "#7209b7" }
     } else if (position === 3) {
-      return { type: "europa", label: "Evropska liga", color: "#4361ee" }
-    } else if (position === 4) {
       return { type: "conference", label: "Liga konferencije", color: "#7209b7" }
     } else if (position === tableData.length - 1 || position === tableData.length) {
       return { type: "relegation", label: "Ispadanje", color: "#f72585" }
@@ -88,10 +86,6 @@ export default function Tabela() {
               <div className={styles.infoItem}>
                 <span className={styles.infoBox} style={{ backgroundColor: "#4cc9f0" }}></span>
                 <span className={styles.infoText}>Liga prvaka</span>
-              </div>
-              <div className={styles.infoItem}>
-                <span className={styles.infoBox} style={{ backgroundColor: "#4361ee" }}></span>
-                <span className={styles.infoText}>Evropska liga</span>
               </div>
               <div className={styles.infoItem}>
                 <span className={styles.infoBox} style={{ backgroundColor: "#7209b7" }}></span>
