@@ -53,6 +53,63 @@ export default function Vijesti() {
     return stripHtml.length > 120 ? stripHtml.slice(0, 120) + "..." : stripHtml
   }
 
+  const getRelativeTime = (dateString) => {
+    console.log('=== DEBUG getRelativeTime ===');
+    console.log('Original dateString:', dateString);
+    
+    // Parsiraj datum string kao UTC (jer se čuva u UTC)
+    const date = new Date(dateString + 'Z'); // Dodaj 'Z' da označi UTC
+    console.log('Parsed date (with Z):', date);
+    console.log('Date UTC time:', date.getTime());
+    console.log('Date UTC string:', date.toISOString());
+    
+    // Ako je datum invalid, vrati fallback
+    if (isNaN(date.getTime())) {
+      console.error('Invalid date:', dateString);
+      return "datum nepoznat";
+    }
+    
+    // Koristi UTC vrijeme za računanje
+    const now = new Date();
+    console.log('Current now:', now);
+    console.log('Current UTC time:', now.getTime());
+    console.log('Current UTC string:', now.toISOString());
+    
+    const diff = now.getTime() - date.getTime();
+    console.log('Time difference (ms):', diff);
+    
+    const minutes = Math.floor(diff / (1000 * 60));
+    const hours = Math.floor(diff / (1000 * 60 * 60));
+    const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+    
+    console.log('Calculated:', { minutes, hours, days });
+    
+    if (minutes < 1) {
+      console.log('Result: upravo sada');
+      return "upravo sada";
+    } else if (minutes < 60) {
+      const result = `prije ${minutes} ${minutes === 1 ? 'minutu' : minutes < 5 ? 'minute' : 'minuta'}`;
+      console.log('Result:', result);
+      return result;
+    } else if (hours < 24) {
+      const result = `prije ${hours} ${hours === 1 ? 'sat' : hours < 5 ? 'sata' : 'sati'}`;
+      console.log('Result:', result);
+      return result;
+    } else {
+      // Za datume starije od 24 sata, koristi UTC format
+      const months = [
+        'januar', 'februar', 'mart', 'april', 'maj', 'juni',
+        'juli', 'august', 'septembar', 'oktobar', 'novembar', 'decembar'
+      ];
+      const day = date.getUTCDate();
+      const month = months[date.getUTCMonth()];
+      const year = date.getUTCFullYear();
+      const result = `${day}. ${month} ${year}.`;
+      console.log('Result:', result);
+      return result;
+    }
+  };
+
   return (
     <>
       <Head>
@@ -97,7 +154,7 @@ export default function Vijesti() {
                   )}
                 </div>
                 <div className={styles.newsContent}>
-                  <span className={styles.newsDate}>{item.date_posted ? new Date(item.date_posted).toLocaleDateString() : "-"}</span>
+                  <span className={styles.newsDate}>{item.date_posted ? getRelativeTime(item.date_posted) : "-"}</span>
                   <h3 className={styles.newsTitle}>
                     <Link href={`/vijesti/${item.id}`}>{item.title}</Link>
                   </h3>

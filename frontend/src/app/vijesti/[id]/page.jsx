@@ -66,6 +66,43 @@ export default function VijestiDetalji() {
       (item.category === news.category || (news.club_id && item.club_id === news.club_id))
   ).slice(0, 3)
 
+  const getRelativeTime = (dateString) => {
+    // Parsiraj datum string
+    const date = new Date(dateString);
+    
+    // Ako je datum invalid, vrati fallback
+    if (isNaN(date.getTime())) {
+      console.error('Invalid date:', dateString);
+      return "datum nepoznat";
+    }
+    
+    // Koristi UTC vrijeme za računanje
+    const now = new Date();
+    const diff = now.getTime() - date.getTime();
+    
+    const minutes = Math.floor(diff / (1000 * 60));
+    const hours = Math.floor(diff / (1000 * 60 * 60));
+    const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+    
+    if (minutes < 1) {
+      return "upravo sada";
+    } else if (minutes < 60) {
+      return `prije ${minutes} ${minutes === 1 ? 'minutu' : minutes < 5 ? 'minute' : 'minuta'}`;
+    } else if (hours < 24) {
+      return `prije ${hours} ${hours === 1 ? 'sat' : hours < 5 ? 'sata' : 'sati'}`;
+    } else {
+      // Za datume starije od 24 sata, koristi UTC format
+      const months = [
+        'januar', 'februar', 'mart', 'april', 'maj', 'juni',
+        'juli', 'august', 'septembar', 'oktobar', 'novembar', 'decembar'
+      ];
+      const day = date.getUTCDate();
+      const month = months[date.getUTCMonth()];
+      const year = date.getUTCFullYear();
+      return `${day}. ${month} ${year}.`;
+    }
+  };
+
   return (
     <>
       <Head>
@@ -80,7 +117,7 @@ export default function VijestiDetalji() {
           <div className={styles.articleHeader}>
             <h1 className={styles.title}>{news.title}</h1>
             <div className={styles.meta}>
-              <span className={styles.date}>{news.date_posted ? new Date(news.date_posted).toLocaleDateString() : "-"}</span>
+              <span className={styles.date}>{news.date_posted ? getRelativeTime(news.date_posted) : "-"}</span>
               <span className={styles.category}>{CATEGORY_LABELS[news.category] || news.category}</span>
             </div>
           </div>
