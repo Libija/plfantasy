@@ -45,7 +45,12 @@ export default function Vijesti() {
 
   const getExcerpt = (text) => {
     if (!text) return ""
-    return text.length > 120 ? text.slice(0, 120) + "..." : text
+    
+    // Ukloni HTML tagove
+    const stripHtml = text.replace(/<[^>]*>/g, '')
+    
+    // Uzmi prvi deo teksta
+    return stripHtml.length > 120 ? stripHtml.slice(0, 120) + "..." : stripHtml
   }
 
   return (

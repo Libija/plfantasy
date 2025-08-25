@@ -259,3 +259,117 @@
     height: 120px;
   }
 }
+
+/* Formatted Content Styles */
+.content {
+  padding: 2rem;
+  color: #e0e0e0;
+  line-height: 1.6;
+  font-size: 16px;
+}
+
+.content p {
+  margin-bottom: 1.5rem;
+}
+
+.content strong,
+.content b {
+  font-weight: bold;
+  color: #ffffff;
+}
+
+.content em,
+.content i {
+  font-style: italic;
+}
+
+.content a {
+  color: #4361ee;
+  text-decoration: underline;
+  transition: color 0.3s;
+}
+
+.content a:hover {
+  color: #3a56d4;
+}
+
+.content ul,
+.content ol {
+  margin-left: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.content li {
+  margin-bottom: 0.5rem;
+}
+
+.content h1,
+.content h2,
+.content h3,
+.content h4,
+.content h5,
+.content h6 {
+  color: #ffffff;
+  margin-top: 2rem;
+  margin-bottom: 1rem;
+}
+
+.content h1 {
+  font-size: 1.8rem;
+}
+
+.content h2 {
+  font-size: 1.6rem;
+}
+
+.content h3 {
+  font-size: 1.4rem;
+}
+
+.content blockquote {
+  border-left: 4px solid #4361ee;
+  padding-left: 1rem;
+  margin: 1.5rem 0;
+  font-style: italic;
+  color: #b8c1ec;
+}
+
+/* Global styles for HTML content */
+.content :global(p) {
+  margin-bottom: 1.5rem;
+}
+
+.content :global(strong),
+.content :global(b) {
+  font-weight: bold;
+  color: #ffffff;
+}
+
+.content :global(em),
+.content :global(i) {
+  font-style: italic;
+}
+
+.content :global(a) {
+  color: #4361ee;
+  text-decoration: underline;
+  transition: color 0.3s;
+}
+
+.content :global(a:hover) {
+  color: #3a56d4;
+}
+
+.content :global(ul),
+.content :global(ol) {
+  margin-left: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.content :global(li) {
+  margin-bottom: 0.5rem;
+}
+
+.content :global(br) {
+  display: none;
+}

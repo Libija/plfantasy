@@ -92,7 +92,7 @@ export default function VijestiDetalji() {
             )}
           </div>
           <div className={styles.content}>
-            {news.content}
+            <div dangerouslySetInnerHTML={{ __html: news.content }} />
           </div>
         </article>
         <div className={styles.relatedNews}>
