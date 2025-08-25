@@ -126,7 +126,12 @@ export default function KluboviDetalji() {
         }}>
           <div className={styles.clubLogo}>
             {club.logo_url ? (
-              <img src={club.logo_url} alt={club.name} style={{ width: 120, height: 120, borderRadius: 16, objectFit: "cover" }} />
+              <img src={club.logo_url} alt={club.name} style={{ 
+                width: 120, 
+                height: 120, 
+                borderRadius: 16, 
+                objectFit: "contain"
+              }} />
             ) : (
               <div className={styles.logoPlaceholder} style={{ backgroundColor: club.primary_color || "#4361ee", color: getTextColor(club.primary_color || "#4361ee") }}>
                 {club.name.charAt(0)}
