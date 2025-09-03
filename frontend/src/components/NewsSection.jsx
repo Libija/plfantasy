@@ -72,7 +72,10 @@ export default function NewsSection() {
                 <h3 className={styles.newsTitle}>
                   <Link href={`/vijesti/${item.id}`}>{item.title}</Link>
                 </h3>
-                <p className={styles.newsExcerpt}>{getExcerpt(item.content)}</p>
+                <div 
+                  className={styles.newsExcerpt} 
+                  dangerouslySetInnerHTML={{ __html: getExcerpt(item.content) }}
+                />
                 <Link href={`/vijesti/${item.id}`} className={styles.readMore}>
                   Pročitaj više
                 </Link>
