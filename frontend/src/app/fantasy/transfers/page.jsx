@@ -110,6 +110,7 @@ export default function FantasyTransfers() {
       console.log('DEBUG fetchTransfersData - transfersInfo:', JSON.stringify(data.transfers_info, null, 2))
       setIsDraftMode(data.is_draft_mode)
       setAllPlayers(data.all_players)
+      console.log('DEBUG ALL PLAYERS LOGO:', data.all_players.golmani?.[0]?.club_logo ? 'IMA LOGO' : 'NEMA LOGO')
       
       // Ako nije draft mode i transfer window je zatvoren, dohvati fantasy poene
       if (!data.is_draft_mode && data.transfer_window && !data.transfer_window.is_open && data.fantasy_team) {
@@ -130,13 +131,16 @@ export default function FantasyTransfers() {
             price: tp.price,
             points: tp.points,
             club_id: tp.club_id,
-            position: tp.player_position // Dodaj poziciju igrača
+            position: tp.player_position, // Dodaj poziciju igrača
+            club_logo: tp.club_logo,
+            club_primary_color: tp.club_primary_color,
+            club_secondary_color: tp.club_secondary_color
           }
           if (tp.is_captain) setCaptainId(tp.player_id)
           if (tp.is_vice_captain) setViceCaptainId(tp.player_id)
         })
 
-        console.log('DEBUG fetchTransfersData - postojeći igrači:', Object.keys(existingPlayers))
+        console.log('DEBUG POSTOJI IGRAC LOGO:', existingPlayers[Object.keys(existingPlayers)[0]]?.club_logo ? 'IMA LOGO' : 'NEMA LOGO')
         setSelectedPlayers(existingPlayers)
       }
       
@@ -439,7 +443,8 @@ export default function FantasyTransfers() {
             
             return (
               <div
-                className={`${styles.playerPosition} ${styles.gkPosition} ${selectedPlayers.GK ? styles.filled : ""} ${selectedPlayers.GK ? styles.positionGK : ""} ${!isDraftMode && transferWindow && !transferWindow.is_open ? styles.disabled : ""}`}
+                className={getPlayerPositionClasses(selectedPlayers.GK, `${styles.playerPosition} ${styles.gkPosition} ${selectedPlayers.GK ? styles.filled : ""} ${selectedPlayers.GK ? styles.positionGK : ""} ${!isDraftMode && transferWindow && !transferWindow.is_open ? styles.disabled : ""}`)}
+                style={getPlayerPositionStyle(selectedPlayers.GK)}
                 onClick={() => openPlayerSelection("GK")}
                 title={!isDraftMode && transferWindow && !transferWindow.is_open ? "Transfer window je zatvoren" : (selectedPlayers.GK ? `Odaberi golmana (trenutno: ${selectedPlayers.GK.name})` : "Odaberi golmana")}
               >
@@ -519,7 +524,8 @@ export default function FantasyTransfers() {
             return (
               <div
                 key={position}
-                className={`${styles.playerPosition} ${styles.dfPosition} ${selectedPlayers[position] ? styles.filled : ""} ${selectedPlayers[position] ? styles.positionDEF : ""} ${!isDraftMode && transferWindow && !transferWindow.is_open ? styles.disabled : ""}`}
+                className={getPlayerPositionClasses(selectedPlayers[position], `${styles.playerPosition} ${styles.dfPosition} ${selectedPlayers[position] ? styles.filled : ""} ${selectedPlayers[position] ? styles.positionDEF : ""} ${!isDraftMode && transferWindow && !transferWindow.is_open ? styles.disabled : ""}`)}
+                style={getPlayerPositionStyle(selectedPlayers[position])}
                 onClick={() => openPlayerSelection(position)}
                 title={!isDraftMode && transferWindow && !transferWindow.is_open ? "Transfer window je zatvoren" : (selectedPlayers[position] ? `Odaberi odbrambenog igrača (trenutno: ${selectedPlayers[position].name})` : "Odaberi odbrambenog igrača")}
 
@@ -600,7 +606,8 @@ export default function FantasyTransfers() {
             return (
               <div
                 key={position}
-                className={`${styles.playerPosition} ${styles.mfPosition} ${selectedPlayers[position] ? styles.filled : ""} ${selectedPlayers[position] ? styles.positionMID : ""} ${!isDraftMode && transferWindow && !transferWindow.is_open ? styles.disabled : ""}`}
+                className={getPlayerPositionClasses(selectedPlayers[position], `${styles.playerPosition} ${styles.mfPosition} ${selectedPlayers[position] ? styles.filled : ""} ${selectedPlayers[position] ? styles.positionMID : ""} ${!isDraftMode && transferWindow && !transferWindow.is_open ? styles.disabled : ""}`)}
+                style={getPlayerPositionStyle(selectedPlayers[position])}
                 onClick={() => openPlayerSelection(position)}
                 title={!isDraftMode && transferWindow && !transferWindow.is_open ? "Transfer window je zatvoren" : (selectedPlayers[position] ? `Odaberi veznjaka (trenutno: ${selectedPlayers[position].name})` : "Odaberi veznjaka")}
 
@@ -681,7 +688,8 @@ export default function FantasyTransfers() {
             return (
               <div
                 key={position}
-                className={`${styles.playerPosition} ${styles.fwPosition} ${selectedPlayers[position] ? styles.filled : ""} ${selectedPlayers[position] ? styles.positionFWD : ""} ${!isDraftMode && transferWindow && !transferWindow.is_open ? styles.disabled : ""}`}
+                className={getPlayerPositionClasses(selectedPlayers[position], `${styles.playerPosition} ${styles.fwPosition} ${selectedPlayers[position] ? styles.filled : ""} ${selectedPlayers[position] ? styles.positionFWD : ""} ${!isDraftMode && transferWindow && !transferWindow.is_open ? styles.disabled : ""}`)}
+                style={getPlayerPositionStyle(selectedPlayers[position])}
                 onClick={() => openPlayerSelection(position)}
                 title={!isDraftMode && transferWindow && !transferWindow.is_open ? "Transfer window je zatvoren" : (selectedPlayers[position] ? `Odaberi napadača (trenutno: ${selectedPlayers[position].name})` : "Odaberi napadača")}
 
@@ -909,10 +917,13 @@ export default function FantasyTransfers() {
     const newPlayerData = {
       ...player,
       team: player.club_name, // Dodaj ime kluba za prikaz na terenu
-      position: player.position // Osiguraj da se pozicija sačuva
+      position: player.position, // Osiguraj da se pozicija sačuva
+      club_logo: player.club_logo,
+      club_primary_color: player.club_primary_color,
+      club_secondary_color: player.club_secondary_color
     }
     
-    console.log('DEBUG selectPlayer - novi igrač:', newPlayerData)
+        console.log('DEBUG NOVI IGRAC LOGO:', newPlayerData.club_logo ? 'IMA LOGO' : 'NEMA LOGO')
 
     setSelectedPlayers({
       ...selectedPlayers,
@@ -1140,6 +1151,26 @@ export default function FantasyTransfers() {
     console.log('DEBUG getPlayerPointsInfo - igrač:', playerId, 'info:', info)
 
     return info
+  }
+
+  const getPlayerPositionStyle = (player) => {
+    if (!player || !player.club_logo) {
+      return {}
+    }
+
+    console.log('DEBUG getPlayerPositionStyle - postavljam logo za:', player.name)
+    return {
+      '--club-logo': `url(${player.club_logo})`
+    }
+  }
+
+  const getPlayerPositionClasses = (player, baseClasses) => {
+    if (!player || !player.club_logo) {
+      return baseClasses
+    }
+
+    console.log('DEBUG getPlayerPositionClasses - dodajem CSS klasu za:', player.name)
+    return `${baseClasses} ${styles.playerPositionWithClub}`
   }
 
   const isPlayerInStarting11 = (playerId) => {
@@ -1434,7 +1465,8 @@ export default function FantasyTransfers() {
                     return (
                       <div
                         key={pos}
-                        className={`${styles.benchPosition} ${selectedPlayers[pos] ? styles.filled : ""} ${playerPositionClass} ${!isDraftMode && transferWindow && !transferWindow.is_open ? styles.disabled : ""}`}
+                        className={getPlayerPositionClasses(selectedPlayers[pos], `${styles.benchPosition} ${selectedPlayers[pos] ? styles.filled : ""} ${playerPositionClass} ${!isDraftMode && transferWindow && !transferWindow.is_open ? styles.disabled : ""}`)}
+                        style={getPlayerPositionStyle(selectedPlayers[pos])}
                         onClick={() => openPlayerSelection(pos)}
                         title={!isDraftMode && transferWindow && !transferWindow.is_open ? "Transfer window je zatvoren" : (selectedPlayers[pos] ? `Odaberi ${getPositionName(pos.split("_")[0])} (trenutno: ${selectedPlayers[pos].name})` : `Odaberi ${getPositionName(pos.split("_")[0])}`)}
 

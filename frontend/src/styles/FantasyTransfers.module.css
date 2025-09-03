@@ -171,6 +171,9 @@
   transition: all 0.2s ease;
   position: relative;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
 }
 
 .playerPosition:hover {
@@ -212,6 +215,73 @@
 .positionFWD {
   background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%) !important;
   color: white !important;
+}
+
+/* Stilizovanje sa slikama kluba */
+.playerPositionWithClub {
+  position: relative;
+  overflow: hidden;
+}
+
+.playerPositionWithClub::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-image: var(--club-logo);
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  opacity: 0.4;
+  z-index: 1;
+}
+
+.playerPositionWithClub::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.3);
+  z-index: 2;
+}
+
+.playerPositionWithClub .selectedPlayerInfo {
+  position: relative;
+  z-index: 3;
+  color: white;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
+}
+
+.playerPositionWithClub .playerName {
+  color: white !important;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
+}
+
+.playerPositionWithClub .playerTeam {
+  color: rgba(255, 255, 255, 0.9) !important;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
+}
+
+.playerPositionWithClub .playerPrice {
+  background: rgba(255, 255, 255, 0.2);
+  color: white;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
+}
+
+.playerPositionWithClub .pointsValue {
+  background: rgba(255, 255, 255, 0.2);
+  color: white;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
+}
+
+.playerPositionWithClub .captainIcon,
+.playerPositionWithClub .viceCaptainIcon {
+  color: #ffc107;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
 }
 
 /* Legacy klase za kompatibilnost */
@@ -328,6 +398,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  position: relative;
 }
 
 .benchPosition:hover {
@@ -978,6 +1049,7 @@
 .benchPlayer {
   opacity: 0.6;
   background: #f8f9fa;
+  position: relative;
 }
 
 .benchLabel {
@@ -989,11 +1061,12 @@
 
 /* Player Buttons Container */
 .playerButtons {
-  display: flex;
+  display: flex !important;
   gap: 0.25rem;
-  position: absolute;
-  top: 5px;
-  right: 5px;
+  position: absolute !important;
+  top: 5px !important;
+  right: 5px !important;
+  z-index: 9999 !important;
 }
 
 /* Swap Button */

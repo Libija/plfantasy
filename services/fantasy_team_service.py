@@ -184,6 +184,9 @@ def get_transfers_data_service(session: Session, user_id: int) -> Dict[str, Any]
             "player_position": player.position if player else "",
             "club_name": club.name if club else "",
             "club_id": player.club_id if player else None,
+            "club_logo": club.logo_url if club else None,
+            "club_primary_color": club.primary_color if club else None,
+            "club_secondary_color": club.secondary_color if club else None,
             "price": player.price if player else 0,
             "points": 0,  # TODO: Dohvati poene iz PlayerFantasyPoints
             "role": tp.role,
@@ -192,6 +195,10 @@ def get_transfers_data_service(session: Session, user_id: int) -> Dict[str, Any]
             "is_captain": tp.is_captain,
             "is_vice_captain": tp.is_vice_captain
         })
+        
+        # Debug log za logo - samo prvi igrač
+        if len(team_players_data) == 1:
+            print(f"LOGO: {player.name if player else 'Unknown'} - {club.logo_url if club else 'NEMA KLUB'}")
     
     # Pripremi podatke o svim igračima
     all_players_data = []
@@ -213,11 +220,18 @@ def get_transfers_data_service(session: Session, user_id: int) -> Dict[str, Any]
             "position": player.position,
             "club_name": club.name if club else "",
             "club_id": player.club_id,
+            "club_logo": club.logo_url if club else None,
+            "club_primary_color": club.primary_color if club else None,
+            "club_secondary_color": club.secondary_color if club else None,
             "price": player.price,
             "points": total_points,
             "shirt_number": player.shirt_number,
             "nationality": player.nationality
         })
+        
+        # Debug log za logo u all_players - samo prvi igrač
+        if len(all_players_data) == 1:
+            print(f"ALL_PLAYERS: {player.name} - {club.logo_url if club else 'NEMA KLUB'}")
     
     # Grupiši i sortiraj igrače po pozicijama (po cijeni opadajuće)
     players_by_position = {
