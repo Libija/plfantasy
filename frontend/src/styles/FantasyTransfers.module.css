@@ -1070,6 +1070,11 @@
   z-index: 9999 !important;
 }
 
+/* Sakrij dugmad kad je transfer window zatvoren */
+.playerPosition.disabled .playerButtons {
+  display: none !important;
+}
+
 /* Posebni stilovi za dugmad na klupi */
 .benchPosition .playerButtons {
   top: 2px !important;
