@@ -587,6 +587,31 @@
   opacity: 0.6;
 }
 
+.infoButton {
+  background: #17a2b8;
+  color: white;
+  padding: 0.4rem 0.8rem;
+  margin-right: 0.5rem;
+}
+
+.infoButton:hover {
+  background: #138496;
+  transform: translateY(-1px);
+}
+
+.playerAction {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-width: 120px;
+  justify-content: flex-end;
+}
+
+.playerHeaderAction {
+  min-width: 120px;
+  text-align: right;
+}
+
 @media (max-width: 768px) {
   .container {
     padding: 1rem;

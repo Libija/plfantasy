@@ -197,6 +197,16 @@ def get_transfers_data_service(session: Session, user_id: int) -> Dict[str, Any]
     all_players_data = []
     for player in all_players:
         club = session.get(Club, player.club_id)
+        
+        # Dohvati ukupne fantasy poene igrača
+        total_points = 0
+        player_fantasy_points = session.exec(
+            select(PlayerFantasyPoints).where(PlayerFantasyPoints.player_id == player.id)
+        ).all()
+        
+        for pfp in player_fantasy_points:
+            total_points += pfp.points
+        
         all_players_data.append({
             "id": player.id,
             "name": player.name,
@@ -204,7 +214,7 @@ def get_transfers_data_service(session: Session, user_id: int) -> Dict[str, Any]
             "club_name": club.name if club else "",
             "club_id": player.club_id,
             "price": player.price,
-            "points": 0,  # TODO: Dohvati poene iz PlayerFantasyPoints
+            "points": total_points,
             "shirt_number": player.shirt_number,
             "nationality": player.nationality
         })

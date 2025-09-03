@@ -3,9 +3,10 @@
 import { useState, useEffect, useCallback } from "react"
 import Head from "next/head"
 import Link from "next/link"
-import { FaArrowLeft, FaSave, FaCrown, FaStar } from "react-icons/fa"
+import { FaArrowLeft, FaSave, FaCrown, FaStar, FaInfoCircle } from "react-icons/fa"
 import styles from "../../../styles/FantasyTransfers.module.css"
 import useAuth from "../../../hooks/use-auth"
+import PlayerMatchInfo from "../../../components/PlayerMatchInfo"
 
 export default function FantasyTransfers() {
   const [selectedFormation, setSelectedFormation] = useState("4-3-3")
@@ -50,6 +51,8 @@ export default function FantasyTransfers() {
   const [showSwapModal, setShowSwapModal] = useState(false)
   const [swapPlayer, setSwapPlayer] = useState(null)
   const [swapOptions, setSwapOptions] = useState([])
+  const [showPlayerInfo, setShowPlayerInfo] = useState(false)
+  const [selectedPlayerForInfo, setSelectedPlayerForInfo] = useState(null)
   const { user, isLoggedIn, loading: authLoading } = useAuth()
 
   // 1. Definiši konstante za broj igrača po poziciji
@@ -842,6 +845,17 @@ export default function FantasyTransfers() {
     console.log('DEBUG closeModal - zatvaram modal')
     setShowModal(false)
     setCurrentPosition(null)
+  }
+
+  const showPlayerMatchInfo = (player) => {
+    console.log('DEBUG showPlayerMatchInfo - prikazujem info za igrača:', player.name)
+    setSelectedPlayerForInfo(player)
+    setShowPlayerInfo(true)
+  }
+
+  const closePlayerInfo = () => {
+    setShowPlayerInfo(false)
+    setSelectedPlayerForInfo(null)
   }
 
   const selectPlayer = (player) => {
@@ -1648,8 +1662,8 @@ export default function FantasyTransfers() {
                   <div className={styles.playersHeader}>
                     <div className={styles.playerHeaderName}>Igrač</div>
                     <div className={styles.playerHeaderTeam}>Tim</div>
-                    <div className={styles.playerHeaderPrice}>Cijena</div>
-                    <div className={styles.playerHeaderPoints}>Bodovi</div>
+                    <div className={styles.playerHeaderPrice}>Cijena (M)</div>
+                    <div className={styles.playerHeaderPoints} title="Ukupni fantasy poeni igrača u sezoni">Ukupno pts</div>
                     <div className={styles.playerHeaderAction}></div>
                   </div>
 
@@ -1663,6 +1677,13 @@ export default function FantasyTransfers() {
                         <div className={styles.playerPrice}>{Number(player.price).toFixed(2)}M</div>
                         <div className={styles.playerPoints}>{player.points}</div>
                         <div className={styles.playerAction}>
+                          <button
+                            className={`${styles.actionButton} ${styles.infoButton}`}
+                            onClick={() => showPlayerMatchInfo(player)}
+                            title={`Prikaži informacije o utakmicama - ${player.name}`}
+                          >
+                            <FaInfoCircle />
+                          </button>
                           <button
                             className={`${styles.actionButton} ${styles.addButton}`}
                             onClick={() => selectPlayer(player)}
@@ -1701,8 +1722,8 @@ export default function FantasyTransfers() {
                   <div className={styles.playersHeader}>
                     <div className={styles.playerHeaderName}>Igrač</div>
                     <div className={styles.playerHeaderTeam}>Tim</div>
-                    <div className={styles.playerHeaderPrice}>Cijena</div>
-                    <div className={styles.playerHeaderPoints}>Bodovi</div>
+                    <div className={styles.playerHeaderPrice}>Cijena (M)</div>
+                    <div className={styles.playerHeaderPoints} title="Ukupni fantasy poeni igrača u sezoni">Ukupno pts</div>
                     <div className={styles.playerHeaderAction}></div>
                   </div>
 
@@ -1730,6 +1751,28 @@ export default function FantasyTransfers() {
                     </div>
                   )}
                 </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Player Info Modal */}
+        {showPlayerInfo && selectedPlayerForInfo && (
+          <div className={styles.modalOverlay}>
+            <div className={styles.modal} style={{ maxWidth: '800px', width: '90%' }}>
+              <div className={styles.modalHeader}>
+                <h3>Informacije o igraču</h3>
+                <button className={styles.closeModalBtn} onClick={closePlayerInfo}>
+                  ×
+                </button>
+              </div>
+
+              <div className={styles.modalContent}>
+                <PlayerMatchInfo 
+                  playerId={selectedPlayerForInfo.id}
+                  playerName={selectedPlayerForInfo.name}
+                  clubName={selectedPlayerForInfo.club_name}
+                />
               </div>
             </div>
           </div>
