@@ -11,6 +11,8 @@ export default function PlayerMatchInfo({ playerId, playerName, clubName }) {
   const [error, setError] = useState("")
   const [showAllRecent, setShowAllRecent] = useState(false)
   const [showAllUpcoming, setShowAllUpcoming] = useState(false)
+  const [hasMoreRecent, setHasMoreRecent] = useState(false)
+  const [hasMoreUpcoming, setHasMoreUpcoming] = useState(false)
 
   useEffect(() => {
     if (playerId) {
@@ -19,24 +21,42 @@ export default function PlayerMatchInfo({ playerId, playerName, clubName }) {
   }, [playerId])
 
   const fetchPlayerMatches = async () => {
+    console.log(`DEBUG PlayerMatchInfo: Počinjem fetch za igrača ${playerId}`)
     setLoading(true)
     setError("")
     
     try {
       const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"
+      console.log(`DEBUG PlayerMatchInfo: API URL: ${apiUrl}`)
       
       // Dohvati poslednje utakmice
-      const recentResponse = await fetch(`${apiUrl}/players/${playerId}/recent-matches?limit=5`)
+      const recentUrl = `${apiUrl}/players/${playerId}/recent-matches?limit=3`
+      console.log(`DEBUG PlayerMatchInfo: Pozivam recent matches: ${recentUrl}`)
+      const recentResponse = await fetch(recentUrl)
+      console.log(`DEBUG PlayerMatchInfo: Recent response status: ${recentResponse.status}`)
+      
       if (recentResponse.ok) {
         const recentData = await recentResponse.json()
+        console.log(`DEBUG PlayerMatchInfo: Recent data:`, recentData)
         setRecentMatches(recentData.recent_matches || [])
+        setHasMoreRecent(recentData.has_more_recent || false)
+      } else {
+        console.log(`DEBUG PlayerMatchInfo: Recent response not ok: ${recentResponse.status}`)
       }
       
       // Dohvati sledeće utakmice
-      const upcomingResponse = await fetch(`${apiUrl}/players/${playerId}/upcoming-matches?limit=3`)
+      const upcomingUrl = `${apiUrl}/players/${playerId}/upcoming-matches?limit=2`
+      console.log(`DEBUG PlayerMatchInfo: Pozivam upcoming matches: ${upcomingUrl}`)
+      const upcomingResponse = await fetch(upcomingUrl)
+      console.log(`DEBUG PlayerMatchInfo: Upcoming response status: ${upcomingResponse.status}`)
+      
       if (upcomingResponse.ok) {
         const upcomingData = await upcomingResponse.json()
+        console.log(`DEBUG PlayerMatchInfo: Upcoming data:`, upcomingData)
         setUpcomingMatches(upcomingData.upcoming_matches || [])
+        setHasMoreUpcoming(upcomingData.has_more_upcoming || false)
+      } else {
+        console.log(`DEBUG PlayerMatchInfo: Upcoming response not ok: ${upcomingResponse.status}`)
       }
       
     } catch (err) {
@@ -45,6 +65,64 @@ export default function PlayerMatchInfo({ playerId, playerName, clubName }) {
     } finally {
       setLoading(false)
     }
+  }
+
+  const toggleShowAllRecent = async () => {
+    if (!showAllRecent && hasMoreRecent) {
+      // Dohvati sve poslednje utakmice
+      try {
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"
+        const response = await fetch(`${apiUrl}/players/${playerId}/recent-matches?limit=10`)
+        if (response.ok) {
+          const data = await response.json()
+          setRecentMatches(data.recent_matches || [])
+        }
+      } catch (err) {
+        console.error("Greška pri dohvatu svih poslednjih utakmica:", err)
+      }
+    } else if (showAllRecent) {
+      // Vrati na originalni limit (3)
+      try {
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"
+        const response = await fetch(`${apiUrl}/players/${playerId}/recent-matches?limit=3`)
+        if (response.ok) {
+          const data = await response.json()
+          setRecentMatches(data.recent_matches || [])
+        }
+      } catch (err) {
+        console.error("Greška pri dohvatu poslednjih utakmica:", err)
+      }
+    }
+    setShowAllRecent(!showAllRecent)
+  }
+
+  const toggleShowAllUpcoming = async () => {
+    if (!showAllUpcoming && hasMoreUpcoming) {
+      // Dohvati sve sledeće utakmice
+      try {
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"
+        const response = await fetch(`${apiUrl}/players/${playerId}/upcoming-matches?limit=10`)
+        if (response.ok) {
+          const data = await response.json()
+          setUpcomingMatches(data.upcoming_matches || [])
+        }
+      } catch (err) {
+        console.error("Greška pri dohvatu svih sledećih utakmica:", err)
+      }
+    } else if (showAllUpcoming) {
+      // Vrati na originalni limit (2)
+      try {
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"
+        const response = await fetch(`${apiUrl}/players/${playerId}/upcoming-matches?limit=2`)
+        if (response.ok) {
+          const data = await response.json()
+          setUpcomingMatches(data.upcoming_matches || [])
+        }
+      } catch (err) {
+        console.error("Greška pri dohvatu sledećih utakmica:", err)
+      }
+    }
+    setShowAllUpcoming(!showAllUpcoming)
   }
 
   const formatDate = (dateString) => {
@@ -157,10 +235,10 @@ export default function PlayerMatchInfo({ playerId, playerName, clubName }) {
               </div>
             ))}
             
-            {recentMatches.length > 3 && (
+            {hasMoreRecent && (
               <button 
                 className={styles.showMoreBtn}
-                onClick={() => setShowAllRecent(!showAllRecent)}
+                onClick={toggleShowAllRecent}
               >
                 {showAllRecent ? (
                   <>
@@ -170,7 +248,7 @@ export default function PlayerMatchInfo({ playerId, playerName, clubName }) {
                 ) : (
                   <>
                     <FaChevronDown className={styles.chevronIcon} />
-                    Prikaži sve ({recentMatches.length})
+                    Vidi više
                   </>
                 )}
               </button>
@@ -214,10 +292,10 @@ export default function PlayerMatchInfo({ playerId, playerName, clubName }) {
               </div>
             ))}
             
-            {upcomingMatches.length > 2 && (
+            {hasMoreUpcoming && (
               <button 
                 className={styles.showMoreBtn}
-                onClick={() => setShowAllUpcoming(!showAllUpcoming)}
+                onClick={toggleShowAllUpcoming}
               >
                 {showAllUpcoming ? (
                   <>
@@ -227,7 +305,7 @@ export default function PlayerMatchInfo({ playerId, playerName, clubName }) {
                 ) : (
                   <>
                     <FaChevronDown className={styles.chevronIcon} />
-                    Prikaži sve ({upcomingMatches.length})
+                    Vidi više
                   </>
                 )}
               </button>

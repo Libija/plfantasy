@@ -23,12 +23,12 @@ def get_public_player(player_id: int, session: Session = Depends(get_session)):
     return get_player_service(session, player_id)
 
 @public_router.get("/{player_id}/recent-matches")
-def get_player_recent_matches(player_id: int, limit: int = Query(5, ge=1, le=10), session: Session = Depends(get_session)):
+def get_player_recent_matches(player_id: int, limit: int = Query(3, ge=1, le=10), session: Session = Depends(get_session)):
     """Dohvata poslednje utakmice igrača sa poenima"""
     return get_player_recent_matches_service(session, player_id, limit)
 
 @public_router.get("/{player_id}/upcoming-matches")
-def get_player_upcoming_matches(player_id: int, limit: int = Query(3, ge=1, le=5), session: Session = Depends(get_session)):
+def get_player_upcoming_matches(player_id: int, limit: int = Query(2, ge=1, le=10), session: Session = Depends(get_session)):
     """Dohvata sledeće utakmice igrača"""
     return get_player_upcoming_matches_service(session, player_id, limit)
 

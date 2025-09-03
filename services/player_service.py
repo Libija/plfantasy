@@ -68,7 +68,7 @@ def delete_player_service(session: Session, player_id: int):
     delete_player(session, player)
     return {"msg": "Player deleted"}
 
-def get_player_recent_matches_service(session: Session, player_id: int, limit: int = 5) -> Dict[str, Any]:
+def get_player_recent_matches_service(session: Session, player_id: int, limit: int = 3) -> Dict[str, Any]:
     """Dohvata poslednje utakmice igrača sa poenima"""
     
     # Proveri da li igrač postoji
@@ -81,16 +81,18 @@ def get_player_recent_matches_service(session: Session, player_id: int, limit: i
     if not club:
         raise HTTPException(status_code=404, detail="Player's club not found")
     
-    # Dohvati poslednje završene utakmice kluba
-    completed_matches = session.exec(
+    # Dohvati ukupan broj poslednjih utakmica
+    total_recent_matches = session.exec(
         select(Match)
         .where(
             (Match.home_club_id == player.club_id) | (Match.away_club_id == player.club_id),
             Match.status == MatchStatus.COMPLETED
         )
         .order_by(desc(Match.date))
-        .limit(limit)
     ).all()
+    
+    # Dohvati poslednje utakmice kluba (ograničeno)
+    completed_matches = total_recent_matches[:limit]
     
     matches_data = []
     
@@ -132,10 +134,11 @@ def get_player_recent_matches_service(session: Session, player_id: int, limit: i
         "player_name": player.name,
         "club_name": club.name,
         "recent_matches": matches_data,
-        "total_matches": len(matches_data)
+        "total_matches": len(matches_data),
+        "has_more_recent": len(total_recent_matches) > limit
     }
 
-def get_player_upcoming_matches_service(session: Session, player_id: int, limit: int = 3) -> Dict[str, Any]:
+def get_player_upcoming_matches_service(session: Session, player_id: int, limit: int = 2) -> Dict[str, Any]:
     """Dohvata sledeće utakmice igrača"""
     
     # Proveri da li igrač postoji
@@ -148,35 +151,36 @@ def get_player_upcoming_matches_service(session: Session, player_id: int, limit:
     if not club:
         raise HTTPException(status_code=404, detail="Player's club not found")
     
-    # Dohvati sledeće kolo
-    next_gameweek = session.exec(
-        select(Gameweek)
-        .where(Gameweek.status == GameweekStatus.SCHEDULED)
-        .order_by(asc(Gameweek.number))
-        .limit(1)
-    ).first()
+    # Dohvati ukupan broj sledećih utakmica (sve buduće utakmice kluba)
+    print(f"DEBUG get_player_upcoming_matches: Tražim utakmice za klub {player.club_id}")
+    print(f"DEBUG get_player_upcoming_matches: Trenutno vrijeme: {datetime.utcnow()}")
     
-    # Ako nema zakazanih kola, uzmi prvo kolo koje nije završeno
-    if not next_gameweek:
-        next_gameweek = session.exec(
-            select(Gameweek)
-            .where(Gameweek.status != GameweekStatus.COMPLETED)
-            .order_by(asc(Gameweek.number))
-            .limit(1)
-        ).first()
+    # Prvo proveri sve utakmice kluba
+    all_club_matches = session.exec(
+        select(Match)
+        .where(
+            (Match.home_club_id == player.club_id) | (Match.away_club_id == player.club_id)
+        )
+        .order_by(asc(Match.date))
+    ).all()
     
-    # Dohvati utakmice igrača u sledećem kolu
-    upcoming_matches = []
-    if next_gameweek:
-        upcoming_matches = session.exec(
-            select(Match)
-            .where(
-                (Match.home_club_id == player.club_id) | (Match.away_club_id == player.club_id),
-                Match.gameweek_id == next_gameweek.id
-            )
-            .order_by(asc(Match.date))
-            .limit(limit)
-        ).all()
+    print(f"DEBUG get_player_upcoming_matches: Ukupno utakmica kluba: {len(all_club_matches)}")
+    for match in all_club_matches:
+        print(f"DEBUG get_player_upcoming_matches: Utakmica {match.id} - Status: {match.status}, Datum: {match.date}")
+    
+    total_upcoming_matches = session.exec(
+        select(Match)
+        .where(
+            (Match.home_club_id == player.club_id) | (Match.away_club_id == player.club_id),
+            Match.status == MatchStatus.SCHEDULED
+        )
+        .order_by(asc(Match.date))
+    ).all()
+    
+    print(f"DEBUG get_player_upcoming_matches: Pronađeno {len(total_upcoming_matches)} zakazanih utakmica u budućnosti")
+    
+    # Dohvati utakmice igrača (ograničeno)
+    upcoming_matches = total_upcoming_matches[:limit]
     
     matches_data = []
     
@@ -207,5 +211,6 @@ def get_player_upcoming_matches_service(session: Session, player_id: int, limit:
         "player_name": player.name,
         "club_name": club.name,
         "upcoming_matches": matches_data,
-        "total_matches": len(matches_data)
+        "total_matches": len(matches_data),
+        "has_more_upcoming": len(total_upcoming_matches) > limit
     } 
