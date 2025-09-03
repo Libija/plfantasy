@@ -1062,11 +1062,19 @@
 /* Player Buttons Container */
 .playerButtons {
   display: flex !important;
-  gap: 0.25rem;
+  gap: 0.25rem !important;
   position: absolute !important;
-  top: 5px !important;
-  right: 5px !important;
+  bottom: calc(100% - 80px) !important;
+  left: 50% !important;
+  transform: translateX(-50%) !important;
   z-index: 9999 !important;
+}
+
+/* Posebni stilovi za dugmad na klupi */
+.benchPosition .playerButtons {
+  top: 2px !important;
+  right: 5px !important;
+  left: auto !important;
 }
 
 /* Swap Button */
