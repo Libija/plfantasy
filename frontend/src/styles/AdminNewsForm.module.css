@@ -243,3 +243,52 @@
     flex-direction: column;
   }
 }
+
+/* ReactQuill Styles */
+:global(.ql-editor) {
+  min-height: 200px;
+  font-size: 16px;
+  line-height: 1.6;
+}
+
+:global(.ql-toolbar) {
+  border-top-left-radius: 6px;
+  border-top-right-radius: 6px;
+  border-color: #dee2e6;
+}
+
+:global(.ql-container) {
+  border-bottom-left-radius: 6px;
+  border-bottom-right-radius: 6px;
+  border-color: #dee2e6;
+}
+
+:global(.ql-editor:focus) {
+  border-color: #667eea;
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+:global(.ql-editor p) {
+  margin-bottom: 1rem;
+}
+
+:global(.ql-editor strong),
+:global(.ql-editor b) {
+  font-weight: bold;
+}
+
+:global(.ql-editor em),
+:global(.ql-editor i) {
+  font-style: italic;
+}
+
+:global(.ql-editor a) {
+  color: #4361ee;
+  text-decoration: underline;
+}
+
+:global(.ql-editor ul),
+:global(.ql-editor ol) {
+  margin-left: 1.5rem;
+  margin-bottom: 1rem;
+}

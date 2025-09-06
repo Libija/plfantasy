@@ -20,115 +20,25 @@ export default function KluboviDetalji() {
   const id = params.id
   const [club, setClub] = useState(null)
   const [players, setPlayers] = useState([])
+  const [recentMatches, setRecentMatches] = useState([])
+  const [upcomingMatches, setUpcomingMatches] = useState([])
   const [error, setError] = useState("")
 
-  // Hardkodirani podaci za prikaz (igraci, trofeji, utakmice)
-  const hardcoded = {
-    fullName: "Fudbalski klub Sarajevo",
-    nickname: "Bordo tim",
-    website: "www.fcsarajevo.ba",
-    address: "Patriotske lige 2, 71000 Sarajevo",
-    description: `FK Sarajevo je bosanskohercegovački fudbalski klub iz Sarajeva. Osnovan je 1946. godine i jedan je od najuspješnijih klubova u Bosni i Hercegovini.\n\nKlub je osvojio brojne trofeje, uključujući nekoliko titula prvaka Premijer lige BiH i Kupa BiH. FK Sarajevo je također učestvovao u evropskim takmičenjima, uključujući kvalifikacije za Ligu prvaka i Ligu Evrope.\n\nDomaće utakmice igra na stadionu Koševo, koji je jedan od najvećih stadiona u Bosni i Hercegovini. Tradicionalne boje kluba su bordo i bijela, po čemu su dobili nadimak \"Bordo tim\".`,
-    trophies: [
-      { name: "Premijer liga BiH", count: 5, years: "2006/07, 2014/15, 2018/19, 2019/20, 2020/21" },
-      { name: "Kup BiH", count: 6, years: "1996/97, 1997/98, 2001/02, 2004/05, 2013/14, 2018/19" },
-      { name: "Prvenstvo Jugoslavije", count: 2, years: "1966/67, 1984/85" },
-      { name: "Kup Jugoslavije", count: 1, years: "1966/67" },
-    ],
-    squad: [
-      { number: 1, name: "Kenan Pirić", position: "Golman", age: 28, nationality: "BiH" },
-      { number: 2, name: "Siniša Stevanović", position: "Odbrana", age: 30, nationality: "BiH" },
-      { number: 5, name: "Besim Šerbečić", position: "Odbrana", age: 26, nationality: "BiH" },
-      { number: 6, name: "Selmir Pidro", position: "Odbrana", age: 25, nationality: "BiH" },
-      { number: 3, name: "Nihad Mujakić", position: "Odbrana", age: 27, nationality: "BiH" },
-      { number: 8, name: "Amar Rahmanović", position: "Veznjak", age: 26, nationality: "BiH" },
-      { number: 10, name: "Krste Velkoski", position: "Veznjak", age: 29, nationality: "Sjeverna Makedonija" },
-      { number: 20, name: "Ivan Jukić", position: "Veznjak", age: 24, nationality: "BiH" },
-      { number: 7, name: "Benjamin Tatar", position: "Napadač", age: 28, nationality: "BiH" },
-      { number: 9, name: "Mersudin Ahmetović", position: "Napadač", age: 27, nationality: "BiH" },
-      { number: 11, name: "Matthias Fanimo", position: "Napadač", age: 26, nationality: "Engleska" },
-      { number: 12, name: "Belmin Dizdarević", position: "Golman", age: 22, nationality: "BiH" },
-      { number: 4, name: "Aleksandar Vojnović", position: "Odbrana", age: 23, nationality: "BiH" },
-      { number: 15, name: "Dino Ćorić", position: "Veznjak", age: 24, nationality: "BiH" },
-      { number: 17, name: "Almir Bekić", position: "Veznjak", age: 22, nationality: "BiH" },
-      { number: 19, name: "Kerim Memija", position: "Odbrana", age: 27, nationality: "BiH" },
-      { number: 21, name: "Andrej Đokanović", position: "Napadač", age: 21, nationality: "BiH" },
-      { number: 23, name: "Amar Beganović", position: "Veznjak", age: 20, nationality: "BiH" },
-    ],
-    recentMatches: [
-      {
-        id: 1,
-        competition: "Premijer liga BiH",
-        home: "Sarajevo",
-        away: "Zrinjski",
-        homeScore: 2,
-        awayScore: 1,
-        date: "19.05.2025.",
-      },
-      {
-        id: 2,
-        competition: "Premijer liga BiH",
-        home: "Borac",
-        away: "Sarajevo",
-        homeScore: 3,
-        awayScore: 2,
-        date: "12.05.2025.",
-      },
-      {
-        id: 3,
-        competition: "Premijer liga BiH",
-        home: "Sarajevo",
-        away: "Tuzla City",
-        homeScore: 3,
-        awayScore: 0,
-        date: "05.05.2025.",
-      },
-      {
-        id: 4,
-        competition: "Kup BiH",
-        home: "Sarajevo",
-        away: "Željezničar",
-        homeScore: 2,
-        awayScore: 1,
-        date: "01.05.2025.",
-      },
-      {
-        id: 5,
-        competition: "Premijer liga BiH",
-        home: "Široki Brijeg",
-        away: "Sarajevo",
-        homeScore: 0,
-        awayScore: 2,
-        date: "28.04.2025.",
-      },
-    ],
-    upcomingMatches: [
-      {
-        id: 6,
-        competition: "Premijer liga BiH",
-        home: "Sarajevo",
-        away: "Željezničar",
-        date: "25.05.2025.",
-        time: "20:00",
-      },
-      {
-        id: 7,
-        competition: "Premijer liga BiH",
-        home: "Velež",
-        away: "Sarajevo",
-        date: "01.06.2025.",
-        time: "18:00",
-      },
-      {
-        id: 8,
-        competition: "Premijer liga BiH",
-        home: "Sarajevo",
-        away: "Sloboda",
-        date: "08.06.2025.",
-        time: "20:00",
-      },
-    ],
-  }
+  // Funkcija koja određuje da li koristiti crnu ili bijelu boju teksta
+  const getTextColor = (backgroundColor) => {
+    if (!backgroundColor) return '#ffffff';
+    
+    // Konvertuj hex u RGB i izračunaj svjetlost
+    const hex = backgroundColor.replace('#', '');
+    const r = parseInt(hex.substr(0, 2), 16);
+    const g = parseInt(hex.substr(2, 2), 16);
+    const b = parseInt(hex.substr(4, 2), 16);
+    const brightness = (r * 299 + g * 587 + b * 114) / 1000;
+    
+    return brightness > 128 ? '#000000' : '#ffffff';
+  };
+
+  // Uklonjen hardkodirani podaci - sada se dohvaćaju iz baze
 
   useEffect(() => {
     if (!id) return
@@ -162,6 +72,32 @@ export default function KluboviDetalji() {
     fetchPlayers()
   }, [id])
 
+  useEffect(() => {
+    if (!id) return
+    const fetchMatches = async () => {
+      try {
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"
+        
+        // Dohvati nedavne utakmice
+        const recentRes = await fetch(`${apiUrl}/matches/club/${id}/recent?limit=5`)
+        if (recentRes.ok) {
+          const recentData = await recentRes.json()
+          setRecentMatches(recentData)
+        }
+        
+        // Dohvati nadolazeće utakmice
+        const upcomingRes = await fetch(`${apiUrl}/matches/club/${id}/upcoming?limit=5`)
+        if (upcomingRes.ok) {
+          const upcomingData = await upcomingRes.json()
+          setUpcomingMatches(upcomingData)
+        }
+      } catch (error) {
+        console.error("Greška pri dohvatu utakmica:", error)
+      }
+    }
+    fetchMatches()
+  }, [id])
+
   if (!id) return null
   if (error) return <div className={styles.container}><p style={{ color: "red" }}>{error}</p></div>
   if (!club) return <div className={styles.container}><p>Učitavanje...</p></div>
@@ -184,19 +120,26 @@ export default function KluboviDetalji() {
           <Link href="/">Početna</Link> / <Link href="/klubovi">Klubovi</Link> / <span>{club.name}</span>
         </div>
 
-        <div className={styles.clubHeader} style={{ backgroundColor: club.primary_color || "#1a1a2e" }}>
+        <div className={styles.clubHeader} style={{ 
+          background: `linear-gradient(135deg, ${club.primary_color || "#1a1a2e"} 0%, ${club.secondary_color || club.primary_color || "#1a1a2e"} 100%)`,
+          color: getTextColor(club.primary_color || "#1a1a2e")
+        }}>
           <div className={styles.clubLogo}>
             {club.logo_url ? (
-              <img src={club.logo_url} alt={club.name} style={{ width: 120, height: 120, borderRadius: 16, objectFit: "cover" }} />
+              <img src={club.logo_url} alt={club.name} style={{ 
+                width: 120, 
+                height: 120, 
+                borderRadius: 16, 
+                objectFit: "contain"
+              }} />
             ) : (
-              <div className={styles.logoPlaceholder} style={{ backgroundColor: club.primary_color || "#4361ee", color: club.secondary_color || "#fff" }}>
+              <div className={styles.logoPlaceholder} style={{ backgroundColor: club.primary_color || "#4361ee", color: getTextColor(club.primary_color || "#4361ee") }}>
                 {club.name.charAt(0)}
               </div>
             )}
           </div>
           <div className={styles.clubInfo}>
             <h1 className={styles.clubName}>{club.name}</h1>
-            <p className={styles.clubFullName}>{hardcoded.fullName}</p>
             <div className={styles.clubBasicInfo}>
               <div className={styles.infoItem}>
                 <span className={styles.infoLabel}>Osnovan</span>
@@ -224,7 +167,10 @@ export default function KluboviDetalji() {
 
         <div className={styles.clubContent}>
           <div className={styles.aboutClub}>
-            <div className={styles.sectionHeader} style={{ backgroundColor: club.primary_color || "#16213e" }}>
+            <div className={styles.sectionHeader} style={{ 
+              background: `linear-gradient(135deg, ${club.primary_color || "#16213e"} 0%, ${club.secondary_color || club.primary_color || "#16213e"} 100%)`,
+              color: getTextColor(club.primary_color || "#16213e")
+            }}>
               <h2>O klubu</h2>
             </div>
             <div className={styles.aboutContent}>
@@ -236,27 +182,13 @@ export default function KluboviDetalji() {
             </div>
           </div>
 
-          <div className={styles.trophies}>
-            <div className={styles.sectionHeader} style={{ backgroundColor: club.primary_color || "#16213e" }}>
-              <h2>Trofeji</h2>
-            </div>
-            <div className={styles.trophiesContent}>
-              {hardcoded.trophies.map((trophy, index) => (
-                <div key={index} className={styles.trophyItem}>
-                  <div className={styles.trophyIcon}>🏆</div>
-                  <div className={styles.trophyInfo}>
-                    <div className={styles.trophyName}>
-                      {trophy.name} <span className={styles.trophyCount}>x{trophy.count}</span>
-                    </div>
-                    <div className={styles.trophyYears}>{trophy.years}</div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
+          
 
           <div className={styles.squad}>
-            <div className={styles.sectionHeader} style={{ backgroundColor: club.primary_color || "#16213e" }}>
+            <div className={styles.sectionHeader} style={{ 
+              background: `linear-gradient(135deg, ${club.primary_color || "#16213e"} 0%, ${club.secondary_color || club.primary_color || "#16213e"} 100%)`,
+              color: getTextColor(club.primary_color || "#16213e")
+            }}>
               <h2>Igrači</h2>
             </div>
             <div className={styles.squadContent}>
@@ -285,44 +217,65 @@ export default function KluboviDetalji() {
           </div>
 
           <div className={styles.matches}>
-            <div className={styles.sectionHeader} style={{ backgroundColor: club.primary_color || "#16213e" }}>
+            <div className={styles.sectionHeader} style={{ 
+              background: `linear-gradient(135deg, ${club.primary_color || "#16213e"} 0%, ${club.secondary_color || club.primary_color || "#16213e"} 100%)`,
+              color: getTextColor(club.primary_color || "#16213e")
+            }}>
               <h2>Utakmice</h2>
             </div>
             <div className={styles.matchesContent}>
               <div className={styles.matchesGroup}>
                 <h3>Nedavne utakmice</h3>
                 <div className={styles.matchesList}>
-                  {hardcoded.recentMatches.map((match) => (
-                    <Link href={`/utakmice/${match.id}`} key={match.id} className={styles.matchCard}>
-                      <div className={styles.matchInfo}>
-                        <span className={styles.matchCompetition}>{match.competition}</span>
-                        <span className={styles.matchDate}>{match.date}</span>
-                      </div>
-                      <div className={styles.matchTeams}>
-                        <div className={`${styles.matchTeam} ${match.home === club.name ? styles.homeTeam : styles.awayTeam}`}>{match.home}</div>
-                        <div className={styles.matchScore}>{match.homeScore} - {match.awayScore}</div>
-                        <div className={`${styles.matchTeam} ${match.away === club.name ? styles.homeTeam : styles.awayTeam}`}>{match.away}</div>
-                      </div>
-                    </Link>
-                  ))}
+                  {recentMatches.length === 0 ? (
+                    <p>Nema nedavnih utakmica</p>
+                  ) : (
+                    recentMatches.map((match) => (
+                      <Link href={`/utakmice/${match.id}`} key={match.id} className={styles.matchCard}>
+                        <div className={styles.matchInfo}>
+                          <span className={styles.matchCompetition}>Premijer liga BiH</span>
+                          <span className={styles.matchDate}>{new Date(match.date).toLocaleDateString("bs-BA")}</span>
+                        </div>
+                        <div className={styles.matchTeams}>
+                          <div className={`${styles.matchTeam} ${match.home_club_id === parseInt(id) ? styles.homeTeam : styles.awayTeam}`}>
+                            {match.home_club_name}
+                          </div>
+                          <div className={styles.matchScore}>{match.home_score} - {match.away_score}</div>
+                          <div className={`${styles.matchTeam} ${match.away_club_id === parseInt(id) ? styles.homeTeam : styles.awayTeam}`}>
+                            {match.away_club_name}
+                          </div>
+                        </div>
+                      </Link>
+                    ))
+                  )}
                 </div>
               </div>
               <div className={styles.matchesGroup}>
                 <h3>Nadolazeće utakmice</h3>
                 <div className={styles.matchesList}>
-                  {hardcoded.upcomingMatches.map((match) => (
-                    <Link href={`/utakmice/${match.id}`} key={match.id} className={styles.matchCard}>
-                      <div className={styles.matchInfo}>
-                        <span className={styles.matchCompetition}>{match.competition}</span>
-                        <span className={styles.matchDate}>{match.date} | {match.time}</span>
-                      </div>
-                      <div className={styles.matchTeams}>
-                        <div className={`${styles.matchTeam} ${match.home === club.name ? styles.homeTeam : styles.awayTeam}`}>{match.home}</div>
-                        <div className={styles.matchVs}>VS</div>
-                        <div className={`${styles.matchTeam} ${match.away === club.name ? styles.homeTeam : styles.awayTeam}`}>{match.away}</div>
-                      </div>
-                    </Link>
-                  ))}
+                  {upcomingMatches.length === 0 ? (
+                    <p>Nema nadolazećih utakmica</p>
+                  ) : (
+                    upcomingMatches.map((match) => (
+                      <Link href={`/utakmice/${match.id}`} key={match.id} className={styles.matchCard}>
+                        <div className={styles.matchInfo}>
+                          <span className={styles.matchCompetition}>Premijer liga BiH</span>
+                          <span className={styles.matchDate}>
+                            {new Date(match.date).toLocaleDateString("bs-BA")} | {new Date(match.date).toLocaleTimeString("bs-BA", {hour: '2-digit', minute: '2-digit'})}
+                          </span>
+                        </div>
+                        <div className={styles.matchTeams}>
+                          <div className={`${styles.matchTeam} ${match.home_club_id === parseInt(id) ? styles.homeTeam : styles.awayTeam}`}>
+                            {match.home_club_name}
+                          </div>
+                          <div className={styles.matchVs}>VS</div>
+                          <div className={`${styles.matchTeam} ${match.away_club_id === parseInt(id) ? styles.homeTeam : styles.awayTeam}`}>
+                            {match.away_club_name}
+                          </div>
+                        </div>
+                      </Link>
+                    ))
+                  )}
                 </div>
               </div>
             </div>

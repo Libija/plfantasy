@@ -12,29 +12,33 @@ export default function AdminDashboard() {
     clubs: { total: 0 },
     players: { total: 0 },
     matches: { total: 0 },
+    users: { total: 0 },
   })
 
   useEffect(() => {
     const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"
     const fetchStats = async () => {
       try {
-        const [newsRes, clubsRes, playersRes, matchesRes] = await Promise.all([
+        const [newsRes, clubsRes, playersRes, matchesRes, usersRes] = await Promise.all([
           fetch(`${apiUrl}/admin/news/`),
           fetch(`${apiUrl}/admin/clubs/`),
           fetch(`${apiUrl}/admin/players/`),
           fetch(`${apiUrl}/admin/matches/`),
+          fetch(`${apiUrl}/admin/users/`),
         ])
-        const [news, clubs, players, matches] = await Promise.all([
+        const [news, clubs, players, matches, users] = await Promise.all([
           newsRes.ok ? newsRes.json() : [],
           clubsRes.ok ? clubsRes.json() : [],
           playersRes.ok ? playersRes.json() : [],
           matchesRes.ok ? matchesRes.json() : [],
+          usersRes.ok ? usersRes.json() : [],
         ])
         setStats({
           news: { total: news.length },
           clubs: { total: clubs.length },
           players: { total: players.length },
           matches: { total: matches.length },
+          users: { total: users.length },
         })
       } catch (err) {
         // fallback: ne prikazuj ništa
@@ -69,7 +73,7 @@ export default function AdminDashboard() {
               <FaNewspaper />
             </div>
             <div className={styles.statContent}>
-              <h3 className={styles.statNumber}>{stats.news.total}</h3>
+              <h3 className={styles.statNumber}>{stats.news?.total || 0}</h3>
               <p className={styles.statLabel}>Ukupno vijesti</p>
             </div>
           </div>
@@ -79,7 +83,7 @@ export default function AdminDashboard() {
               <FaUsers />
             </div>
             <div className={styles.statContent}>
-              <h3 className={styles.statNumber}>{stats.clubs.total}</h3>
+              <h3 className={styles.statNumber}>{stats.clubs?.total || 0}</h3>
               <p className={styles.statLabel}>Klubovi</p>
             </div>
           </div>
@@ -89,7 +93,7 @@ export default function AdminDashboard() {
               <FaUserTie />
             </div>
             <div className={styles.statContent}>
-              <h3 className={styles.statNumber}>{stats.players.total}</h3>
+              <h3 className={styles.statNumber}>{stats.players?.total || 0}</h3>
               <p className={styles.statLabel}>Igrači</p>
             </div>
           </div>
@@ -99,8 +103,18 @@ export default function AdminDashboard() {
               <FaFutbol />
             </div>
             <div className={styles.statContent}>
-              <h3 className={styles.statNumber}>{stats.matches.total}</h3>
+              <h3 className={styles.statNumber}>{stats.matches?.total || 0}</h3>
               <p className={styles.statLabel}>Utakmice</p>
+            </div>
+          </div>
+
+          <div className={styles.statCard}>
+            <div className={styles.statIcon}>
+              <FaUsers />
+            </div>
+            <div className={styles.statContent}>
+              <h3 className={styles.statNumber}>{stats.users?.total || 0}</h3>
+              <p className={styles.statLabel}>Korisnici</p>
             </div>
           </div>
         </div>

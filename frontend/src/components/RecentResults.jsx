@@ -24,11 +24,24 @@ export default function RecentResults() {
       }
       
       const gameweeks = await gameweeksResponse.json()
+      console.log('Sva kola:', gameweeks)
       
-      // Pronađi zadnje završeno kolo (najveći broj kola koji je completed)
-      const lastCompletedGameweek = gameweeks
-        .filter(gw => gw.status === 'completed')
-        .sort((a, b) => b.round_number - a.round_number)[0]
+      // Pronađi zadnje završeno kolo (po datumu - najnoviji datum)
+      const completedGameweeks = gameweeks.filter(gw => gw.status === 'completed')
+      console.log('Završena kola:', completedGameweeks)
+      
+      const lastCompletedGameweek = completedGameweeks
+        .sort((a, b) => new Date(b.start_date) - new Date(a.start_date))[0]
+      
+      console.log('Zadnje završeno kolo (po start_date):', lastCompletedGameweek)
+      console.log('Sortiranje po start_date:', completedGameweeks.map(gw => ({ id: gw.id, number: gw.number, start_date: gw.start_date })).sort((a, b) => new Date(b.start_date) - new Date(a.start_date)))
+      
+      // Alternativno sortiranje po broju kola
+      const lastCompletedGameweekByNumber = completedGameweeks
+        .sort((a, b) => b.number - a.number)[0]
+      
+      console.log('Zadnje završeno kolo (po number):', lastCompletedGameweekByNumber)
+      console.log('Sortiranje po number:', completedGameweeks.map(gw => ({ id: gw.id, number: gw.number, start_date: gw.start_date })).sort((a, b) => b.number - a.number))
       
       if (!lastCompletedGameweek) {
         setResults([])
@@ -42,12 +55,14 @@ export default function RecentResults() {
       }
       
       const allMatches = await matchesResponse.json()
+      console.log('Sve utakmice za kolo:', allMatches)
       
       // Filtriraj samo completed utakmice, uzmi prve 3
       const completedMatches = allMatches
         .filter(match => match.status === 'completed')
         .slice(0, 3)
       
+      console.log('Filtrirane completed utakmice:', completedMatches)
       console.log('Recent results data:', completedMatches)
       setResults(completedMatches)
     } catch (error) {

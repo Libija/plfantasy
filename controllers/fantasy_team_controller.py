@@ -17,6 +17,7 @@ from typing import List
 from services.gameweek_team_service import GameweekTeamService
 from models.gameweek_team_model import GameweekTeam
 from models.user_model import User
+from models.fantasyteam_model import FantasyTeam
 
 router = APIRouter(prefix="/admin/fantasy", tags=["fantasy"])
 
@@ -91,6 +92,63 @@ def get_fantasy_leaderboard(session: Session = Depends(get_session)):
     for idx, entry in enumerate(sorted_leaderboard, 1):
         entry["rank"] = idx
     return sorted_leaderboard
+
+@public_router.get("/favorite-clubs-stats")
+def get_favorite_clubs_stats(session: Session = Depends(get_session)):
+    """Vraća statistike o omiljenim klubovima fantasy timova"""
+    from models.club_model import Club
+    
+    # Dohvati sve fantasy timove sa omiljenim klubovima
+    statement = select(FantasyTeam.favorite_club_id, Club.name).join(Club, Club.id == FantasyTeam.favorite_club_id, isouter=True)
+    teams = session.exec(statement).all()
+    
+    # Broj ukupnih timova
+    total_teams = len(teams)
+    
+    if total_teams == 0:
+        return {
+            "total_teams": 0,
+            "stats": []
+        }
+    
+    # Grupiranje po omiljenim klubovima
+    club_stats = {}
+    league_fans = 0  # Fanovi cijele lige (favorite_club_id = null)
+    
+    for favorite_club_id, club_name in teams:
+        if favorite_club_id is None:
+            league_fans += 1
+        else:
+            if club_name not in club_stats:
+                club_stats[club_name] = 0
+            club_stats[club_name] += 1
+    
+    # Sortiraj klubove po broju fanova
+    sorted_clubs = sorted(club_stats.items(), key=lambda x: x[1], reverse=True)
+    
+    # Izračunaj postotke
+    stats = []
+    
+    # Dodaj fanove cijele lige
+    if league_fans > 0:
+        stats.append({
+            "club_name": "🏆 Fan cijele lige",
+            "count": league_fans,
+            "percentage": round((league_fans / total_teams) * 100, 1)
+        })
+    
+    # Dodaj ostale klubove
+    for club_name, count in sorted_clubs:
+        stats.append({
+            "club_name": club_name,
+            "count": count,
+            "percentage": round((count / total_teams) * 100, 1)
+        })
+    
+    return {
+        "total_teams": total_teams,
+        "stats": stats
+    }
 
 # Admin endpointi
 @router.get("/teams", response_model=List[FantasyTeamResponse])

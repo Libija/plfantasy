@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, status, Query
 from sqlmodel import Session
 from database import get_session
 from schemas.player_schema import PlayerCreate, PlayerUpdate, PlayerResponse
-from services.player_service import create_player_service, list_players_service, get_player_service, update_player_service, delete_player_service, list_players_by_club_service
+from services.player_service import create_player_service, list_players_service, get_player_service, update_player_service, delete_player_service, list_players_by_club_service, get_player_recent_matches_service, get_player_upcoming_matches_service 
 from typing import List, Optional
 
 router = APIRouter(prefix="/admin/players", tags=["players"])
@@ -21,6 +21,16 @@ def get_public_players(club_id: Optional[int] = Query(None), session: Session = 
 def get_public_player(player_id: int, session: Session = Depends(get_session)):
     """Dohvata igrača po ID-u za javnost"""
     return get_player_service(session, player_id)
+
+@public_router.get("/{player_id}/recent-matches")
+def get_player_recent_matches(player_id: int, limit: int = Query(3, ge=1, le=10), session: Session = Depends(get_session)):
+    """Dohvata poslednje utakmice igrača sa poenima"""
+    return get_player_recent_matches_service(session, player_id, limit)
+
+@public_router.get("/{player_id}/upcoming-matches")
+def get_player_upcoming_matches(player_id: int, limit: int = Query(2, ge=1, le=10), session: Session = Depends(get_session)):
+    """Dohvata sledeće utakmice igrača"""
+    return get_player_upcoming_matches_service(session, player_id, limit)
 
 # No image_url handling needed
 # Nationality handled via schema

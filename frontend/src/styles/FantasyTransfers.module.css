@@ -1,3 +1,7 @@
+:root {
+  --transition-fast: 0.15s ease;
+}
+
 .container {
   width: 100%;
   max-width: 1400px;
@@ -167,6 +171,9 @@
   transition: all 0.2s ease;
   position: relative;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
 }
 
 .playerPosition:hover {
@@ -189,6 +196,95 @@
   color: white;
 }
 
+/* Pozicija boje na osnovu player.position iz baze */
+.positionGK {
+  background: linear-gradient(135deg, #f39c12 0%, #e67e22 100%) !important;
+  color: white !important;
+}
+
+.positionDEF {
+  background: linear-gradient(135deg, #3498db 0%, #2980b9 100%) !important;
+  color: white !important;
+}
+
+.positionMID {
+  background: linear-gradient(135deg, #2ecc71 0%, #27ae60 100%) !important;
+  color: white !important;
+}
+
+.positionFWD {
+  background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%) !important;
+  color: white !important;
+}
+
+/* Stilizovanje sa slikama kluba */
+.playerPositionWithClub {
+  position: relative;
+  overflow: hidden;
+}
+
+.playerPositionWithClub::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-image: var(--club-logo);
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  opacity: 0.4;
+  z-index: 1;
+}
+
+.playerPositionWithClub::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.3);
+  z-index: 2;
+}
+
+.playerPositionWithClub .selectedPlayerInfo {
+  position: relative;
+  z-index: 3;
+  color: white;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
+}
+
+.playerPositionWithClub .playerName {
+  color: white !important;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
+}
+
+.playerPositionWithClub .playerTeam {
+  color: rgba(255, 255, 255, 0.9) !important;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
+}
+
+.playerPositionWithClub .playerPrice {
+  background: rgba(255, 255, 255, 0.2);
+  color: white;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
+}
+
+.playerPositionWithClub .pointsValue {
+  background: rgba(255, 255, 255, 0.2);
+  color: white;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
+}
+
+.playerPositionWithClub .captainIcon,
+.playerPositionWithClub .viceCaptainIcon {
+  color: #ffc107;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
+}
+
+/* Legacy klase za kompatibilnost */
 .gkPosition {
   background: rgba(255, 255, 255, 0.9);
 }
@@ -197,15 +293,15 @@
   color: white;
 }
 
-.dfPosition.filled {
+.defPosition.filled {
   background: linear-gradient(135deg, #3498db 0%, #2980b9 100%) !important;
 }
 
-.mfPosition.filled {
+.midPosition.filled {
   background: linear-gradient(135deg, #2ecc71 0%, #27ae60 100%) !important;
 }
 
-.fwPosition.filled {
+.fwdPosition.filled {
   background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%) !important;
 }
 
@@ -237,11 +333,8 @@
 }
 
 .removePlayerBtn {
-  position: absolute;
-  top: -5px;
-  right: -5px;
-  width: 24px;
-  height: 24px;
+  width: 20px;
+  height: 20px;
   border-radius: 50%;
   background: #dc3545;
   color: white;
@@ -251,6 +344,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  transition: all var(--transition-fast);
 }
 
 .removePlayerBtn:disabled {
@@ -304,6 +398,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  position: relative;
 }
 
 .benchPosition:hover {
@@ -561,6 +656,31 @@
   color: #6c757d;
   cursor: not-allowed;
   opacity: 0.6;
+}
+
+.infoButton {
+  background: #17a2b8;
+  color: white;
+  padding: 0.4rem 0.8rem;
+  margin-right: 0.5rem;
+}
+
+.infoButton:hover {
+  background: #138496;
+  transform: translateY(-1px);
+}
+
+.playerAction {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-width: 120px;
+  justify-content: flex-end;
+}
+
+.playerHeaderAction {
+  min-width: 120px;
+  text-align: right;
 }
 
 @media (max-width: 768px) {
@@ -929,6 +1049,7 @@
 .benchPlayer {
   opacity: 0.6;
   background: #f8f9fa;
+  position: relative;
 }
 
 .benchLabel {
@@ -936,4 +1057,106 @@
   color: #6c757d;
   font-style: italic;
   margin-top: 0.2rem;
+}
+
+/* Player Buttons Container */
+.playerButtons {
+  display: flex !important;
+  gap: 0.25rem !important;
+  position: absolute !important;
+  bottom: calc(100% - 80px) !important;
+  left: 50% !important;
+  transform: translateX(-50%) !important;
+  z-index: 9999 !important;
+}
+
+/* Sakrij dugmad kad je transfer window zatvoren */
+.playerPosition.disabled .playerButtons {
+  display: none !important;
+}
+
+/* Posebni stilovi za dugmad na klupi */
+.benchPosition .playerButtons {
+  top: 2px !important;
+  right: 5px !important;
+  left: auto !important;
+}
+
+/* Swap Button */
+.swapBtn {
+  background-color: rgba(52, 152, 219, 0.8);
+  color: white;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.8rem;
+  font-weight: 700;
+  border: none;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.swapBtn:hover {
+  background-color: #3498db;
+  transform: scale(1.1);
+}
+
+.swapBtn:disabled {
+  background-color: #adb5bd;
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.swapBtn:disabled:hover {
+  background-color: #adb5bd;
+  transform: none;
+}
+
+/* Swap Modal Styles */
+.swapInfo {
+  background: #e3f2fd;
+  border: 1px solid #2196f3;
+  border-radius: 8px;
+  padding: 1rem;
+  margin-bottom: 1rem;
+  text-align: center;
+}
+
+.swapInfo p {
+  margin: 0;
+  color: #1976d2;
+  font-weight: 500;
+}
+
+.swapButton {
+  background: linear-gradient(135deg, #2196f3 0%, #1976d2 100%);
+  color: white;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: all 0.2s ease;
+}
+
+.swapButton:hover {
+  background: linear-gradient(135deg, #1976d2 0%, #1565c0 100%);
+  transform: translateY(-1px);
+}
+
+.noSwapOptions {
+  text-align: center;
+  padding: 2rem;
+  color: #6c757d;
+  font-style: italic;
+}
+
+.removePlayerBtn:disabled {
+  background: #adb5bd;
+  color: #6c757d;
+  cursor: not-allowed;
+  opacity: 0.6;
 }

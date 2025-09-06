@@ -20,6 +20,7 @@ export default function FantasyDashboard() {
   const { user, isLoggedIn, loading: authLoading } = useAuth()
   const [userResults, setUserResults] = useState([])
   const [leaderboard, setLeaderboard] = useState([])
+  const [favoriteClubsStats, setFavoriteClubsStats] = useState([])
 
   useEffect(() => {
     // Ako se još učitava auth, ne radi ništa
@@ -110,6 +111,18 @@ export default function FantasyDashboard() {
         const leaderboardData = leaderboardRes.ok ? await leaderboardRes.json() : []
         setUserResults(results)
         setLeaderboard(leaderboardData)
+        
+        // Dohvati favorite clubs stats odvojeno
+        try {
+          const favoriteClubsRes = await fetch(`${apiUrl}/fantasy/favorite-clubs-stats`)
+          if (favoriteClubsRes.ok) {
+            const favoriteClubsData = await favoriteClubsRes.json()
+            setFavoriteClubsStats(favoriteClubsData.stats || [])
+          }
+        } catch (err) {
+          console.error("Greška pri dohvatu favorite clubs stats:", err)
+          setFavoriteClubsStats([])
+        }
       } catch (err) {
         console.error("Greška pri dohvatu rezultata ili leaderboarda:", err)
       }
@@ -136,7 +149,7 @@ export default function FantasyDashboard() {
     if (lastSnapshot && lastSnapshot.players) {
       teamStats.value = lastSnapshot.players.reduce((acc, p) => acc + (p.price || 0), 0).toFixed(2)
       teamStats.lastWeekPoints = lastSnapshot.total_points
-      // Top 3 igrača po poenima iz prošlog kola
+      // Top 3 igrača po poenima iz prošlog kola (iz tvoje ekipe)
       top3Players = [...lastSnapshot.players]
         .filter(p => !p.is_bench)
         .sort((a, b) => b.points - a.points)
@@ -169,14 +182,6 @@ export default function FantasyDashboard() {
     },
   ]
 
-  // Simulirani podaci za top igrače
-  const topPlayers = [
-    { rank: 1, name: "Amar K.", teamName: "Sarajevo Šampioni", points: 1567 },
-    { rank: 2, name: "Mirza H.", teamName: "Željo Zauvijek", points: 1543 },
-    { rank: 3, name: "Edin D.", teamName: "Zmajevi BiH", points: 1521 },
-    { rank: 4, name: "Haris M.", teamName: "Bordo Armija", points: 1498 },
-    { rank: 5, name: "Kenan P.", teamName: "Tuzla City Fans", points: 1476 },
-  ]
 
   const handleCreateLeague = (e) => {
     e.preventDefault()
@@ -305,6 +310,27 @@ export default function FantasyDashboard() {
                 ))}
               </div>
             </div>
+
+            {/* Favorite Clubs Stats - mala sekcija */}
+            {favoriteClubsStats.length > 0 && (
+              <div className={styles.globalRanking} style={{ marginTop: '20px' }}>
+                <div className={styles.sectionHeader}>
+                  <h2>Omiljeni klubovi fanova</h2>
+                </div>
+                <div className={styles.rankingList}>
+                  {favoriteClubsStats.slice(0, 3).map((stat, idx) => (
+                    <div key={stat.club_name} className={styles.rankingItem}>
+                      <div className={styles.rankingPosition}>{idx + 1}</div>
+                      <div className={styles.rankingInfo}>
+                        <div className={styles.rankingName}>{stat.club_name}</div>
+                      </div>
+                      <div className={styles.rankingPoints}>{stat.percentage}%</div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
           </div>
         </div>
 

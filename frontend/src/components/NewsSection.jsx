@@ -21,10 +21,10 @@ export default function NewsSection() {
       setLoading(true)
       try {
         const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"
-        const res = await fetch(`${apiUrl}/admin/news`)
+        const res = await fetch(`${apiUrl}/admin/news?limit=3`)
         if (!res.ok) throw new Error()
         const data = await res.json()
-        setNews(data.slice(0, 6))
+        setNews(data)
       } catch {
         setError("Greška pri dohvatu vijesti!")
       } finally {
@@ -72,7 +72,10 @@ export default function NewsSection() {
                 <h3 className={styles.newsTitle}>
                   <Link href={`/vijesti/${item.id}`}>{item.title}</Link>
                 </h3>
-                <p className={styles.newsExcerpt}>{getExcerpt(item.content)}</p>
+                <div 
+                  className={styles.newsExcerpt} 
+                  dangerouslySetInnerHTML={{ __html: getExcerpt(item.content) }}
+                />
                 <Link href={`/vijesti/${item.id}`} className={styles.readMore}>
                   Pročitaj više
                 </Link>

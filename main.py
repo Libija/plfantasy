@@ -55,6 +55,7 @@ app = start_application()
 
 from controllers import user_controller
 app.include_router(user_controller.router)
+app.include_router(user_controller.admin_router)
 from controllers import club_controller
 app.include_router(club_controller.router)
 app.include_router(club_controller.public_router)

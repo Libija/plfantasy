@@ -140,12 +140,31 @@ def get_transfers_data_service(session: Session, user_id: int) -> Dict[str, Any]
     print(f"DEBUG get_transfers_data: Non-completed kola: {[gw.number for gw in non_completed_gameweeks]}")
     print(f"DEBUG get_transfers_data: Next gameweek: {next_gameweek.number if next_gameweek else 'None'}")
     
-    # Dohvati broj transfera za naredno kolo (ako postoji)
+    # Dohvati broj transfera za trenutno kolo (IN_PROGRESS) ili naredno kolo
     transfers_this_week = 0
-    if next_gameweek and fantasy_team.id is not None:
-        transfer_repo = TransferLogRepository(session)
-        # Broj transfera je broj IN transfera
-        transfers_this_week = transfer_repo.get_transfer_count_by_gameweek(fantasy_team.id, next_gameweek.number)
+    transfer_repo = TransferLogRepository(session)
+    
+    # Prvo provjeri da li postoji trenutno kolo (IN_PROGRESS)
+    current_gameweek = None
+    for gw in gameweeks:
+        if gw.status.value == "in_progress":
+            current_gameweek = gw
+            break
+    
+    if current_gameweek and fantasy_team.id is not None:
+        # Ako postoji trenutno kolo, dohvati transfer za njega
+        transfers_this_week = transfer_repo.get_transfer_count_by_gameweek(
+            fantasy_team.id, current_gameweek.number
+        )
+        print(f"DEBUG: Trenutno kolo {current_gameweek.number} (IN_PROGRESS) - transferi: {transfers_this_week}")
+    elif next_gameweek and fantasy_team.id is not None:
+        # Ako nema trenutnog kola, dohvati transfer za naredno kolo
+        transfers_this_week = transfer_repo.get_transfer_count_by_gameweek(
+            fantasy_team.id, next_gameweek.number
+        )
+        print(f"DEBUG: Naredno kolo {next_gameweek.number} - transferi: {transfers_this_week}")
+    else:
+        print(f"DEBUG: Nema trenutnog ili narednog kola za transfer")
     
     # Izračunaj besplatne transfere i penal
     free_transfers = 3
@@ -165,6 +184,9 @@ def get_transfers_data_service(session: Session, user_id: int) -> Dict[str, Any]
             "player_position": player.position if player else "",
             "club_name": club.name if club else "",
             "club_id": player.club_id if player else None,
+            "club_logo": club.logo_url if club else None,
+            "club_primary_color": club.primary_color if club else None,
+            "club_secondary_color": club.secondary_color if club else None,
             "price": player.price if player else 0,
             "points": 0,  # TODO: Dohvati poene iz PlayerFantasyPoints
             "role": tp.role,
@@ -173,22 +195,43 @@ def get_transfers_data_service(session: Session, user_id: int) -> Dict[str, Any]
             "is_captain": tp.is_captain,
             "is_vice_captain": tp.is_vice_captain
         })
+        
+        # Debug log za logo - samo prvi igrač
+        if len(team_players_data) == 1:
+            print(f"LOGO: {player.name if player else 'Unknown'} - {club.logo_url if club else 'NEMA KLUB'}")
     
     # Pripremi podatke o svim igračima
     all_players_data = []
     for player in all_players:
         club = session.get(Club, player.club_id)
+        
+        # Dohvati ukupne fantasy poene igrača
+        total_points = 0
+        player_fantasy_points = session.exec(
+            select(PlayerFantasyPoints).where(PlayerFantasyPoints.player_id == player.id)
+        ).all()
+        
+        for pfp in player_fantasy_points:
+            total_points += pfp.points
+        
         all_players_data.append({
             "id": player.id,
             "name": player.name,
             "position": player.position,
             "club_name": club.name if club else "",
             "club_id": player.club_id,
+            "club_logo": club.logo_url if club else None,
+            "club_primary_color": club.primary_color if club else None,
+            "club_secondary_color": club.secondary_color if club else None,
             "price": player.price,
-            "points": 0,  # TODO: Dohvati poene iz PlayerFantasyPoints
+            "points": total_points,
             "shirt_number": player.shirt_number,
             "nationality": player.nationality
         })
+        
+        # Debug log za logo u all_players - samo prvi igrač
+        if len(all_players_data) == 1:
+            print(f"ALL_PLAYERS: {player.name} - {club.logo_url if club else 'NEMA KLUB'}")
     
     # Grupiši i sortiraj igrače po pozicijama (po cijeni opadajuće)
     players_by_position = {
@@ -411,10 +454,13 @@ def save_transfers_service(session: Session, user_id: int, transfer_data: dict) 
                 is_captain = player_data["id"] == captain_id
                 is_vice_captain = player_data["id"] == vice_captain_id
                 
+                # Odredi role na osnovu pozicije
+                role = PlayerRole.BENCH if "_BENCH" in position else PlayerRole.REGULAR
+                
                 team_player = FantasyTeamPlayer(
                     fantasy_team_id=fantasy_team.id,
                     player_id=player_data["id"],
-                    role=PlayerRole.REGULAR,
+                    role=role,
                     formation_position=position,
                     squad_number=squad_number,
                     is_captain=is_captain,
@@ -456,7 +502,8 @@ def save_transfers_service(session: Session, user_id: int, transfer_data: dict) 
         raise HTTPException(status_code=500, detail=f"Greška pri spremanju: {str(e)}")
 
 def get_team_current_gameweek_points_service(session: Session, fantasy_team_id: int) -> Dict[str, Any]:
-    """Dohvata fantasy poene za tim u trenutnom kolu (IN_PROGRESS)"""
+    """Dohvata fantasy poene za tim u trenutnom kolu (IN_PROGRESS).
+    Napomena: Bodovi igrača sa klupe (formation_position sadrži '_BENCH') se NE računaju u total points."""
     
     print(f"DEBUG get_team_current_gameweek_points: Tražim kolo za tim {fantasy_team_id}")
     
@@ -523,6 +570,9 @@ def get_team_current_gameweek_points_service(session: Session, fantasy_team_id: 
         
         print(f"DEBUG get_team_current_gameweek_points: Igrač {player.name} - ukupno poena: {total_points}")
         
+        # Igrači sa klupe ne doprinose bodovima tima
+        is_bench = "_BENCH" in (team_player.formation_position or "")
+        
         # Izračunaj poene sa bonusom samo za kapiten (vice-kapiten ostaje normalno)
         final_points = total_points
         if team_player.is_captain:
@@ -536,12 +586,17 @@ def get_team_current_gameweek_points_service(session: Session, fantasy_team_id: 
             "formation_position": team_player.formation_position,
             "is_captain": team_player.is_captain,
             "is_vice_captain": team_player.is_vice_captain,
+            "is_bench": is_bench,
             "points": total_points,
             "final_points": final_points
         })
     
-    total_points_sum = sum(player["final_points"] for player in players_with_points)
+    # Računaj bodove samo za igrače iz prvih 11 (bez klupe)
+    total_points_sum = sum(player["final_points"] for player in players_with_points if not player["is_bench"])
+    bench_points_sum = sum(player["final_points"] for player in players_with_points if player["is_bench"])
+    
     print(f"DEBUG get_team_current_gameweek_points: Ukupno poena tima (sa bonusom): {total_points_sum}")
+    print(f"DEBUG get_team_current_gameweek_points: Bodovi klupe (ne računaju se): {bench_points_sum}")
     print(f"DEBUG get_team_current_gameweek_points: Broj igrača sa poenima: {len(players_with_points)}")
     
     return {

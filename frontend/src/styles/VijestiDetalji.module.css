@@ -98,7 +98,7 @@
 }
 
 .content p {
-  margin-bottom: 1.5rem;
+  margin-bottom: 2rem; /* Povećano sa 1.5rem na 2rem */
 }
 
 .share {
@@ -158,8 +158,9 @@
 
 .relatedGrid {
   display: grid;
-  grid-template-columns: repeat(1, 1fr);
+  grid-template-columns: repeat(3, 1fr);
   gap: 1.5rem;
+  max-width: 100%;
 }
 
 .relatedCard {
@@ -167,24 +168,48 @@
   border-radius: 8px;
   overflow: hidden;
   text-decoration: none;
-  transition: transform 0.3s;
+  transition: all 0.3s ease;
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  border: 1px solid #2a2a3a;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
 }
 
 .relatedCard:hover {
   transform: translateY(-5px);
+  border-color: #4361ee;
+  box-shadow: 0 8px 25px rgba(67, 97, 238, 0.15);
 }
 
 .relatedImage {
   width: 100%;
-  height: 150px;
+  height: 140px;
   overflow: hidden;
+  position: relative;
+  flex-shrink: 0;
+}
+
+.relatedImageImg {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.3s ease;
+}
+
+.relatedCard:hover .relatedImageImg {
+  transform: scale(1.05);
 }
 
 .relatedImagePlaceholder {
   width: 100%;
   height: 100%;
   background-color: #16213e;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #6c7293;
+  font-size: 0.9rem;
 }
 
 .relatedCardTitle {
@@ -192,12 +217,22 @@
   font-size: 1rem;
   color: #ffffff;
   margin: 0;
+  line-height: 1.4;
+  flex: 1;
+  display: flex;
+  align-items: flex-start;
 }
 
 /* Responsive */
 @media (min-width: 768px) {
   .relatedGrid {
     grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (min-width: 1024px) {
+  .relatedGrid {
+    grid-template-columns: repeat(3, 1fr);
   }
 }
 
@@ -214,4 +249,127 @@
   .imageContainer {
     height: 250px;
   }
+  
+  .relatedGrid {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+  
+  .relatedImage {
+    height: 120px;
+  }
+}
+
+/* Formatted Content Styles */
+.content {
+  padding: 2rem;
+  color: #e0e0e0;
+  line-height: 1.6;
+  font-size: 16px;
+}
+
+.content p {
+  margin-bottom: 2rem; /* Povećano sa 1.5rem na 2rem */
+}
+
+.content strong,
+.content b {
+  font-weight: bold;
+  color: #ffffff;
+}
+
+.content em,
+.content i {
+  font-style: italic;
+}
+
+.content a {
+  color: #4361ee;
+  text-decoration: underline;
+  transition: color 0.3s;
+}
+
+.content a:hover {
+  color: #3a56d4;
+}
+
+.content ul,
+.content ol {
+  margin-left: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.content li {
+  margin-bottom: 0.5rem;
+}
+
+.content h1,
+.content h2,
+.content h3,
+.content h4,
+.content h5,
+.content h6 {
+  color: #ffffff;
+  margin-top: 2rem;
+  margin-bottom: 1rem;
+}
+
+.content h1 {
+  font-size: 1.8rem;
+}
+
+.content h2 {
+  font-size: 1.6rem;
+}
+
+.content h3 {
+  font-size: 1.4rem;
+}
+
+.content blockquote {
+  border-left: 4px solid #4361ee;
+  padding-left: 1rem;
+  margin: 1.5rem 0;
+  font-style: italic;
+  color: #b8c1ec;
+}
+
+/* Global styles for HTML content */
+.content :global(p) {
+  margin-bottom: 1.5rem;
+}
+
+.content :global(strong),
+.content :global(b) {
+  font-weight: bold;
+  color: #ffffff;
+}
+
+.content :global(em),
+.content :global(i) {
+  font-style: italic;
+}
+
+.content :global(a) {
+  color: #4361ee;
+  text-decoration: underline;
+  transition: color 0.3s;
+}
+
+.content :global(a:hover) {
+  color: #3a56d4;
+}
+
+.content :global(ul),
+.content :global(ol) {
+  margin-left: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.content :global(li) {
+  margin-bottom: 0.5rem;
+}
+
+.content :global(br) {
+  display: none;
 }

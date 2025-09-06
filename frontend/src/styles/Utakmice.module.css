@@ -100,10 +100,16 @@
   padding: 1.5rem;
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
   transition: transform 0.3s;
+  border: 1px solid #2a2a3a;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
 }
 
 .matchCard:hover {
   transform: translateY(-5px);
+  border-color: #4361ee;
+  box-shadow: 0 8px 25px rgba(67, 97, 238, 0.15);
 }
 
 .matchHeader {
@@ -200,6 +206,8 @@
   font-weight: 500;
   transition: background-color 0.3s;
   text-align: center;
+  margin-top: auto;
+  flex-shrink: 0;
 }
 
 .matchLink:hover {
@@ -209,7 +217,25 @@
 /* Responsive */
 @media (min-width: 768px) {
   .matchesList {
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (min-width: 1024px) {
+  .matchesList {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (min-width: 1200px) {
+  .matchesList {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (min-width: 1400px) {
+  .matchesList {
+    grid-template-columns: repeat(3, 1fr);
   }
 }
 

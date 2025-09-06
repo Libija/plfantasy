@@ -1,4 +1,4 @@
-from sqlmodel import Session, select, and_
+from sqlmodel import Session, select, and_, or_
 from typing import List, Optional
 from datetime import datetime
 from models.match_model import Match, MatchStatus
@@ -167,4 +167,70 @@ class MatchRepository:
         
         self.db.commit()
         self.db.refresh(match)
-        return match 
+        return match
+
+    def get_recent_matches_by_club(self, club_id: int, limit: int = 5) -> List[dict]:
+        """Dohvata nedavne utakmice za određeni klub (zadnjih N završenih)"""
+        query = select(Match).where(
+            and_(
+                or_(Match.home_club_id == club_id, Match.away_club_id == club_id),
+                Match.status == MatchStatus.COMPLETED
+            )
+        ).order_by(Match.date.desc()).limit(limit)
+        
+        matches = list(self.db.exec(query))
+        result = []
+        for match in matches:
+            home_club = self.db.get(Club, match.home_club_id)
+            away_club = self.db.get(Club, match.away_club_id)
+            
+            result.append({
+                'id': match.id,
+                'home_club_id': match.home_club_id,
+                'away_club_id': match.away_club_id,
+                'gameweek_id': match.gameweek_id,
+                'date': match.date,
+                'stadium': match.stadium,
+                'referee': match.referee,
+                'home_score': match.home_score,
+                'away_score': match.away_score,
+                'status': match.status,
+                'home_club_name': home_club.name if home_club else f"Klub {match.home_club_id}",
+                'home_club_logo': home_club.logo_url if home_club else None,
+                'away_club_name': away_club.name if away_club else f"Klub {match.away_club_id}",
+                'away_club_logo': away_club.logo_url if away_club else None,
+            })
+        return result
+
+    def get_upcoming_matches_by_club(self, club_id: int, limit: int = 5) -> List[dict]:
+        """Dohvata nadolazeće utakmice za određeni klub (sljedećih N zakazanih)"""
+        query = select(Match).where(
+            and_(
+                or_(Match.home_club_id == club_id, Match.away_club_id == club_id),
+                Match.status == MatchStatus.SCHEDULED
+            )
+        ).order_by(Match.date.asc()).limit(limit)
+        
+        matches = list(self.db.exec(query))
+        result = []
+        for match in matches:
+            home_club = self.db.get(Club, match.home_club_id)
+            away_club = self.db.get(Club, match.away_club_id)
+            
+            result.append({
+                'id': match.id,
+                'home_club_id': match.home_club_id,
+                'away_club_id': match.away_club_id,
+                'gameweek_id': match.gameweek_id,
+                'date': match.date,
+                'stadium': match.stadium,
+                'referee': match.referee,
+                'home_score': match.home_score,
+                'away_score': match.away_score,
+                'status': match.status,
+                'home_club_name': home_club.name if home_club else f"Klub {match.home_club_id}",
+                'home_club_logo': home_club.logo_url if home_club else None,
+                'away_club_name': away_club.name if away_club else f"Klub {match.away_club_id}",
+                'away_club_logo': away_club.logo_url if away_club else None,
+            })
+        return result 

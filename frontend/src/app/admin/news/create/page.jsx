@@ -1,11 +1,70 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import Head from "next/head"
 import Link from "next/link"
 import { FaArrowLeft, FaSave, FaEye, FaUpload } from "react-icons/fa"
 import styles from "../../../../styles/AdminNewsForm.module.css"
 import { useRouter } from "next/navigation"
+
+// Custom QuillJS wrapper
+const QuillEditor = ({ value, onChange, placeholder }) => {
+  const quillRef = useRef(null);
+  const editorRef = useRef(null);
+
+  useEffect(() => {
+    if (quillRef.current) return;
+
+    const loadQuill = async () => {
+      const Quill = (await import('quill')).default;
+      await import('quill/dist/quill.snow.css');
+
+      if (editorRef.current) {
+        quillRef.current = new Quill(editorRef.current, {
+          theme: 'snow',
+          placeholder: placeholder,
+          modules: {
+            toolbar: [
+              ['bold', 'italic', 'underline'],
+              ['link'],
+              [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+              ['clean']
+            ]
+          }
+        });
+
+        // Set initial content
+        if (value) {
+          quillRef.current.root.innerHTML = value;
+        }
+
+        // Listen for changes
+        quillRef.current.on('text-change', () => {
+          const html = quillRef.current.root.innerHTML;
+          onChange(html);
+        });
+      }
+    };
+
+    loadQuill();
+  }, []);
+
+  // Update content when value prop changes (for edit mode)
+  useEffect(() => {
+    if (quillRef.current && value) {
+      const currentContent = quillRef.current.root.innerHTML;
+      if (value !== currentContent) {
+        quillRef.current.root.innerHTML = value;
+      }
+    }
+  }, [value]);
+
+  return (
+    <div style={{ height: '200px', marginBottom: '50px' }}>
+      <div ref={editorRef} style={{ height: '100%' }} />
+    </div>
+  );
+};
 
 export default function CreateNews() {
   const router = useRouter();
@@ -163,13 +222,9 @@ export default function CreateNews() {
             </div>
             <div className={styles.formGroup}>
               <label htmlFor="content">Sadržaj vijesti *</label>
-              <textarea
-                id="content"
-                name="content"
+              <QuillEditor
                 value={formData.content}
-                onChange={handleChange}
-                rows="10"
-                required
+                onChange={(value) => setFormData(prev => ({ ...prev, content: value }))}
                 placeholder="Unesite pun sadržaj vijesti"
               />
             </div>
