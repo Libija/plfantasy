@@ -8,7 +8,8 @@ from schemas.poll_schema import (
 from services.poll_service import (
     create_poll_service, create_rating_poll_service, create_choice_poll_service,
     get_poll_service, get_polls_by_news_service, vote_poll_service,
-    get_all_polls_service, update_poll_service, delete_poll_service
+    get_all_polls_service, update_poll_service, delete_poll_service,
+    get_admin_polls_service, toggle_news_polls_service
 )
 from services.jwt_service import verify_access_token
 from typing import List, Optional
@@ -52,7 +53,7 @@ def create_choice_poll(poll_data: ChoicePollCreate, session: Session = Depends(g
     """Kreira anketu za izbor između opcija (admin)"""
     return create_choice_poll_service(session, poll_data)
 
-@router.get("/", response_model=List[PollResponse])
+@router.get("/list", response_model=List[PollResponse])
 def get_all_polls(
     limit: int = 50, 
     offset: int = 0, 
@@ -125,3 +126,15 @@ def vote_poll(
 def get_poll_for_user(poll_id: int, user_id: int, session: Session = Depends(get_session)):
     """Dohvata anketu sa informacijom da li je korisnik glasao"""
     return get_poll_service(session, poll_id, user_id)
+
+# Admin endpointi za upravljanje anketama
+@router.get("/", response_model=List[dict])
+def get_admin_polls(session: Session = Depends(get_session)):
+    """Dohvata sve ankete grupisano po vijestima za admin panel"""
+    return get_admin_polls_service(session)
+
+@router.post("/news/{news_id}/toggle")
+def toggle_news_polls(news_id: int, toggle_data: dict, session: Session = Depends(get_session)):
+    """Toggle aktivnost svih anketa u vijesti"""
+    is_active = toggle_data.get("is_active", False)
+    return toggle_news_polls_service(session, news_id, is_active)

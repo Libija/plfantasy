@@ -2,7 +2,7 @@ from sqlmodel import Session
 from repositories.poll_repository import (
     create_poll, get_poll_by_id, get_polls_by_news_id, get_poll_with_options,
     has_user_voted, get_user_vote, create_poll_vote, get_all_polls,
-    update_poll, delete_poll
+    update_poll, delete_poll, get_polls_grouped_by_news, toggle_polls_by_news_id
 )
 from schemas.poll_schema import (
     PollCreate, PollResponse, PollVoteCreate, PollVoteResponse,
@@ -243,3 +243,12 @@ def update_poll_service(session: Session, poll_id: int, poll_data: dict) -> Poll
 def delete_poll_service(session: Session, poll_id: int) -> bool:
     """Briše anketu"""
     return delete_poll(session, poll_id)
+
+def get_admin_polls_service(session: Session) -> List[dict]:
+    """Dohvata sve ankete grupisano po vijestima za admin panel"""
+    return get_polls_grouped_by_news(session)
+
+def toggle_news_polls_service(session: Session, news_id: int, is_active: bool) -> dict:
+    """Toggle aktivnost svih anketa u vijesti"""
+    success = toggle_polls_by_news_id(session, news_id, is_active)
+    return {"success": success, "message": f"Ankete {'aktivirane' if is_active else 'deaktivirane'}"}

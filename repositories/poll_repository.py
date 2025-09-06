@@ -1,5 +1,5 @@
 from sqlmodel import Session, select, func, and_
-from models.poll_model import Poll, PollOption, PollVote
+from models.poll_model import Poll, PollOption, PollVote, PollType
 from models.news_model import News
 from typing import List, Optional, Dict, Any
 from datetime import datetime
@@ -171,3 +171,71 @@ def delete_poll(session: Session, poll_id: int) -> bool:
     session.add(poll)
     session.commit()
     return True
+
+def get_polls_grouped_by_news(session: Session) -> List[dict]:
+    """Dohvata sve ankete grupisano po vijestima za admin panel"""
+    # Dohvati sve vijesti koje imaju ankete
+    statement = select(News).join(Poll).distinct()
+    news_with_polls = session.exec(statement).all()
+    
+    result = []
+    for news in news_with_polls:
+        # Dohvati sve ankete za ovu vijest
+        polls_statement = select(Poll).where(Poll.news_id == news.id)
+        polls = session.exec(polls_statement).all()
+        
+        polls_data = []
+        for poll in polls:
+            # Dohvati opcije i broj glasova za svaku anketu
+            poll_with_options = get_poll_with_options(session, poll.id)
+            if poll_with_options:
+                # Dodaj prosječnu ocjenu za rating ankete
+                if poll.poll_type == PollType.RATING:
+                    total_votes = poll_with_options["total_votes"]
+                    if total_votes > 0:
+                        weighted_sum = sum(option["vote_count"] * int(option["option_text"]) for option in poll_with_options["options"])
+                        average_rating = weighted_sum / total_votes
+                    else:
+                        average_rating = 0
+                    poll_with_options["average_rating"] = average_rating
+                
+                polls_data.append({
+                    "id": poll.id,
+                    "question": poll.question,
+                    "poll_type": poll.poll_type.value,
+                    "is_active": poll.is_active,
+                    "total_votes": poll_with_options["total_votes"],
+                    "options": [
+                        {
+                            "id": option["id"],
+                            "option_text": option["option_text"],
+                            "vote_count": option["vote_count"]
+                        } for option in poll_with_options["options"]
+                    ],
+                    "average_rating": poll_with_options.get("average_rating", 0)
+                })
+        
+        result.append({
+            "id": news.id,
+            "title": news.title,
+            "polls": polls_data
+        })
+    
+    return result
+
+def toggle_polls_by_news_id(session: Session, news_id: int, is_active: bool) -> bool:
+    """Toggle aktivnost svih anketa u vijesti"""
+    try:
+        statement = select(Poll).where(Poll.news_id == news_id)
+        polls = session.exec(statement).all()
+        
+        for poll in polls:
+            poll.is_active = is_active
+            poll.updated_at = datetime.now()
+            session.add(poll)
+        
+        session.commit()
+        return True
+    except Exception as e:
+        session.rollback()
+        return False
