@@ -95,3 +95,6 @@ from controllers import transfer_window_controller
 app.include_router(transfer_window_controller.router)
 from controllers import fantasy_transfer_controller
 app.include_router(fantasy_transfer_controller.router)
+from controllers import poll_controller
+app.include_router(poll_controller.router)
+app.include_router(poll_controller.public_router)

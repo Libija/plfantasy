@@ -18,12 +18,18 @@ from models.gameweekscore_model import GameweekScore
 from models.playerfantasypoints_model import PlayerFantasyPoints
 from models.transfer_window_model import TransferWindow
 from models.transfer_log_model import TransferLog
+from models.poll_model import Poll, PollOption, PollVote
 from models.gameweek_team_model import GameweekTeam
 from models.gameweek_player_model import GameweekPlayer
 
 # PostgreSQL connection string sa Aiven-a
 postgres_url = "postgresql://avnadmin:AVNS_DWsOBrpf63F7vWUzPaa@plkutak-ahmeddadada-6942.i.aivencloud.com:18528/defaultdb?sslmode=require"
-engine = create_engine(postgres_url, echo=True)
+
+# Osnovna konfiguracija
+engine = create_engine(
+    postgres_url, 
+    echo=True
+)
 
 def create_db_and_tables():
     SQLModel.metadata.create_all(engine)

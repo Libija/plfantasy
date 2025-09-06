@@ -75,6 +75,8 @@ export default function CreateNews() {
     content: "",
     image_url: "",
   })
+  const [hasPolls, setHasPolls] = useState(false)
+  const [polls, setPolls] = useState([])
   const [error, setError] = useState("")
   const [clubs, setClubs] = useState([])
   const [loadingClubs, setLoadingClubs] = useState(true)
@@ -123,25 +125,122 @@ export default function CreateNews() {
     }
   }
 
+  const addPoll = () => {
+    const newPoll = {
+      id: Date.now(), // Temporary ID
+      question: "",
+      poll_type: "choice",
+      options: ["", ""]
+    }
+    setPolls([...polls, newPoll])
+  }
+
+  const updatePoll = (pollId, field, value) => {
+    setPolls(polls.map(poll => 
+      poll.id === pollId 
+        ? { ...poll, [field]: value }
+        : poll
+    ))
+  }
+
+  const addPollOption = (pollId) => {
+    setPolls(polls.map(poll => 
+      poll.id === pollId 
+        ? { ...poll, options: [...poll.options, ""] }
+        : poll
+    ))
+  }
+
+  const updatePollOption = (pollId, optionIndex, value) => {
+    setPolls(polls.map(poll => 
+      poll.id === pollId 
+        ? { 
+            ...poll, 
+            options: poll.options.map((opt, idx) => 
+              idx === optionIndex ? value : opt
+            )
+          }
+        : poll
+    ))
+  }
+
+  const removePollOption = (pollId, optionIndex) => {
+    setPolls(polls.map(poll => 
+      poll.id === pollId 
+        ? { 
+            ...poll, 
+            options: poll.options.filter((_, idx) => idx !== optionIndex)
+          }
+        : poll
+    ))
+  }
+
+  const removePoll = (pollId) => {
+    setPolls(polls.filter(poll => poll.id !== pollId))
+  }
+
   const handleSubmit = async (e) => {
     e.preventDefault()
     setError("")
     const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"
-    const payload = {
-      title: formData.title,
-      content: formData.content,
-      image_url: formData.image_url || null,
-      category: formData.category,
-      club_id: formData.club_id ? Number(formData.club_id) : null,
-      date_posted: new Date().toISOString(),
-    }
+    
     try {
-      const res = await fetch(`${apiUrl}/admin/news/create`, {
+      // Prvo kreiraj vijest
+      const newsPayload = {
+        title: formData.title,
+        content: formData.content,
+        image_url: formData.image_url || null,
+        category: formData.category,
+        club_id: formData.club_id ? Number(formData.club_id) : null,
+        date_posted: new Date().toISOString(),
+      }
+      
+      const newsRes = await fetch(`${apiUrl}/admin/news/create`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
+        body: JSON.stringify(newsPayload),
       })
-      if (!res.ok) throw new Error("Greška pri kreiranju vijesti")
+      
+      if (!newsRes.ok) throw new Error("Greška pri kreiranju vijesti")
+      
+      const newsData = await newsRes.json()
+      
+      // Zatim kreiraj ankete ako postoje
+      if (hasPolls && polls.length > 0) {
+        for (const poll of polls) {
+          if (poll.question.trim()) {
+            if (poll.poll_type === "rating") {
+              // Rating poll
+              const pollPayload = {
+                question: poll.question,
+                news_id: newsData.id
+              }
+              
+              await fetch(`${apiUrl}/admin/polls/rating`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(pollPayload),
+              })
+            } else {
+              // Choice poll
+              const pollPayload = {
+                question: poll.question,
+                news_id: newsData.id,
+                options: poll.options
+                  .filter(opt => opt.trim())
+                  .map(opt => opt.trim())
+              }
+              
+              await fetch(`${apiUrl}/admin/polls/choice`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(pollPayload),
+              })
+            }
+          }
+        }
+      }
+      
       router.push("/admin/news")
     } catch (err) {
       setError("Greška pri kreiranju vijesti!")
@@ -228,6 +327,108 @@ export default function CreateNews() {
                 placeholder="Unesite pun sadržaj vijesti"
               />
             </div>
+
+            {/* Polls Section */}
+            <div className={styles.formGroup}>
+              <div className={styles.checkboxGroup}>
+                <input
+                  type="checkbox"
+                  id="hasPolls"
+                  checked={hasPolls}
+                  onChange={(e) => setHasPolls(e.target.checked)}
+                />
+                <label htmlFor="hasPolls">Dodaj ankete u vijest</label>
+              </div>
+            </div>
+
+            {hasPolls && (
+              <div className={styles.pollsSection}>
+                <h3>Ankete</h3>
+                {polls.map((poll, pollIndex) => (
+                  <div key={poll.id} className={styles.pollCard}>
+                    <div className={styles.pollHeader}>
+                      <h4>Anketa {pollIndex + 1}</h4>
+                      <button
+                        type="button"
+                        onClick={() => removePoll(poll.id)}
+                        className={styles.removeButton}
+                      >
+                        Ukloni
+                      </button>
+                    </div>
+                    
+                    <div className={styles.formGroup}>
+                      <label>Pitanje ankete *</label>
+                      <input
+                        type="text"
+                        value={poll.question}
+                        onChange={(e) => updatePoll(poll.id, 'question', e.target.value)}
+                        placeholder="Unesite pitanje ankete"
+                        required
+                      />
+                    </div>
+
+                    <div className={styles.formGroup}>
+                      <label>Tip ankete</label>
+                      <select
+                        value={poll.poll_type}
+                        onChange={(e) => updatePoll(poll.id, 'poll_type', e.target.value)}
+                      >
+                        <option value="choice">Izbor između opcija</option>
+                        <option value="rating">Ocjena 1-5</option>
+                      </select>
+                    </div>
+
+                    {poll.poll_type === "choice" && (
+                      <div className={styles.formGroup}>
+                        <label>Opcije za izbor *</label>
+                        {poll.options.map((option, optionIndex) => (
+                          <div key={optionIndex} className={styles.optionRow}>
+                            <input
+                              type="text"
+                              value={option}
+                              onChange={(e) => updatePollOption(poll.id, optionIndex, e.target.value)}
+                              placeholder={`Opcija ${optionIndex + 1}`}
+                              required
+                            />
+                            {poll.options.length > 2 && (
+                              <button
+                                type="button"
+                                onClick={() => removePollOption(poll.id, optionIndex)}
+                                className={styles.removeOptionButton}
+                              >
+                                ×
+                              </button>
+                            )}
+                          </div>
+                        ))}
+                        <button
+                          type="button"
+                          onClick={() => addPollOption(poll.id)}
+                          className={styles.addOptionButton}
+                        >
+                          + Dodaj opciju
+                        </button>
+                      </div>
+                    )}
+
+                    {poll.poll_type === "rating" && (
+                      <div className={styles.ratingInfo}>
+                        <p>Anketa za ocjenu će automatski imati opcije 1, 2, 3, 4, 5</p>
+                      </div>
+                    )}
+                  </div>
+                ))}
+                
+                <button
+                  type="button"
+                  onClick={addPoll}
+                  className={styles.addPollButton}
+                >
+                  + Dodaj anketu
+                </button>
+              </div>
+            )}
             <div className={styles.formGroup}>
               <button type="submit" className={styles.saveButton}>
                 <FaSave /> Sačuvaj vijest

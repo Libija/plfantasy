@@ -4,6 +4,7 @@ import Link from "next/link"
 import { useParams } from "next/navigation"
 import { useEffect, useState } from "react"
 import styles from "../../../styles/VijestiDetalji.module.css"
+import useAuth from "../../../hooks/use-auth"
 
 const CATEGORY_LABELS = {
   transfer: "Transferi",
@@ -20,6 +21,9 @@ export default function VijestiDetalji() {
   const [allNews, setAllNews] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState("")
+  const [polls, setPolls] = useState([])
+  const [userVotes, setUserVotes] = useState({})
+  const { isLoggedIn, token } = useAuth()
 
   useEffect(() => {
     if (!id) return
@@ -39,6 +43,31 @@ export default function VijestiDetalji() {
     }
     fetchNews()
   }, [id])
+
+  useEffect(() => {
+    if (!id) return
+    const fetchPolls = async () => {
+      try {
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"
+        const headers = {}
+        if (isLoggedIn && token) {
+          headers['Authorization'] = `Bearer ${token}`
+        }
+        
+        const res = await fetch(`${apiUrl}/polls/news/${id}`, {
+          headers
+        })
+        if (res.ok) {
+          const data = await res.json()
+          setPolls(data)
+        }
+      } catch {
+        // ignore
+      }
+    }
+    fetchPolls()
+  }, [id, isLoggedIn, token])
+
 
   useEffect(() => {
     const fetchAllNews = async () => {
@@ -65,6 +94,47 @@ export default function VijestiDetalji() {
       item.id !== news.id &&
       (item.category === news.category || (news.club_id && item.club_id === news.club_id))
   ).slice(0, 3)
+
+  const handleVote = async (pollId, optionId) => {
+    if (!isLoggedIn || !token) {
+      alert("Morate biti ulogovani da biste glasali!")
+      return
+    }
+
+    try {
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"
+      
+      const res = await fetch(`${apiUrl}/polls/${pollId}/vote`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`
+        },
+        body: JSON.stringify({ option_id: optionId })
+      })
+
+      if (res.ok) {
+        // Ažuriraj lokalno stanje
+        setUserVotes(prev => ({ ...prev, [pollId]: optionId }))
+        
+        // Ponovo učitaj ankete da dobijemo ažurirane rezultate
+        const pollsRes = await fetch(`${apiUrl}/polls/news/${id}`, {
+          headers: {
+            "Authorization": `Bearer ${token}`
+          }
+        })
+        if (pollsRes.ok) {
+          const updatedPolls = await pollsRes.json()
+          setPolls(updatedPolls)
+        }
+      } else {
+        const error = await res.json()
+        alert(error.detail || "Greška pri glasanju!")
+      }
+    } catch {
+      alert("Greška pri glasanju!")
+    }
+  }
 
   const getRelativeTime = (dateString) => {
     // Parsiraj datum string
@@ -132,6 +202,102 @@ export default function VijestiDetalji() {
             <div dangerouslySetInnerHTML={{ __html: news.content }} />
           </div>
         </article>
+
+        {/* Polls Section */}
+        {polls.length > 0 && (
+          <div className={styles.pollsSection} style={{ position: 'relative' }}>
+            <h2 className={styles.pollsTitle}>Ankete</h2>
+            
+            {/* Login poruka ako nije logovan */}
+            {!isLoggedIn && polls.length > 0 && (
+              <div className={styles.pollOverlay}>
+                <div className={styles.pollOverlayContent}>
+                  <h3>🔐 Prijava potrebna</h3>
+                  <p>Morate se prijaviti da biste glasali na anketama</p>
+                  <a href="/login" className={styles.loginLink}>Prijavite se ovdje</a>
+                </div>
+              </div>
+            )}
+            
+            {/* Overlay nakon glasanja na svim anketama */}
+            {polls.length > 0 && polls.every(p => p.all_polls_voted) && (
+              <div className={styles.pollOverlay}>
+                <div className={styles.pollOverlayContent}>
+                  <h3>🎉 Hvala vam što ste glasali na anketi!</h3>
+                  <p>Vaš glas je zabeležen i uzet u obzir.</p>
+                </div>
+              </div>
+            )}
+            
+            {/* Overlay za neaktivne ankete */}
+            {polls.length > 0 && polls.every(p => !p.is_active) && (
+              <div className={styles.pollOverlay}>
+                <div className={styles.pollOverlayContent}>
+                  <h3>⏰ Ankete su zatvorene</h3>
+                  <p>Glasanje na ovim anketama je završeno.</p>
+                </div>
+              </div>
+            )}
+            
+            {polls.map((poll) => (
+              <div key={poll.id} className={`${styles.pollCard} ${poll.all_polls_voted ? styles.pollVoted : ''}`}>
+                <h3 className={styles.pollQuestion}>{poll.question}</h3>
+                
+                {/* Rating ankete u liniji */}
+                {poll.poll_type === 'rating' ? (
+                  <div className={styles.ratingOptions}>
+                    {poll.options.map((option) => {
+                      const isVoted = userVotes[poll.id] === option.id
+                      const isDisabled = !isLoggedIn || poll.user_voted || !poll.is_active
+                      return (
+                        <button
+                          key={option.id}
+                          className={`${styles.ratingOption} ${isVoted ? styles.selected : ''} ${isDisabled ? styles.disabled : ''}`}
+                          onClick={() => handleVote(poll.id, option.id)}
+                          disabled={isDisabled}
+                        >
+                          <span className={styles.ratingNumber}>{option.option_text}</span>
+                        </button>
+                      )
+                    })}
+                  </div>
+                ) : (
+                  /* Choice ankete - vertikalno */
+                  <div className={styles.pollOptions}>
+                    {poll.options.map((option) => {
+                      const isVoted = userVotes[poll.id] === option.id
+                      const isDisabled = !isLoggedIn || poll.user_voted || !poll.is_active
+                      
+                      return (
+                        <div key={option.id} className={styles.pollOption}>
+                          <button
+                            className={`${styles.optionButton} ${isVoted ? styles.optionVoted : ''} ${isDisabled ? styles.optionDisabled : ''}`}
+                            onClick={() => handleVote(poll.id, option.id)}
+                            disabled={isDisabled}
+                          >
+                            <span className={styles.optionText}>{option.option_text}</span>
+                          </button>
+                        </div>
+                      )
+                    })}
+                  </div>
+                )}
+                
+                <div className={styles.pollFooter}>
+                  {!poll.is_active && (
+                    <span className={styles.pollInactive}>Anketa je zatvorena</span>
+                  )}
+                  {isLoggedIn && poll.is_active && poll.user_voted && (
+                    <span className={styles.pollVoted}>Već ste glasali</span>
+                  )}
+                  {!isLoggedIn && poll.is_active && (
+                    <span className={styles.pollLoginRequired}>Morate biti ulogovani da glasate</span>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
         <div className={styles.relatedNews}>
           <h2 className={styles.relatedTitle}>Povezane vijesti</h2>
           <div className={styles.relatedGrid}>
