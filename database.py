@@ -1,5 +1,6 @@
 from typing import Generator
 from sqlmodel import SQLModel, create_engine, Session
+import time
 
 # Import svih modela
 from models.user_model import User
@@ -21,14 +22,24 @@ from models.transfer_log_model import TransferLog
 from models.poll_model import Poll, PollOption, PollVote
 from models.gameweek_team_model import GameweekTeam
 from models.gameweek_player_model import GameweekPlayer
+from models.match_prediction_model import MatchPrediction
 
 # PostgreSQL connection string sa Aiven-a
 postgres_url = "postgresql://avnadmin:AVNS_DWsOBrpf63F7vWUzPaa@plkutak-ahmeddadada-6942.i.aivencloud.com:18528/defaultdb?sslmode=require"
 
-# Osnovna konfiguracija
+# Osnovna konfiguracija - optimizovano za Aiven Free tier
 engine = create_engine(
     postgres_url, 
-    echo=True
+    echo=False,  # Isključeno echo za manje I/O
+    pool_size=2,  # Minimalan pool za free tier
+    max_overflow=3,  # Maksimalno 5 konekcija ukupno
+    pool_pre_ping=True,
+    pool_recycle=180,  # 3 minuta - kraći recycle
+    pool_timeout=10,  # Timeout za konekciju
+    connect_args={
+        "connect_timeout": 10,
+        "application_name": "plfantasy"
+    }
 )
 
 def create_db_and_tables():

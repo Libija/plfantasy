@@ -33,8 +33,9 @@ def start_application():
         CORSMiddleware,
         allow_origins=origins,
         allow_credentials=True,
-        allow_methods=["*"],
-        allow_headers=["*"]
+        allow_methods=["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
+        allow_headers=["*"],
+        expose_headers=["*"]
     )
 
     @app.exception_handler(RequestValidationError)
@@ -46,6 +47,16 @@ def start_application():
             status_code=422,
             content={"detail": [{"loc": error["loc"], "msg": error["msg"]} for error in exc.errors()]},
         )
+
+    @app.exception_handler(Exception)
+    async def global_exception_handler(request: Request, exc: Exception):
+        # Log samo tip greške, ne full stack trace za Aiven free tier
+        print(f"[ERROR] {type(exc).__name__}: {str(exc)}")
+        return JSONResponse(
+            status_code=500,
+            content={"detail": "Server error - please try again"}
+        )
+
 
     return app
 
@@ -98,3 +109,5 @@ app.include_router(fantasy_transfer_controller.router)
 from controllers import poll_controller
 app.include_router(poll_controller.router)
 app.include_router(poll_controller.public_router)
+from controllers import match_prediction_controller
+app.include_router(match_prediction_controller.router)
