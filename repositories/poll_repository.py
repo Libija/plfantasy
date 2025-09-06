@@ -38,7 +38,7 @@ def get_poll_by_id(session: Session, poll_id: int) -> Optional[Poll]:
 
 def get_polls_by_news_id(session: Session, news_id: int) -> List[Poll]:
     """Dohvata sve ankete za određenu vijest"""
-    statement = select(Poll).where(Poll.news_id == news_id, Poll.is_active == True)
+    statement = select(Poll).where(Poll.news_id == news_id)
     polls = session.exec(statement).all()
     return polls
 

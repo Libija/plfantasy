@@ -54,15 +54,20 @@ export default function VijestiDetalji() {
           headers['Authorization'] = `Bearer ${token}`
         }
         
+        console.log('Fetching polls from:', `${apiUrl}/polls/news/${id}`)
         const res = await fetch(`${apiUrl}/polls/news/${id}`, {
           headers
         })
+        console.log('Polls response status:', res.status)
         if (res.ok) {
           const data = await res.json()
+          console.log('Polls data received:', data)
           setPolls(data)
+        } else {
+          console.error('Polls fetch failed:', res.status, res.statusText)
         }
-      } catch {
-        // ignore
+      } catch (error) {
+        console.error('Polls fetch error:', error)
       }
     }
     fetchPolls()
