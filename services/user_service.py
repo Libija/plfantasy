@@ -3,16 +3,44 @@ from models.user_model import User, Role
 from repositories.user_repository import get_user_by_username, get_user_by_email, create_user
 from schemas.user_schema import UserRegisterRequest, UserLoginRequest, UserResponse
 from services.jwt_service import create_access_token
-from passlib.context import CryptContext
 from fastapi import HTTPException, status
-
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+import bcrypt
+import hashlib
 
 def hash_password(password: str) -> str:
-    return pwd_context.hash(password)
+    """
+    Hashuje password koristeći bcrypt direktno.
+    Ako je password duži od 72 bajta (bcrypt ograničenje),
+    prvo ga hashujemo preko SHA256.
+    """
+    password_bytes = password.encode('utf-8')
+    
+    # Bcrypt ima ograničenje od 72 bajta
+    if len(password_bytes) > 72:
+        # Hashujemo preko SHA256 da osiguramo da je uvek manje od 72 bajta
+        password_bytes = hashlib.sha256(password_bytes).digest()
+    
+    # Generišemo salt i hashujemo password
+    salt = bcrypt.gensalt()
+    hashed = bcrypt.hashpw(password_bytes, salt)
+    return hashed.decode('utf-8')
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
-    return pwd_context.verify(plain_password, hashed_password)
+    """
+    Verifikuje password koristeći bcrypt direktno.
+    Ako je password duži od 72 bajta, prvo ga hashujemo preko SHA256.
+    Podržava bcrypt format ($2a$, $2b$, $2y$) koji koristi i passlib.
+    """
+    password_bytes = plain_password.encode('utf-8')
+    
+    # Bcrypt ima ograničenje od 72 bajta
+    if len(password_bytes) > 72:
+        # Hashujemo preko SHA256 da osiguramo da je uvek manje od 72 bajta
+        password_bytes = hashlib.sha256(password_bytes).digest()
+    
+    # Verifikujemo password
+    hashed_bytes = hashed_password.encode('utf-8')
+    return bcrypt.checkpw(password_bytes, hashed_bytes)
 
 def register_user(session: Session, data: UserRegisterRequest) -> UserResponse:
     if get_user_by_username(session, data.username):

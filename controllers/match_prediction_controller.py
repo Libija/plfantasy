@@ -64,3 +64,4 @@ def get_match_prediction(
     
     return get_user_prediction_service(session, user_id, match_id)
 
+

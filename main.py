@@ -43,19 +43,27 @@ def start_application():
         print("\n[VALIDATION ERROR]", file=sys.stderr)
         print(exc.errors(), file=sys.stderr)
         print("Body:", await request.body(), file=sys.stderr)
-        return JSONResponse(
+        response = JSONResponse(
             status_code=422,
             content={"detail": [{"loc": error["loc"], "msg": error["msg"]} for error in exc.errors()]},
         )
+        # Dodaj CORS headere
+        response.headers["Access-Control-Allow-Origin"] = "http://localhost:3000"
+        response.headers["Access-Control-Allow-Credentials"] = "true"
+        return response
 
     @app.exception_handler(Exception)
     async def global_exception_handler(request: Request, exc: Exception):
         # Log samo tip greške, ne full stack trace za Aiven free tier
         print(f"[ERROR] {type(exc).__name__}: {str(exc)}")
-        return JSONResponse(
+        response = JSONResponse(
             status_code=500,
             content={"detail": "Server error - please try again"}
         )
+        # Dodaj CORS headere
+        response.headers["Access-Control-Allow-Origin"] = "http://localhost:3000"
+        response.headers["Access-Control-Allow-Credentials"] = "true"
+        return response
 
 
     return app
