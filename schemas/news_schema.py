@@ -27,6 +27,8 @@ class NewsResponse(BaseModel):
     category: NewsCategory
     club_id: Optional[int]
     date_posted: datetime
+    comments_count: Optional[int] = 0
+    total_likes_count: Optional[int] = 0
 
     class Config:
         from_attributes = True 

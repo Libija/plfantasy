@@ -125,6 +125,13 @@
   line-height: 1.5;
 }
 
+.footerRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 1rem;
+}
+
 .readMore {
   display: inline-block;
   color: #4361ee;
@@ -137,6 +144,15 @@
 .readMore:hover {
   color: #3a56d4;
   text-decoration: underline;
+}
+
+.commentsBadge {
+  color: #b8c1ec;
+  font-size: 0.9rem;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
 }
 
 /* Responsive */

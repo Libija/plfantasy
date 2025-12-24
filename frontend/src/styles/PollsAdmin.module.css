@@ -1,0 +1,396 @@
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+.header {
+  margin-bottom: 30px;
+}
+
+.header h1 {
+  color: #1e3a8a;
+  margin-bottom: 10px;
+}
+
+.header p {
+  color: #6b7280;
+  font-size: 1.1rem;
+}
+
+.loading {
+  text-align: center;
+  padding: 40px;
+  font-size: 1.2rem;
+  color: #6b7280;
+}
+
+.newsList {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.newsCard {
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+  border: 1px solid #e5e7eb;
+}
+
+.newsHeader {
+  background: #f8fafc;
+  padding: 20px;
+  border-bottom: 1px solid #e5e7eb;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 15px;
+}
+
+.newsHeader h3 {
+  margin: 0;
+  color: #1f2937;
+  font-size: 1.3rem;
+  flex: 1;
+  min-width: 300px;
+}
+
+.newsActions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.toggleBtn {
+  padding: 8px 16px;
+  border: none;
+  border-radius: 6px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-size: 0.9rem;
+}
+
+.toggleBtn.active {
+  background: #dc2626;
+  color: white;
+}
+
+.toggleBtn.inactive {
+  background: #16a34a;
+  color: white;
+}
+
+.toggleBtn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+.resultsBtn {
+  padding: 8px 16px;
+  background: #1e3a8a;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-size: 0.9rem;
+}
+
+.resultsBtn:hover {
+  background: #1d4ed8;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+.pollsList {
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.pollItem {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 15px;
+  border-radius: 8px;
+  border: 1px solid #e5e7eb;
+  transition: all 0.2s ease;
+}
+
+.pollItem.active {
+  background: #f0f9ff;
+  border-color: #0ea5e9;
+}
+
+.pollItem.inactive {
+  background: #f9fafb;
+  border-color: #d1d5db;
+  opacity: 0.7;
+}
+
+.pollInfo {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.pollInfo h4 {
+  margin: 0;
+  color: #1f2937;
+  font-size: 1.1rem;
+}
+
+.pollType {
+  font-size: 0.8rem;
+  color: #6b7280;
+  background: #f3f4f6;
+  padding: 2px 8px;
+  border-radius: 4px;
+  display: inline-block;
+  width: fit-content;
+}
+
+.pollStatus {
+  font-size: 0.8rem;
+  font-weight: 500;
+  display: inline-block;
+  width: fit-content;
+}
+
+.pollItem.active .pollStatus {
+  color: #16a34a;
+}
+
+.pollItem.inactive .pollStatus {
+  color: #dc2626;
+}
+
+.pollStats {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 5px;
+  font-size: 0.9rem;
+  color: #6b7280;
+}
+
+/* Modal Styles */
+.modalOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 20px;
+}
+
+.modalContent {
+  background: white;
+  border-radius: 12px;
+  max-width: 800px;
+  width: 100%;
+  max-height: 80vh;
+  overflow: hidden;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+}
+
+.modalHeader {
+  background: #1e3a8a;
+  color: white;
+  padding: 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.modalHeader h2 {
+  margin: 0;
+  font-size: 1.5rem;
+}
+
+.closeBtn {
+  background: none;
+  border: none;
+  color: white;
+  font-size: 2rem;
+  cursor: pointer;
+  padding: 0;
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: background 0.2s ease;
+}
+
+.closeBtn:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.modalBody {
+  padding: 20px;
+  max-height: 60vh;
+  overflow-y: auto;
+}
+
+.resultsPoll {
+  margin-bottom: 30px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.resultsPoll:last-child {
+  border-bottom: none;
+  margin-bottom: 0;
+}
+
+.resultsPoll h3 {
+  margin: 0 0 15px 0;
+  color: #1f2937;
+  font-size: 1.2rem;
+}
+
+.resultsContent {
+  margin-left: 10px;
+}
+
+.averageRating {
+  background: #f0f9ff;
+  padding: 15px;
+  border-radius: 8px;
+  margin-bottom: 15px;
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #1e3a8a;
+  text-align: center;
+}
+
+.ratingBreakdown {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.ratingResult {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px;
+  background: #f9fafb;
+  border-radius: 6px;
+}
+
+.ratingValue {
+  font-weight: 600;
+  color: #1f2937;
+}
+
+.ratingCount {
+  color: #6b7280;
+  font-size: 0.9rem;
+}
+
+.ratingPercentage {
+  background: #1e3a8a;
+  color: white;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.choiceResults {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.choiceResult {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.choiceText {
+  font-weight: 500;
+  color: #1f2937;
+}
+
+.choiceStats {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.choiceCount {
+  color: #6b7280;
+  font-size: 0.9rem;
+}
+
+.choicePercentage {
+  background: #1e3a8a;
+  color: white;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.choiceBar {
+  height: 8px;
+  background: #e5e7eb;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.choiceBarFill {
+  height: 100%;
+  background: linear-gradient(90deg, #1e3a8a, #3b82f6);
+  transition: width 0.3s ease;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .newsHeader {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  
+  .newsHeader h3 {
+    min-width: auto;
+  }
+  
+  .newsActions {
+    width: 100%;
+    justify-content: flex-start;
+  }
+  
+  .pollItem {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+  
+  .pollStats {
+    align-items: flex-start;
+  }
+  
+  .modalContent {
+    margin: 10px;
+    max-height: 90vh;
+  }
+}

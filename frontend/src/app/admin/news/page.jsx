@@ -75,6 +75,9 @@ export default function AdminNews() {
   const [imagePreview, setImagePreview] = useState(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState("")
+  const [editHasPolls, setEditHasPolls] = useState(false)
+  const [editPolls, setEditPolls] = useState([])
+  const [existingPolls, setExistingPolls] = useState([])
 
   useEffect(() => {
     const fetchNews = async () => {
@@ -145,10 +148,36 @@ export default function AdminNews() {
     }
   }
 
-  const handleEdit = (newsItem) => {
+  const handleEdit = async (newsItem) => {
     setSelectedNews(newsItem)
     setEditFormData({ ...newsItem })
     setImagePreview(newsItem.image_url)
+    
+    // Učitaj postojeće ankete za ovu vijest
+    try {
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"
+      const res = await fetch(`${apiUrl}/polls/news/${newsItem.id}`)
+      if (res.ok) {
+        const polls = await res.json()
+        setExistingPolls(polls)
+        setEditHasPolls(polls.length > 0)
+        setEditPolls(polls.map(poll => ({
+          id: poll.id,
+          question: poll.question,
+          poll_type: poll.poll_type,
+          options: poll.options ? poll.options.map(opt => opt.option_text) : []
+        })))
+      } else {
+        setExistingPolls([])
+        setEditHasPolls(false)
+        setEditPolls([])
+      }
+    } catch {
+      setExistingPolls([])
+      setEditHasPolls(false)
+      setEditPolls([])
+    }
+    
     setShowEditModal(true)
   }
 
@@ -177,6 +206,61 @@ export default function AdminNews() {
     }
   }
 
+  // Polls functions for edit mode
+  const addEditPoll = () => {
+    const newPoll = {
+      id: Date.now(), // Temporary ID
+      question: "",
+      poll_type: "choice",
+      options: ["", ""]
+    }
+    setEditPolls([...editPolls, newPoll])
+  }
+
+  const updateEditPoll = (pollId, field, value) => {
+    setEditPolls(editPolls.map(poll => 
+      poll.id === pollId 
+        ? { ...poll, [field]: value }
+        : poll
+    ))
+  }
+
+  const addEditPollOption = (pollId) => {
+    setEditPolls(editPolls.map(poll => 
+      poll.id === pollId 
+        ? { ...poll, options: [...poll.options, ""] }
+        : poll
+    ))
+  }
+
+  const updateEditPollOption = (pollId, optionIndex, value) => {
+    setEditPolls(editPolls.map(poll => 
+      poll.id === pollId 
+        ? { 
+            ...poll, 
+            options: poll.options.map((opt, idx) => 
+              idx === optionIndex ? value : opt
+            )
+          }
+        : poll
+    ))
+  }
+
+  const removeEditPollOption = (pollId, optionIndex) => {
+    setEditPolls(editPolls.map(poll => 
+      poll.id === pollId 
+        ? { 
+            ...poll, 
+            options: poll.options.filter((_, idx) => idx !== optionIndex)
+          }
+        : poll
+    ))
+  }
+
+  const removeEditPoll = (pollId) => {
+    setEditPolls(editPolls.filter(poll => poll.id !== pollId))
+  }
+
   const handleEditSubmit = async (e) => {
     e.preventDefault()
     const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"
@@ -189,6 +273,7 @@ export default function AdminNews() {
       date_posted: editFormData.date_posted,
     }
     try {
+      // Ažuriraj vijest
       const res = await fetch(`${apiUrl}/admin/news/${selectedNews.id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
@@ -196,11 +281,64 @@ export default function AdminNews() {
       })
       if (!res.ok) throw new Error()
       const updated = await res.json()
+      
+      // Ažuriraj ankete
+      if (editHasPolls && editPolls.length > 0) {
+        // Prvo obriši postojeće ankete
+        for (const existingPoll of existingPolls) {
+          await fetch(`${apiUrl}/admin/polls/${existingPoll.id}`, {
+            method: "DELETE"
+          })
+        }
+        
+        // Zatim kreiraj nove
+        for (const poll of editPolls) {
+          if (poll.question.trim()) {
+            if (poll.poll_type === "rating") {
+              const pollPayload = {
+                question: poll.question,
+                news_id: selectedNews.id
+              }
+              
+              await fetch(`${apiUrl}/admin/polls/rating`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(pollPayload),
+              })
+            } else {
+              const pollPayload = {
+                question: poll.question,
+                news_id: selectedNews.id,
+                options: poll.options
+                  .filter(opt => opt.trim())
+                  .map(opt => opt.trim())
+              }
+              
+              await fetch(`${apiUrl}/admin/polls/choice`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(pollPayload),
+              })
+            }
+          }
+        }
+      } else {
+        // Ako nema anketa, obriši postojeće
+        for (const existingPoll of existingPolls) {
+          await fetch(`${apiUrl}/admin/polls/${existingPoll.id}`, {
+            method: "DELETE"
+          })
+        }
+      }
+      
       setNews((prev) => prev.map((item) => (item.id === selectedNews.id ? updated : item)))
       setShowEditModal(false)
       setSelectedNews(null)
       setEditFormData({})
       setImagePreview(null)
+      setEditHasPolls(false)
+      setEditPolls([])
+      setExistingPolls([])
     } catch {
       alert("Greška pri ažuriranju vijesti!")
     }
@@ -354,6 +492,108 @@ export default function AdminNews() {
                     placeholder="Unesite pun sadržaj vijesti"
                   />
                 </div>
+
+                {/* Polls Section for Edit */}
+                <div className={styles.formGroup}>
+                  <div className={styles.checkboxGroup}>
+                    <input
+                      type="checkbox"
+                      id="editHasPolls"
+                      checked={editHasPolls}
+                      onChange={(e) => setEditHasPolls(e.target.checked)}
+                    />
+                    <label htmlFor="editHasPolls">Dodaj ankete u vijest</label>
+                  </div>
+                </div>
+
+                {editHasPolls && (
+                  <div className={styles.pollsSection}>
+                    <h3>Ankete</h3>
+                    {editPolls.map((poll, pollIndex) => (
+                      <div key={poll.id} className={styles.pollCard}>
+                        <div className={styles.pollHeader}>
+                          <h4>Anketa {pollIndex + 1}</h4>
+                          <button
+                            type="button"
+                            onClick={() => removeEditPoll(poll.id)}
+                            className={styles.removeButton}
+                          >
+                            Ukloni
+                          </button>
+                        </div>
+                        
+                        <div className={styles.formGroup}>
+                          <label>Pitanje ankete *</label>
+                          <input
+                            type="text"
+                            value={poll.question}
+                            onChange={(e) => updateEditPoll(poll.id, 'question', e.target.value)}
+                            placeholder="Unesite pitanje ankete"
+                            required
+                          />
+                        </div>
+
+                        <div className={styles.formGroup}>
+                          <label>Tip ankete</label>
+                          <select
+                            value={poll.poll_type}
+                            onChange={(e) => updateEditPoll(poll.id, 'poll_type', e.target.value)}
+                          >
+                            <option value="choice">Izbor između opcija</option>
+                            <option value="rating">Ocjena 1-5</option>
+                          </select>
+                        </div>
+
+                        {poll.poll_type === "choice" && (
+                          <div className={styles.formGroup}>
+                            <label>Opcije za izbor *</label>
+                            {poll.options.map((option, optionIndex) => (
+                              <div key={optionIndex} className={styles.optionRow}>
+                                <input
+                                  type="text"
+                                  value={option}
+                                  onChange={(e) => updateEditPollOption(poll.id, optionIndex, e.target.value)}
+                                  placeholder={`Opcija ${optionIndex + 1}`}
+                                  required
+                                />
+                                {poll.options.length > 2 && (
+                                  <button
+                                    type="button"
+                                    onClick={() => removeEditPollOption(poll.id, optionIndex)}
+                                    className={styles.removeOptionButton}
+                                  >
+                                    ×
+                                  </button>
+                                )}
+                              </div>
+                            ))}
+                            <button
+                              type="button"
+                              onClick={() => addEditPollOption(poll.id)}
+                              className={styles.addOptionButton}
+                            >
+                              + Dodaj opciju
+                            </button>
+                          </div>
+                        )}
+
+                        {poll.poll_type === "rating" && (
+                          <div className={styles.ratingInfo}>
+                            <p>Anketa za ocjenu će automatski imati opcije 1, 2, 3, 4, 5</p>
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                    
+                    <button
+                      type="button"
+                      onClick={addEditPoll}
+                      className={styles.addPollButton}
+                    >
+                      + Dodaj anketu
+                    </button>
+                  </div>
+                )}
                 <div className={styles.modalActions}>
                   <button type="button" className={styles.cancelButton} onClick={() => setShowEditModal(false)}>
                     Otkaži

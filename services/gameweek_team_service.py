@@ -7,6 +7,8 @@ from models.player_model import Player
 from models.gameweek_model import Gameweek
 from models.playerfantasypoints_model import PlayerFantasyPoints
 from models.match_model import Match
+from models.user_model import User
+from models.club_model import Club
 from repositories.gameweek_team_repository import (
     create_gameweek_team, get_gameweek_team_by_id, get_user_gameweek_teams,
     get_user_gameweek_team, get_completed_gameweek_teams, create_gameweek_player,
@@ -308,4 +310,69 @@ class GameweekTeamService:
                 # FINALNI POENI = player_points - penalty
                 total_points -= penalty
         
-        return total_points 
+        return total_points
+
+    def get_best_team_for_gameweek(self, gameweek_id: int) -> Optional[Dict[str, Any]]:
+        """Dohvata najbolji tim (najviše poena) za određeno kolo"""
+        # Dohvati sve timove za ovo kolo
+        statement = select(GameweekTeam).where(GameweekTeam.gameweek_id == gameweek_id)
+        teams = list(self.session.exec(statement).all())
+        
+        if not teams:
+            return None
+        
+        # Pronađi tim sa najviše poena
+        best_team = max(teams, key=lambda t: t.total_points)
+        
+        # Dohvati informacije o kolu
+        gameweek_statement = select(Gameweek).where(Gameweek.id == gameweek_id)
+        gameweek = self.session.exec(gameweek_statement).first()
+        
+        # Dohvati informacije o korisniku
+        user_statement = select(User).where(User.id == best_team.user_id)
+        user = self.session.exec(user_statement).first()
+        
+        # Dohvati igrače tima
+        if best_team.id is not None:
+            players = get_gameweek_team_players(self.session, best_team.id)
+        else:
+            players = []
+        
+        # Dohvati informacije o igračima
+        players_with_details = []
+        for player in players:
+            player_statement = select(Player).where(Player.id == player.player_id)
+            player_details = self.session.exec(player_statement).first()
+            
+            # Dohvati informacije o klubu igrača
+            team_name = None
+            if player_details and player_details.club_id:
+                club_statement = select(Club).where(Club.id == player_details.club_id)
+                club = self.session.exec(club_statement).first()
+                team_name = club.name if club else None
+            
+            players_with_details.append({
+                "id": player.id,
+                "player_id": player.player_id,
+                "player_name": player_details.name if player_details else "Unknown",
+                "position": player.position,
+                "is_bench": player.is_bench,
+                "points": player.points,
+                "is_captain": player.player_id == best_team.captain_id,
+                "is_vice_captain": player.player_id == best_team.vice_captain_id,
+                "price": player_details.price if player_details else 0.0,
+                "team_name": team_name
+            })
+        
+        return {
+            "id": best_team.id,
+            "gameweek_id": best_team.gameweek_id,
+            "gameweek_number": gameweek.number if gameweek else 0,
+            "gameweek_season": gameweek.season if gameweek else "",
+            "user_id": best_team.user_id,
+            "username": user.username if user else "Unknown",
+            "formation": best_team.formation,
+            "total_points": best_team.total_points,
+            "created_at": best_team.created_at,
+            "players": players_with_details
+        } 

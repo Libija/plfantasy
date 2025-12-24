@@ -4,6 +4,7 @@ import UpcomingMatches from "../components/UpcomingMatches"
 import RecentResults from "../components/RecentResults"
 import LeagueTable from "../components/LeagueTable"
 import TopScorers from "../components/TopScorers"
+import MatchPredictions from "../components/MatchPredictions"
 import styles from "../styles/Home.module.css"
 
 export default function Home() {
@@ -24,6 +25,7 @@ export default function Home() {
         <div className={styles.grid}>
           <div className={styles.mainContent}>
             <NewsSection />
+            <MatchPredictions />
             <div className={styles.matchesContainer}>
               <UpcomingMatches />
               <RecentResults />

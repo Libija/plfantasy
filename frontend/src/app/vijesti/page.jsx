@@ -159,9 +159,14 @@ export default function Vijesti() {
                     <Link href={`/vijesti/${item.id}`}>{item.title}</Link>
                   </h3>
                   <p className={styles.newsExcerpt}>{getExcerpt(item.content)}</p>
-                  <Link href={`/vijesti/${item.id}`} className={styles.readMore}>
-                    Pročitaj više
-                  </Link>
+                  <div className={styles.footerRow}>
+                    <Link href={`/vijesti/${item.id}`} className={styles.readMore}>
+                      Pročitaj više
+                    </Link>
+                    {item.comments_count > 0 && (
+                      <span className={styles.commentsBadge}>💬 {item.comments_count}</span>
+                    )}
+                  </div>
                 </div>
               </article>
             ))
