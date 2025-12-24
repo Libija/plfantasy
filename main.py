@@ -122,3 +122,6 @@ app.include_router(match_prediction_controller.router)
 from controllers import gameweek_team_controller
 app.include_router(gameweek_team_controller.router)
 app.include_router(gameweek_team_controller.public_router)
+from controllers import comment_controller
+app.include_router(comment_controller.router)
+app.include_router(comment_controller.admin_router)

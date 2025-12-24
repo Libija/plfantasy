@@ -5,6 +5,7 @@ import { useParams } from "next/navigation"
 import { useEffect, useState } from "react"
 import styles from "../../../styles/VijestiDetalji.module.css"
 import useAuth from "../../../hooks/use-auth"
+import CommentsSection from "../../../components/CommentsSection"
 
 const CATEGORY_LABELS = {
   transfer: "Transferi",
@@ -207,6 +208,9 @@ export default function VijestiDetalji() {
             <div dangerouslySetInnerHTML={{ __html: news.content }} />
           </div>
         </article>
+
+        {/* Comments Section */}
+        <CommentsSection newsId={id} />
 
         {/* Polls Section */}
         {polls.length > 0 && (

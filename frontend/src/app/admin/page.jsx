@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react"
 import Head from "next/head"
 import Link from "next/link"
-import { FaNewspaper, FaUsers, FaUserTie, FaFutbol, FaChartBar, FaTrophy, FaExchangeAlt, FaPoll } from "react-icons/fa"
+import { FaNewspaper, FaUsers, FaUserTie, FaFutbol, FaChartBar, FaTrophy, FaExchangeAlt, FaPoll, FaComments } from "react-icons/fa"
 import styles from "../../styles/AdminDashboard.module.css"
 
 export default function AdminDashboard() {
@@ -184,6 +184,16 @@ export default function AdminDashboard() {
                   <div className={styles.menuContent}>
                     <h3>Ankete</h3>
                     <p>Upravljanje anketama i rezultatima</p>
+                  </div>
+                </Link>
+
+                <Link href="/admin/comments" className={styles.menuCard}>
+                  <div className={styles.menuIcon}>
+                    <FaComments />
+                  </div>
+                  <div className={styles.menuContent}>
+                    <h3>Komentari</h3>
+                    <p>Upravljanje komentarima na vijestima</p>
                   </div>
                 </Link>
               </div>
