@@ -4,7 +4,7 @@ import { useState, useEffect } from "react"
 import Head from "next/head"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
-import { FaTrophy, FaUsers, FaExchangeAlt, FaChartLine, FaHistory, FaCog } from "react-icons/fa"
+import { FaTrophy, FaUsers, FaExchangeAlt, FaChartLine, FaHistory, FaCog, FaCrown } from "react-icons/fa"
 import styles from "../../styles/FantasyDashboard.module.css"
 import useAuth from "../../hooks/use-auth"
 
@@ -21,6 +21,7 @@ export default function FantasyDashboard() {
   const [userResults, setUserResults] = useState([])
   const [leaderboard, setLeaderboard] = useState([])
   const [favoriteClubsStats, setFavoriteClubsStats] = useState([])
+  const [bestTeam, setBestTeam] = useState(null)
 
   useEffect(() => {
     // Ako se još učitava auth, ne radi ništa
@@ -122,6 +123,21 @@ export default function FantasyDashboard() {
         } catch (err) {
           console.error("Greška pri dohvatu favorite clubs stats:", err)
           setFavoriteClubsStats([])
+        }
+        
+        // Dohvati najbolji tim kola
+        try {
+          const bestTeamRes = await fetch(`${apiUrl}/gameweek-teams/best-team/last-gameweek`)
+          if (bestTeamRes.ok) {
+            const bestTeamData = await bestTeamRes.json()
+            setBestTeam(bestTeamData)
+          } else {
+            // Ako nema završenih kola ili timova, setBestTeam ostaje null
+            setBestTeam(null)
+          }
+        } catch (err) {
+          console.error("Greška pri dohvatu najboljeg tima:", err)
+          setBestTeam(null)
         }
       } catch (err) {
         console.error("Greška pri dohvatu rezultata ili leaderboarda:", err)
@@ -289,6 +305,17 @@ export default function FantasyDashboard() {
                   <p>Pregled rezultata tima</p>
                 </div>
               </Link>
+              {bestTeam && (
+                <Link href="/fantasy/best-team" className={styles.actionCard}>
+                  <div className={styles.actionIcon} style={{ background: 'linear-gradient(135deg, #ffd700, #ffa500)' }}>
+                    <FaCrown />
+                  </div>
+                  <div className={styles.actionContent}>
+                    <h3>Najbolji Tim Kola</h3>
+                    <p>{bestTeam.username} - {bestTeam.formation} - {bestTeam.total_points} pts</p>
+                  </div>
+                </Link>
+              )}
             </div>
             {/* Uklonjene sekcije za historiju i postavke */}
           </div>

@@ -2,8 +2,9 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlmodel import Session
 from database import get_session
 from services.gameweek_team_service import GameweekTeamService
+from services.gameweek_service import GameweekService
 from schemas.gameweek_team_schema import GameweekTeamResponse, GameweekTeamList
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Optional
 
 router = APIRouter(prefix="/admin/gameweek-teams", tags=["Gameweek Teams"])
 
@@ -62,4 +63,23 @@ def create_auto_snapshots(
     if not result["success"]:
         raise HTTPException(status_code=400, detail=result["message"])
     
-    return result 
+    return result
+
+@public_router.get("/best-team/last-gameweek", response_model=Dict[str, Any])
+def get_best_team_last_gameweek(
+    session: Session = Depends(get_session)
+):
+    """Dohvata najbolji tim (najviše poena) iz zadnjeg završenog kola"""
+    gameweek_service = GameweekService(session)
+    last_completed_gameweek = gameweek_service.get_last_completed_gameweek()
+    
+    if not last_completed_gameweek:
+        raise HTTPException(status_code=404, detail="Nema završenih kola")
+    
+    team_service = GameweekTeamService(session)
+    best_team = team_service.get_best_team_for_gameweek(last_completed_gameweek.id)
+    
+    if not best_team:
+        raise HTTPException(status_code=404, detail="Nema timova za ovo kolo")
+    
+    return best_team 

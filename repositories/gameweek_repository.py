@@ -105,4 +105,16 @@ class GameweekRepository:
                 'status': gameweek.status,
                 'match_count': match_count
             })
-        return result 
+        return result
+
+    def get_last_completed_gameweek(self, season: Optional[str] = None) -> Optional[Gameweek]:
+        """Dohvata zadnje završeno kolo (po broju kola, najveći broj)"""
+        query = select(Gameweek).where(
+            Gameweek.status == GameweekStatus.COMPLETED
+        )
+        
+        if season:
+            query = query.where(Gameweek.season == season)
+        
+        query = query.order_by(Gameweek.number.desc())
+        return self.db.exec(query).first() 

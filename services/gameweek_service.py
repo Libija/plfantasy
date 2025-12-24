@@ -116,4 +116,11 @@ class GameweekService:
         """Dohvata sve sezone"""
         gameweeks = self.repository.get_all()
         seasons = list(set(gw.season for gw in gameweeks))
-        return sorted(seasons, reverse=True)  # Najnovije prvo 
+        return sorted(seasons, reverse=True)  # Najnovije prvo
+
+    def get_last_completed_gameweek(self, season: Optional[str] = None) -> Optional[GameweekResponse]:
+        """Dohvata zadnje završeno kolo"""
+        gameweek = self.repository.get_last_completed_gameweek(season=season)
+        if not gameweek:
+            return None
+        return GameweekResponse.from_orm(gameweek) 
