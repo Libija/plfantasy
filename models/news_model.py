@@ -16,6 +16,6 @@ class News(SQLModel, table=True):
     title: str
     content: str
     image_url: Optional[str]
-    category: NewsCategory = Field(sa_column=Column(PgEnum(NewsCategory, name="newscategory_enum"), name="category"))
+    category: NewsCategory 
     club_id: Optional[int] = Field(default=None, foreign_key="club.id")
     date_posted: datetime
