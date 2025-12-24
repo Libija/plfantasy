@@ -215,7 +215,9 @@ export default function CommentsSection({ newsId }) {
   }
 
   const getRelativeTime = (dateString) => {
-    const date = new Date(dateString)
+    // Parsiraj datum string kao UTC (backend šalje UTC bez 'Z')
+    // Dodaj 'Z' da označi UTC timezone
+    const date = new Date(dateString.endsWith('Z') ? dateString : dateString + 'Z')
     const now = new Date()
     const diff = now.getTime() - date.getTime()
     
@@ -223,13 +225,13 @@ export default function CommentsSection({ newsId }) {
     const hours = Math.floor(diff / (1000 * 60 * 60))
     const days = Math.floor(diff / (1000 * 60 * 60 * 24))
     
-    if (minutes < 1) return "upravo sada"
+    if (diff < 60000) return "upravo sada" // Manje od 1 minute
     if (minutes < 60) return `prije ${minutes} ${minutes === 1 ? 'minutu' : minutes < 5 ? 'minute' : 'minuta'}`
     if (hours < 24) return `prije ${hours} ${hours === 1 ? 'sat' : hours < 5 ? 'sata' : 'sati'}`
     if (days < 7) return `prije ${days} ${days === 1 ? 'dan' : 'dana'}`
     
     const months = ['januar', 'februar', 'mart', 'april', 'maj', 'juni', 'juli', 'august', 'septembar', 'oktobar', 'novembar', 'decembar']
-    return `${date.getDate()}. ${months[date.getMonth()]} ${date.getFullYear()}.`
+    return `${date.getUTCDate()}. ${months[date.getUTCMonth()]} ${date.getUTCFullYear()}.`
   }
 
   const renderContent = (comment) => {

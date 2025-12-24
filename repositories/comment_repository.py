@@ -67,3 +67,12 @@ def get_all_comments_by_news(session: Session, news_id: int) -> List[Comment]:
     ).order_by(Comment.created_at.desc())
     return list(session.exec(statement).all())
 
+def count_comments_by_news(session: Session, news_id: int) -> int:
+    """Broji sve odobrene komentare za vijest (uključujući reply-jeve)"""
+    statement = select(Comment).where(
+        Comment.news_id == news_id,
+        Comment.status == CommentStatus.approved
+    )
+    return len(list(session.exec(statement).all()))
+
+

@@ -209,9 +209,6 @@ export default function VijestiDetalji() {
           </div>
         </article>
 
-        {/* Comments Section */}
-        <CommentsSection newsId={id} />
-
         {/* Polls Section */}
         {polls.length > 0 && (
           <div className={styles.pollsSection} style={{ position: 'relative' }}>
@@ -307,6 +304,10 @@ export default function VijestiDetalji() {
             ))}
           </div>
         )}
+
+        {/* Comments Section - ispod anketa */}
+        <CommentsSection newsId={id} />
+
         <div className={styles.relatedNews}>
           <h2 className={styles.relatedTitle}>Povezane vijesti</h2>
           <div className={styles.relatedGrid}>
