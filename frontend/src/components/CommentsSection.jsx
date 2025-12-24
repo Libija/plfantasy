@@ -5,11 +5,14 @@ import useAuth from "../hooks/use-auth"
 import styles from "../styles/CommentsSection.module.css"
 
 const MAX_CONTENT_LENGTH = 300 // Prikazuje se prvih 300 karaktera, onda "View More"
+const INITIAL_COMMENTS_DISPLAY = 10 // Prvih 10 komentara
+const COMMENTS_PER_LOAD = 5 // Dodatnih 5 komentara po kliku
 
 export default function CommentsSection({ newsId }) {
   const { isLoggedIn, token, user } = useAuth()
   const [comments, setComments] = useState([])
   const [loading, setLoading] = useState(true)
+  const [displayedCount, setDisplayedCount] = useState(INITIAL_COMMENTS_DISPLAY)
   const [newComment, setNewComment] = useState("")
   const [replyingTo, setReplyingTo] = useState(null)
   const [replyContent, setReplyContent] = useState("")
@@ -20,6 +23,7 @@ export default function CommentsSection({ newsId }) {
 
   useEffect(() => {
     fetchComments()
+    setDisplayedCount(INITIAL_COMMENTS_DISPLAY) // Resetuj pri svakom novom newsId
   }, [newsId, token])
 
   const fetchComments = async () => {
@@ -72,6 +76,7 @@ export default function CommentsSection({ newsId }) {
       if (res.ok) {
         setNewComment("")
         fetchComments()
+        setDisplayedCount(INITIAL_COMMENTS_DISPLAY) // Resetuj na početak da se vidi novi komentar
       } else {
         const error = await res.json()
         alert(error.detail || "Greška pri kreiranju komentara")
@@ -212,6 +217,18 @@ export default function CommentsSection({ newsId }) {
       newExpanded.add(commentId)
     }
     setExpandedContent(newExpanded)
+  }
+
+  const handleLoadMore = () => {
+    setDisplayedCount(prev => prev + COMMENTS_PER_LOAD)
+  }
+
+  const getDisplayedComments = () => {
+    return comments.slice(0, displayedCount)
+  }
+
+  const hasMoreComments = () => {
+    return displayedCount < comments.length
   }
 
   const getRelativeTime = (dateString) => {
@@ -455,9 +472,21 @@ export default function CommentsSection({ newsId }) {
       ) : comments.length === 0 ? (
         <div className={styles.noComments}>Nema komentara. Budite prvi koji će komentarisati!</div>
       ) : (
-        <div className={styles.commentsList}>
-          {comments.map(comment => renderComment(comment))}
-        </div>
+        <>
+          <div className={styles.commentsList}>
+            {getDisplayedComments().map(comment => renderComment(comment))}
+          </div>
+          {hasMoreComments() && (
+            <div className={styles.loadMoreContainer}>
+              <button 
+                onClick={handleLoadMore}
+                className={styles.loadMoreBtn}
+              >
+                Učitaj više komentara ({comments.length - displayedCount} preostalo)
+              </button>
+            </div>
+          )}
+        </>
       )}
     </div>
   )
