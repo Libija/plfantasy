@@ -3,6 +3,8 @@ from models.playerfantasypoints_model import PlayerFantasyPoints
 from models.matchevent_model import MatchEvent
 from models.player_model import Player
 from models.match_model import Match
+from models.match_lineup_model import MatchLineup, LineupType
+from models.match_substitution_model import MatchSubstitution
 from typing import List
 import traceback
 
@@ -77,6 +79,50 @@ class FantasyPointsService:
                         print(f"Dodano {assist_points} poena za asistenta {assist_player_id}")
                     else:
                         print(f"Upozorenje: Asistent sa ID {assist_player_id} nije pronađen")
+            
+            # Dohvati sve igrače koji su stvarno igrali u utakmici
+            # (bilo u prvoj postavi ili kao zamjena)
+            starting_players = self.db.exec(
+                select(MatchLineup).where(
+                    MatchLineup.match_id == match_id,
+                    MatchLineup.lineup_type == LineupType.STARTING
+                )
+            ).all()
+            
+            # Dohvati sve zamjene
+            substitutions = self.db.exec(
+                select(MatchSubstitution).where(MatchSubstitution.match_id == match_id)
+            ).all()
+            
+            # Kreiraj set igrača koji su igrali (prva postava + zamjene)
+            players_who_played = set()
+            for lineup in starting_players:
+                players_who_played.add(lineup.player_id)
+            for sub in substitutions:
+                players_who_played.add(sub.player_in_id)
+            
+            # Dodaj appearance i clean sheet bodove za sve igrače koji su igrali
+            for player_id in players_who_played:
+                # Inicijalizuj poene ako igrač nije imao događaje
+                if player_id not in player_points:
+                    player_points[player_id] = 0
+                
+                # Izračunaj minute igrača
+                minutes_played = self._calculate_player_minutes(player_id, match_id)
+                
+                # Dodaj appearance bodove samo ako je igrač stvarno igrao
+                if minutes_played > 0:
+                    appearance_points = self._calculate_appearance_points(minutes_played)
+                    player_points[player_id] += appearance_points
+                    print(f"Dodano {appearance_points} appearance poena za igrača {player_id} ({minutes_played} minuta)")
+                
+                # Dodaj clean sheet bodove
+                player = self.db.get(Player, player_id)
+                if player:
+                    clean_sheet_points = self._calculate_clean_sheet_points(player_id, match_id, player.position, player.club_id)
+                    if clean_sheet_points > 0:
+                        player_points[player_id] += clean_sheet_points
+                        print(f"Dodano {clean_sheet_points} clean sheet poena za igrača {player_id} ({player.position})")
             
             # Kreiraj fantasy poene za sve igrače
             fantasy_points_list = []
@@ -156,4 +202,111 @@ class FantasyPointsService:
             return -4
             
         else:
-            return 0 
+            return 0
+    
+    def _calculate_player_minutes(self, player_id: int, match_id: int) -> int:
+        """Izračunava minute koje je igrač odigrao u utakmici"""
+        # Provjeri da li je igrač u prvoj postavi
+        lineup = self.db.exec(
+            select(MatchLineup).where(
+                MatchLineup.match_id == match_id,
+                MatchLineup.player_id == player_id,
+                MatchLineup.lineup_type == LineupType.STARTING
+            )
+        ).first()
+        
+        # Pretpostavimo da utakmica traje 90 minuta
+        MATCH_DURATION = 90
+        
+        if lineup:
+            # Igrač je počeo u prvoj postavi
+            # Provjeri da li je izašao
+            substitution_out = self.db.exec(
+                select(MatchSubstitution).where(
+                    MatchSubstitution.match_id == match_id,
+                    MatchSubstitution.player_out_id == player_id
+                )
+            ).first()
+            
+            if substitution_out:
+                # Igrač je izašao u određenoj minuti
+                return substitution_out.minute
+            else:
+                # Igrač je igrao cijelu utakmicu
+                return MATCH_DURATION
+        else:
+            # Igrač nije u prvoj postavi, provjeri da li je ušao kao zamjena
+            substitution_in = self.db.exec(
+                select(MatchSubstitution).where(
+                    MatchSubstitution.match_id == match_id,
+                    MatchSubstitution.player_in_id == player_id
+                )
+            ).first()
+            
+            if substitution_in:
+                # Igrač je ušao u određenoj minuti
+                # Provjeri da li je izašao kasnije
+                substitution_out = self.db.exec(
+                    select(MatchSubstitution).where(
+                        MatchSubstitution.match_id == match_id,
+                        MatchSubstitution.player_out_id == player_id
+                    )
+                ).first()
+                
+                if substitution_out:
+                    # Igrač je ušao i izašao
+                    return substitution_out.minute - substitution_in.minute
+                else:
+                    # Igrač je ušao i igrao do kraja
+                    return MATCH_DURATION - substitution_in.minute
+            else:
+                # Igrač nije igrao u utakmici
+                return 0
+    
+    def _calculate_appearance_points(self, minutes_played: int) -> int:
+        """Izračunava appearance bodove na osnovu odigranih minuta"""
+        if minutes_played >= 60:
+            # Igrač je odigrao 60+ minuta
+            return 2
+        elif minutes_played > 0:
+            # Igrač je ušao u igru ali igrao manje od 60 minuta
+            return 1
+        else:
+            # Igrač nije igrao
+            return 0
+    
+    def _calculate_clean_sheet_points(self, player_id: int, match_id: int, player_position: str, player_club_id: int) -> int:
+        """Izračunava clean sheet bodove - tim nije primio golove"""
+        # Dohvati utakmicu
+        match = self.db.get(Match, match_id)
+        if not match:
+            return 0
+        
+        # Provjeri da li je igrač uopće igrao (minimalno 60 minuta za clean sheet)
+        minutes_played = self._calculate_player_minutes(player_id, match_id)
+        if minutes_played < 60:
+            return 0
+        
+        # Provjeri clean sheet za domaći tim
+        if match.home_club_id == player_club_id:
+            if match.away_score == 0:
+                # Domaći tim nije primio golove
+                return self._get_clean_sheet_points_by_position(player_position)
+        
+        # Provjeri clean sheet za gostujući tim
+        if match.away_club_id == player_club_id:
+            if match.home_score == 0:
+                # Gostujući tim nije primio golove
+                return self._get_clean_sheet_points_by_position(player_position)
+        
+        return 0
+    
+    def _get_clean_sheet_points_by_position(self, position: str) -> int:
+        """Vraća clean sheet bodove na osnovu pozicije igrača"""
+        clean_sheet_points = {
+            "GK": 4,   # Golman
+            "DEF": 4,  # Odbrana
+            "MID": 1,  # Veznjak
+            "FWD": 0   # Napadač
+        }
+        return clean_sheet_points.get(position, 0) 
