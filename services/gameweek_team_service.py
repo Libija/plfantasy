@@ -51,104 +51,411 @@ class GameweekTeamService:
         
         created_snapshots = 0
         errors = []
+        skipped = 0
+        
         for fantasy_team in fantasy_teams:
             try:
                 print(f"[DEBUG] --- User {fantasy_team.user_id} ---")
+                
+                # Očisti session cache prije provjere
+                self.session.expire_all()
+                
+                # Provjeri da li snapshot postoji u bazi (direktan upit, ne kroz cache)
                 existing_snapshot = get_user_gameweek_team(self.session, fantasy_team.user_id, gameweek_id)
                 print(f"[DEBUG] Postoji snapshot? {existing_snapshot}")
+                
                 if existing_snapshot:
-                    print(f"[DEBUG] Preskačem user {fantasy_team.user_id} (već postoji snapshot)")
-                    continue
+                    # Provjeri da li snapshot stvarno postoji u bazi i ima li igrače
+                    try:
+                        self.session.refresh(existing_snapshot)
+                        
+                        # Provjeri da li snapshot ima igrače
+                        from repositories.gameweek_team_repository import get_gameweek_team_players
+                        players = get_gameweek_team_players(self.session, existing_snapshot.id)
+                        players_count = len(players) if players else 0
+                        
+                        print(f"[DEBUG] Snapshot postoji u bazi (id={existing_snapshot.id}), ima {players_count} igrača")
+                        
+                        if players_count == 0:
+                            # Snapshot postoji ali nema igrača - obriši ga i kreiraj novi
+                            print(f"[DEBUG] Snapshot {existing_snapshot.id} nema igrače - brišem ga i kreiram novi")
+                            
+                            # Obriši GameweekPlayer zapise (ako postoje)
+                            for player in players:
+                                self.session.delete(player)
+                            
+                            # Obriši GameweekTeam
+                            self.session.delete(existing_snapshot)
+                            self.session.flush()
+                            
+                            print(f"[DEBUG] Stari snapshot obrisan, kreiram novi...")
+                            # Nastavi sa kreiranjem novog snapshot-a
+                        else:
+                            # Snapshot postoji i ima igrače - preskoči
+                            print(f"[DEBUG] Preskačem user {fantasy_team.user_id} (već postoji snapshot u bazi sa igračima, id={existing_snapshot.id})")
+                            skipped += 1
+                            continue
+                            
+                    except Exception as e:
+                        # Ako refresh ne uspije, snapshot ne postoji u bazi - ukloni iz session-a i nastavi
+                        print(f"[DEBUG] Snapshot iz cache-a ne postoji u bazi za user {fantasy_team.user_id}: {str(e)}. Nastavljam sa kreiranjem.")
+                        try:
+                            self.session.expunge(existing_snapshot)
+                        except:
+                            pass
+                        # Nastavi sa kreiranjem snapshot-a
+                
                 snapshot = self.create_team_snapshot(fantasy_team.user_id, gameweek_id, commit=False)
                 print(f"[DEBUG] Kreiran snapshot: {snapshot}")
+                
                 if snapshot:
                     created_snapshots += 1
                 else:
-                    errors.append(f"Greška pri kreiranju snapshot-a za korisnika {fantasy_team.user_id}")
+                    # Snapshot nije kreiran (možda tim nema igrače)
+                    skipped += 1
+                    print(f"[DEBUG] Snapshot nije kreiran za user {fantasy_team.user_id} (tim možda nema igrače)")
+                    
             except Exception as e:
                 print(f"[DEBUG] Greška za korisnika {fantasy_team.user_id}: {str(e)}")
+                import traceback
+                print(f"[DEBUG] Traceback: {traceback.format_exc()}")
                 errors.append(f"Greška za korisnika {fantasy_team.user_id}: {str(e)}")
-        print(f"[DEBUG] SESSION DIRTY: {self.session.dirty}, NEW: {self.session.new}, DELETED: {self.session.deleted}")
+        print(f"[DEBUG] SESSION STATUS PRIJE COMMIT-A:")
+        print(f"[DEBUG]   DIRTY: {len(self.session.dirty)} objekata")
+        print(f"[DEBUG]   NEW: {len(self.session.new)} objekata")
+        print(f"[DEBUG]   DELETED: {len(self.session.deleted)} objekata")
+        
+        if len(self.session.new) > 0:
+            print(f"[DEBUG] Novi objekti u session-u: {[str(obj) for obj in list(self.session.new)[:5]]}")
+        
+        # Flush prije commit-a da osiguramo da se sve šalje u bazu
         self.session.flush()
         print(f"[DEBUG] SESSION FLUSHED")
+        
+        # Commit sve promjene
         self.session.commit()
         print(f"[DEBUG] SESSION COMMIT DONE")
-        print(f"[DEBUG] === POVRATNA VRIJEDNOST: Kreirano {created_snapshots} snapshot-a, errors: {errors} ===")
+        
+        # Provjeri da li su objekti stvarno commit-ovani
+        print(f"[DEBUG] SESSION STATUS NAKON COMMIT-A:")
+        print(f"[DEBUG]   DIRTY: {len(self.session.dirty)} objekata")
+        print(f"[DEBUG]   NEW: {len(self.session.new)} objekata")
+        print(f"[DEBUG]   DELETED: {len(self.session.deleted)} objekata")
+        print(f"[DEBUG] === POVRATNA VRIJEDNOST: Kreirano {created_snapshots} snapshot-a, preskočeno {skipped}, errors: {len(errors)} ===")
         return {
             "success": True,
             "message": f"Kreirano {created_snapshots} snapshot-a za kolo {gameweek_id}",
             "created_snapshots": created_snapshots,
+            "skipped": skipped,
             "errors": errors
         }
     
     def create_team_snapshot(self, user_id: int, gameweek_id: int, commit: bool = True) -> Optional[GameweekTeam]:
         """Kreira snapshot tima za određeno kolo"""
-        # Provjeri da li već postoji snapshot za ovo kolo
-        existing_snapshot = get_user_gameweek_team(self.session, user_id, gameweek_id)
-        if existing_snapshot:
-            return existing_snapshot
-        
-        # Dohvati fantasy tim korisnika
-        fantasy_team_statement = select(FantasyTeam).where(FantasyTeam.user_id == user_id)
-        fantasy_team = self.session.exec(fantasy_team_statement).first()
-        if not fantasy_team:
-            return None
-        
-        # Dohvati igrače tima sa informacijama o kapitenima
-        team_players_statement = select(FantasyTeamPlayer, Player).join(Player, Player.id == FantasyTeamPlayer.player_id).where(
-            FantasyTeamPlayer.fantasy_team_id == fantasy_team.id
-        )
-        team_players_data = self.session.exec(team_players_statement).all()
-        print(f"[DEBUG] team_players_data: {team_players_data}")
-        # Pronađi kapiten i vice-kapiten
-        captain_id = None
-        vice_captain_id = None
-        for ftp, player in team_players_data:
-            if ftp.is_captain:
-                captain_id = player.id
-            elif ftp.is_vice_captain:
-                vice_captain_id = player.id
-        
-        # Kreiraj gameweek tim
-        gameweek_team = GameweekTeam(
-            user_id=user_id,
-            gameweek_id=gameweek_id,
-            formation=fantasy_team.formation,
-            captain_id=captain_id or 0,
-            vice_captain_id=vice_captain_id or 0,
-            total_points=0.0
-        )
-        
-        created_team = create_gameweek_team(self.session, gameweek_team, commit=commit)
-        self.session.flush()  # Osiguraj da team ima ID prije upisa igrača
-        # Dodaj igrače u snapshot
-        for ftp, player in team_players_data:
-            print(f"[DEBUG] Dodajem igrača {player.id} ({player.name}) u snapshot tima {created_team.id}")
-            if player.id is not None and created_team.id is not None:
-                # Dohvati poene igrača za ovo kolo
-                points = self._get_player_points_for_gameweek(player.id, gameweek_id)
+        try:
+            # Očisti session cache da osiguramo da dohvaćamo svježe podatke iz baze
+            self.session.expire_all()
+            
+            # Provjeri da li već postoji snapshot za ovo kolo
+            existing_snapshot = get_user_gameweek_team(self.session, user_id, gameweek_id)
+            
+            # Provjeri da li snapshot stvarno postoji u bazi (ne samo u cache-u)
+            if existing_snapshot:
+                # Provjeri da li snapshot stvarno postoji u bazi provjerom ID-a
+                try:
+                    # Pokušaj refresh-ati objekt iz baze
+                    self.session.refresh(existing_snapshot)
+                    print(f"[DEBUG] Snapshot već postoji za user_id={user_id}, gameweek_id={gameweek_id}, id={existing_snapshot.id}")
+                    return existing_snapshot
+                except Exception as e:
+                    # Ako refresh ne uspije, snapshot ne postoji u bazi - nastavi sa kreiranjem
+                    print(f"[DEBUG] Snapshot iz cache-a ne postoji u bazi (refresh failed): {str(e)}. Nastavljam sa kreiranjem.")
+                    # Ukloni objekt iz session-a
+                    self.session.expunge(existing_snapshot)
+            
+            # Dohvati fantasy tim korisnika
+            fantasy_team_statement = select(FantasyTeam).where(FantasyTeam.user_id == user_id)
+            fantasy_team = self.session.exec(fantasy_team_statement).first()
+            if not fantasy_team:
+                print(f"[DEBUG] Fantasy tim nije pronađen za user_id={user_id}")
+                return None
+            
+            # Dohvati igrače tima sa informacijama o kapitenima
+            team_players_statement = select(FantasyTeamPlayer, Player).join(Player, Player.id == FantasyTeamPlayer.player_id).where(
+                FantasyTeamPlayer.fantasy_team_id == fantasy_team.id
+            )
+            team_players_data = list(self.session.exec(team_players_statement).all())
+            print(f"[DEBUG] team_players_data: {len(team_players_data)} igrača")
+            
+            # Provjeri da li tim ima igrače
+            if not team_players_data or len(team_players_data) == 0:
+                print(f"[DEBUG] UPOZORENJE: Tim user_id={user_id} nema igrača. Preskačem kreiranje snapshot-a.")
+                # Vraćamo None umjesto kreiranja snapshot-a bez igrača
+                return None
+            
+            # Pronađi kapiten i vice-kapiten
+            captain_id = None
+            vice_captain_id = None
+            for ftp, player in team_players_data:
+                if not player or not player.id:
+                    continue
+                if ftp.is_captain:
+                    captain_id = player.id
+                elif ftp.is_vice_captain:
+                    vice_captain_id = player.id
+            
+            # Provjeri da li captain_id i vice_captain_id postoje u igračima
+            valid_captain_id = None
+            valid_vice_captain_id = None
+            
+            # Pronađi prvi igrač iz tima kao fallback (za slučaj da nema kapiten/vice-kapiten)
+            first_player_id = None
+            for _, player in team_players_data:
+                if player and player.id:
+                    first_player_id = player.id
+                    break
+            
+            if captain_id:
+                # Provjeri da li kapiten postoji u listi igrača
+                captain_exists = any(player.id == captain_id for _, player in team_players_data if player)
+                if captain_exists:
+                    valid_captain_id = captain_id
+                else:
+                    print(f"[DEBUG] UPOZORENJE: Kapiten sa ID={captain_id} ne postoji u timu")
+                    # Koristimo prvi igrač kao fallback
+                    if first_player_id:
+                        valid_captain_id = first_player_id
+                        print(f"[DEBUG] Koristim prvi igrač (ID={first_player_id}) kao fallback za kapiten")
+            
+            if vice_captain_id:
+                # Provjeri da li vice-kapiten postoji u listi igrača
+                vice_captain_exists = any(player.id == vice_captain_id for _, player in team_players_data if player)
+                if vice_captain_exists:
+                    valid_vice_captain_id = vice_captain_id
+                else:
+                    print(f"[DEBUG] UPOZORENJE: Vice-kapiten sa ID={vice_captain_id} ne postoji u timu")
+                    # Koristimo prvi igrač kao fallback (ili drugi ako je prvi već kapiten)
+                    if first_player_id:
+                        # Pronađi drugi igrač ako je prvi već kapiten
+                        second_player_id = None
+                        for _, player in team_players_data:
+                            if player and player.id and player.id != valid_captain_id:
+                                second_player_id = player.id
+                                break
+                        valid_vice_captain_id = second_player_id if second_player_id else first_player_id
+                        print(f"[DEBUG] Koristim igrača (ID={valid_vice_captain_id}) kao fallback za vice-kapiten")
+            
+            # Ako ni kapiten ni vice-kapiten nisu postavljeni, koristimo prvi igrač
+            if not valid_captain_id and first_player_id:
+                valid_captain_id = first_player_id
+                print(f"[DEBUG] Nema kapiten, koristim prvi igrač (ID={first_player_id})")
+            
+            if not valid_vice_captain_id and first_player_id:
+                # Pronađi drugi igrač ako je prvi već kapiten
+                second_player_id = None
+                for _, player in team_players_data:
+                    if player and player.id and player.id != valid_captain_id:
+                        second_player_id = player.id
+                        break
+                valid_vice_captain_id = second_player_id if second_player_id else first_player_id
+                print(f"[DEBUG] Nema vice-kapiten, koristim igrača (ID={valid_vice_captain_id})")
+            
+            # Osiguraj da imamo validne ID-ove (ne 0) - provjeri da li igrači postoje u bazi
+            final_captain_id = valid_captain_id if valid_captain_id else (first_player_id if first_player_id else None)
+            final_vice_captain_id = valid_vice_captain_id if valid_vice_captain_id else (first_player_id if first_player_id else None)
+            
+            # Provjeri da li captain_id i vice_captain_id postoje u player tablici
+            if final_captain_id:
+                captain_exists = self.session.get(Player, final_captain_id)
+                if not captain_exists:
+                    print(f"[DEBUG] UPOZORENJE: Captain sa ID={final_captain_id} ne postoji u player tablici")
+                    final_captain_id = first_player_id if first_player_id else None
+            
+            if final_vice_captain_id:
+                vice_captain_exists = self.session.get(Player, final_vice_captain_id)
+                if not vice_captain_exists:
+                    print(f"[DEBUG] UPOZORENJE: Vice-captain sa ID={final_vice_captain_id} ne postoji u player tablici")
+                    # Koristi drugi igrač ili prvi ako nema drugog
+                    second_player_id = None
+                    for _, player in team_players_data:
+                        if player and player.id and player.id != final_captain_id:
+                            second_player_id = player.id
+                            break
+                    final_vice_captain_id = second_player_id if second_player_id else first_player_id
+            
+            # Ako nema validnih ID-ova, koristi prvi igrač ili None
+            if not final_captain_id and first_player_id:
+                final_captain_id = first_player_id
+            if not final_vice_captain_id and first_player_id:
+                # Pronađi drugi igrač ako je prvi već kapiten
+                second_player_id = None
+                for _, player in team_players_data:
+                    if player and player.id and player.id != final_captain_id:
+                        second_player_id = player.id
+                        break
+                final_vice_captain_id = second_player_id if second_player_id else first_player_id
+            
+            # Model zahtijeva int, ne Optional, pa koristimo 0 ako nema igrača
+            # ALI to će uzrokovati foreign key constraint grešku!
+            # Provjeri da li imamo barem jednog igrača
+            if not first_player_id:
+                print(f"[DEBUG] KRITIČNO: Nema igrača u timu, ne mogu kreirati GameweekTeam")
+                return None
+            
+            # Koristimo prvi igrač za oba ako nema postavljenih
+            final_captain_id = final_captain_id or first_player_id
+            final_vice_captain_id = final_vice_captain_id or first_player_id
+            
+            print(f"[DEBUG] Final captain_id={final_captain_id}, vice_captain_id={final_vice_captain_id}")
+            
+            # Kreiraj gameweek tim
+            gameweek_team = GameweekTeam(
+                user_id=user_id,
+                gameweek_id=gameweek_id,
+                formation=fantasy_team.formation or "4-4-2",  # Default formacija ako nije postavljena
+                captain_id=final_captain_id,
+                vice_captain_id=final_vice_captain_id,
+                total_points=0.0
+            )
+            
+            print(f"[DEBUG] Pozivam create_gameweek_team sa commit={commit}")
+            print(f"[DEBUG] GameweekTeam objekt prije kreiranja: user_id={gameweek_team.user_id}, gameweek_id={gameweek_team.gameweek_id}, captain_id={gameweek_team.captain_id}, vice_captain_id={gameweek_team.vice_captain_id}")
+            
+            try:
+                created_team = create_gameweek_team(self.session, gameweek_team, commit=commit)
+                print(f"[DEBUG] create_gameweek_team vratio: {created_team}")
                 
-                gameweek_player = GameweekPlayer(
-                    gameweek_team_id=created_team.id,
-                    player_id=player.id,
-                    position=player.position,
-                    is_bench=ftp.role == "BENCH",
-                    points=points
-                )
-                create_gameweek_player(self.session, gameweek_player, commit=commit)
-        
-        # Izračunaj ukupne poene
-        if created_team.id is not None:
-            total_points = self._calculate_total_points(created_team.id, captain_id or 0, vice_captain_id or 0)
-            created_team.total_points = total_points
-            self.session.add(created_team)
+                if not created_team:
+                    print(f"[DEBUG] Greška: create_gameweek_team vratio None za user_id={user_id}")
+                    return None
+                
+                if not created_team.id:
+                    print(f"[DEBUG] Greška: created_team nema ID za user_id={user_id}")
+                    # Pokušaj flush-ati da dobije ID
+                    try:
+                        self.session.flush()
+                        print(f"[DEBUG] Nakon flush-a, created_team.id={created_team.id}")
+                    except Exception as flush_error:
+                        print(f"[DEBUG] Greška pri flush-u: {str(flush_error)}")
+                        import traceback
+                        print(f"[DEBUG] Traceback: {traceback.format_exc()}")
+                        return None
+                
+                print(f"[DEBUG] GameweekTeam uspješno kreiran sa ID={created_team.id}")
+            except Exception as e:
+                print(f"[DEBUG] Greška pri kreiranju GameweekTeam za user_id={user_id}: {str(e)}")
+                import traceback
+                print(f"[DEBUG] Traceback: {traceback.format_exc()}")
+                return None
+            
+            self.session.flush()  # Osiguraj da team ima ID prije upisa igrača
+            print(f"[DEBUG] GameweekTeam kreiran sa ID={created_team.id}, sada dodajem igrače...")
+            print(f"[DEBUG] Broj igrača u team_players_data: {len(team_players_data)}")
+            
+            # Dodaj igrače u snapshot
+            players_added = 0
+            if not team_players_data or len(team_players_data) == 0:
+                print(f"[DEBUG] KRITIČNO: team_players_data je prazan! Ne mogu dodati igrače.")
+            else:
+                print(f"[DEBUG] Počinjem petlju za dodavanje {len(team_players_data)} igrača...")
+                for idx, (ftp, player) in enumerate(team_players_data):
+                    print(f"[DEBUG] --- Iteracija {idx+1}/{len(team_players_data)} ---")
+                    print(f"[DEBUG] ftp={ftp}, player={player}")
+                    
+                    if not player:
+                        print(f"[DEBUG] UPOZORENJE: player je None, preskačem")
+                        continue
+                    
+                    if not player.id:
+                        print(f"[DEBUG] UPOZORENJE: player.id je None, preskačem")
+                        continue
+                    
+                    if not ftp:
+                        print(f"[DEBUG] UPOZORENJE: ftp je None, preskačem")
+                        continue
+                    
+                    try:
+                        print(f"[DEBUG] Dodajem igrača {player.id} ({player.name}) u snapshot tima {created_team.id}")
+                        
+                        # Dohvati poene igrača za ovo kolo
+                        print(f"[DEBUG] Dohvaćam poene za igrača {player.id} u kolu {gameweek_id}...")
+                        points = self._get_player_points_for_gameweek(player.id, gameweek_id)
+                        print(f"[DEBUG] Igrač {player.id} ima {points} poena za kolo {gameweek_id}")
+                        
+                        # Provjeri poziciju
+                        position_str = player.position.value if hasattr(player.position, 'value') else str(player.position)
+                        print(f"[DEBUG] Pozicija igrača: {position_str}")
+                        
+                        # Provjeri da li je na klupi
+                        is_bench = ftp.role == "BENCH" or "_BENCH" in (ftp.formation_position or "")
+                        print(f"[DEBUG] Igrač je na klupi: {is_bench} (role={ftp.role}, formation_position={ftp.formation_position})")
+                        
+                        gameweek_player = GameweekPlayer(
+                            gameweek_team_id=created_team.id,
+                            player_id=player.id,
+                            position=position_str,
+                            is_bench=is_bench,
+                            points=points
+                        )
+                        print(f"[DEBUG] Kreiran GameweekPlayer objekt: team_id={created_team.id}, player_id={player.id}, points={points}")
+                        
+                        result = create_gameweek_player(self.session, gameweek_player, commit=commit)
+                        print(f"[DEBUG] create_gameweek_player pozvan, rezultat: {result}")
+                        
+                        if commit:
+                            self.session.flush()
+                            print(f"[DEBUG] Session flushed nakon dodavanja igrača {player.id}")
+                        
+                        players_added += 1
+                        print(f"[DEBUG] ✓ Igrač {player.id} uspješno dodan. Ukupno dodano: {players_added}")
+                    except Exception as e:
+                        print(f"[DEBUG] ✗ GREŠKA pri dodavanju igrača {player.id}: {str(e)}")
+                        import traceback
+                        print(f"[DEBUG] Traceback: {traceback.format_exc()}")
+                        # Nastavi sa sljedećim igračem
+                        continue
+                
+                print(f"[DEBUG] Petlja završena. Ukupno dodano igrača: {players_added}")
+            
+            if players_added == 0:
+                print(f"[DEBUG] UPOZORENJE: Nije dodan nijedan igrač u snapshot za user_id={user_id}")
+                # Možemo vratiti None ili nastaviti sa 0 poena
+                # Vraćamo snapshot sa 0 poena
+                created_team.total_points = 0.0
+            else:
+                # Izračunaj ukupne poene
+                try:
+                    total_points = self._calculate_total_points(
+                        created_team.id, 
+                        final_captain_id, 
+                        final_vice_captain_id
+                    )
+                    created_team.total_points = total_points
+                except Exception as e:
+                    print(f"[DEBUG] Greška pri računanju poena: {str(e)}")
+                    created_team.total_points = 0.0
+            
+            # created_team je već dodan u session u create_gameweek_team
+            # Samo ažuriraj total_points i flush/commit
             if commit:
                 self.session.commit()
                 self.session.refresh(created_team)
             else:
+                # Flush da osiguramo da se sve šalje u bazu (ali ne commit-uje)
                 self.session.flush()
-        
-        return created_team
+                print(f"[DEBUG] Session flushed (commit=False), objekti će biti commit-ovani kasnije")
+            
+            print(f"[DEBUG] Snapshot uspješno kreiran za user_id={user_id}, gameweek_id={gameweek_id}, total_points={created_team.total_points}")
+            print(f"[DEBUG] Session status: dirty={len(self.session.dirty)}, new={len(self.session.new)}, deleted={len(self.session.deleted)}")
+            return created_team
+            
+        except Exception as e:
+            print(f"[DEBUG] KRITIČNA GREŠKA u create_team_snapshot za user_id={user_id}, gameweek_id={gameweek_id}: {str(e)}")
+            import traceback
+            print(f"[DEBUG] Traceback: {traceback.format_exc()}")
+            if commit:
+                self.session.rollback()
+            return None
     
     def get_user_results(self, user_id: int) -> List[Dict[str, Any]]:
         """Dohvata rezultate korisnika iz svih završenih kola"""
@@ -265,52 +572,75 @@ class GameweekTeamService:
     def _calculate_total_points(self, team_id: int, captain_id: int, vice_captain_id: int) -> float:
         """Izračunava ukupne poene tima sa bonusima za kapiten i vice-kapiten i transfer penalty.
         Napomena: Bodovi igrača sa klupe (is_bench=True) se NE računaju u total points."""
-        players = get_gameweek_team_players(self.session, team_id)
-        total_points = 0.0
-        
-        bench_points = 0.0  # Bodovi igrača sa klupe (samo za debug)
-        
-        for player in players:
-            # Igrači sa klupe ne doprinose bodovima tima
-            if player.is_bench:
-                bench_points += player.points
-                continue
-                
-            if player.player_id == captain_id:
-                # Kapiten dobija duplo poene
-                total_points += player.points * 2
-            elif player.player_id == vice_captain_id:
-                # Vice-kapiten dobija normalne poene
-                total_points += player.points
-            else:
-                # Ostali igrači iz prvih 11 dobijaju normalne poene
-                total_points += player.points
-        
-        print(f"[DEBUG] _calculate_total_points: team_id={team_id}, starting11_points={total_points}, bench_points={bench_points}")
-        
-        # Dohvati transfer penalty za ovo kolo
-        team = self.session.get(GameweekTeam, team_id)
-        if team and team.gameweek_id:
-            # Pronađi fantasy_team_id iz user_id
-            fantasy_team_statement = select(FantasyTeam).where(FantasyTeam.user_id == team.user_id)
-            fantasy_team = self.session.exec(fantasy_team_statement).first()
+        try:
+            if not team_id:
+                print(f"[DEBUG] _calculate_total_points: team_id je None ili 0")
+                return 0.0
             
-            if fantasy_team and fantasy_team.id:
-                transfer_repo = TransferLogRepository(self.session)
-                transfers_this_week = transfer_repo.get_transfer_count_by_gameweek(
-                    fantasy_team.id, team.gameweek_id
-                )
+            players = get_gameweek_team_players(self.session, team_id)
+            if not players:
+                print(f"[DEBUG] _calculate_total_points: Nema igrača za team_id={team_id}")
+                return 0.0
+            
+            total_points = 0.0
+            bench_points = 0.0  # Bodovi igrača sa klupe (samo za debug)
+            
+            for player in players:
+                if not player:
+                    continue
                 
-                # ISTA FORMULA KAO NA FRONTEND-U!
-                free_transfers = 3
-                penalty = max(0, transfers_this_week - free_transfers) * 4
+                # Igrači sa klupe ne doprinose bodovima tima
+                if player.is_bench:
+                    bench_points += player.points or 0.0
+                    continue
                 
-                print(f"[DEBUG] _calculate_total_points: team_id={team_id}, gameweek={team.gameweek_id}, transfers={transfers_this_week}, penalty={penalty}")
+                player_points = player.points or 0.0
                 
-                # FINALNI POENI = player_points - penalty
-                total_points -= penalty
-        
-        return total_points
+                # Provjeri da li je captain_id validan (ne 0)
+                if captain_id and captain_id > 0 and player.player_id == captain_id:
+                    # Kapiten dobija duplo poene
+                    total_points += player_points * 2
+                elif vice_captain_id and vice_captain_id > 0 and player.player_id == vice_captain_id:
+                    # Vice-kapiten dobija normalne poene
+                    total_points += player_points
+                else:
+                    # Ostali igrači iz prvih 11 dobijaju normalne poene
+                    total_points += player_points
+            
+            print(f"[DEBUG] _calculate_total_points: team_id={team_id}, starting11_points={total_points}, bench_points={bench_points}")
+            
+            # Dohvati transfer penalty za ovo kolo
+            team = self.session.get(GameweekTeam, team_id)
+            if team and team.gameweek_id:
+                try:
+                    # Pronađi fantasy_team_id iz user_id
+                    fantasy_team_statement = select(FantasyTeam).where(FantasyTeam.user_id == team.user_id)
+                    fantasy_team = self.session.exec(fantasy_team_statement).first()
+                    
+                    if fantasy_team and fantasy_team.id:
+                        transfer_repo = TransferLogRepository(self.session)
+                        transfers_this_week = transfer_repo.get_transfer_count_by_gameweek(
+                            fantasy_team.id, team.gameweek_id
+                        )
+                        
+                        # ISTA FORMULA KAO NA FRONTEND-U!
+                        free_transfers = 3
+                        penalty = max(0, transfers_this_week - free_transfers) * 4
+                        
+                        print(f"[DEBUG] _calculate_total_points: team_id={team_id}, gameweek={team.gameweek_id}, transfers={transfers_this_week}, penalty={penalty}")
+                        
+                        # FINALNI POENI = player_points - penalty
+                        total_points -= penalty
+                except Exception as e:
+                    print(f"[DEBUG] Greška pri računanju transfer penalty: {str(e)}")
+                    # Nastavi bez penalty-ja ako ne možemo izračunati
+            
+            return total_points
+        except Exception as e:
+            print(f"[DEBUG] Greška u _calculate_total_points za team_id={team_id}: {str(e)}")
+            import traceback
+            print(f"[DEBUG] Traceback: {traceback.format_exc()}")
+            return 0.0
 
     def get_best_team_for_gameweek(self, gameweek_id: int) -> Optional[Dict[str, Any]]:
         """Dohvata najbolji tim (najviše poena) za određeno kolo"""
