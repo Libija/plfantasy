@@ -22,6 +22,7 @@ export default function FantasyDashboard() {
   const [leaderboard, setLeaderboard] = useState([])
   const [favoriteClubsStats, setFavoriteClubsStats] = useState([])
   const [bestTeam, setBestTeam] = useState(null)
+  const [clubRank, setClubRank] = useState(null)
 
   useEffect(() => {
     // Ako se još učitava auth, ne radi ništa
@@ -139,12 +140,36 @@ export default function FantasyDashboard() {
           console.error("Greška pri dohvatu najboljeg tima:", err)
           setBestTeam(null)
         }
+        
+        // Dohvati rank po klubu (ako korisnik ima favorite_club_id)
+        if (fantasyTeam?.favorite_club_id !== undefined && fantasyTeam?.favorite_club_id !== null) {
+          try {
+            const clubRankRes = await fetch(`${apiUrl}/fantasy/club-rank/${fantasyTeam.favorite_club_id}?user_id=${user.id}`)
+            if (clubRankRes.ok) {
+              const clubRankData = await clubRankRes.json()
+              setClubRank(clubRankData)
+            }
+          } catch (err) {
+            console.error("Greška pri dohvatu ranka po klubu:", err)
+          }
+        } else if (fantasyTeam?.favorite_club_id === null) {
+          // Fan cijele lige - koristi club_id=0
+          try {
+            const clubRankRes = await fetch(`${apiUrl}/fantasy/club-rank/0?user_id=${user.id}`)
+            if (clubRankRes.ok) {
+              const clubRankData = await clubRankRes.json()
+              setClubRank(clubRankData)
+            }
+          } catch (err) {
+            console.error("Greška pri dohvatu ranka po klubu:", err)
+          }
+        }
       } catch (err) {
         console.error("Greška pri dohvatu rezultata ili leaderboarda:", err)
       }
     }
     fetchResultsAndLeaderboard()
-  }, [authLoading, isLoggedIn, user])
+  }, [authLoading, isLoggedIn, user, fantasyTeam])
 
   // Pravi podaci za dashboard
   let teamStats = {
@@ -178,41 +203,107 @@ export default function FantasyDashboard() {
     }
   }
 
-  // Simulirani podaci za lige
-  const leagues = [
-    {
-      id: 1,
-      name: "Prijatelji iz Sarajeva",
-      members: 8,
-      rank: 3,
-      leader: "Emir H.",
-      leaderPoints: 1356,
-    },
-    {
-      id: 2,
-      name: "Kolege sa posla",
-      members: 12,
-      rank: 5,
-      leader: "Adnan M.",
-      leaderPoints: 1289,
-    },
-  ]
+  const [leagues, setLeagues] = useState([])
+  const [loadingLeagues, setLoadingLeagues] = useState(false)
 
+  // Dohvati lige korisnika
+  useEffect(() => {
+    if (authLoading || !isLoggedIn || !user) return
+    
+    const fetchLeagues = async () => {
+      try {
+        setLoadingLeagues(true)
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"
+        const res = await fetch(`${apiUrl}/fantasy/leagues/my-leagues?user_id=${user.id}`)
+        if (res.ok) {
+          const data = await res.json()
+          setLeagues(data)
+        }
+      } catch (err) {
+        console.error("Greška pri dohvatu liga:", err)
+      } finally {
+        setLoadingLeagues(false)
+      }
+    }
+    
+    fetchLeagues()
+  }, [authLoading, isLoggedIn, user])
 
-  const handleCreateLeague = (e) => {
+  const handleCreateLeague = async (e) => {
     e.preventDefault()
-    // Ovdje bi se implementirala logika za kreiranje lige
-    alert(`Liga "${leagueName}" je uspješno kreirana!`)
-    setLeagueName("")
-    setShowCreateLeagueModal(false)
+    if (!user) return
+    
+    try {
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"
+      const res = await fetch(`${apiUrl}/fantasy/leagues`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          name: leagueName.trim(),
+          creator_id: user.id
+        })
+      })
+      
+      if (!res.ok) {
+        const error = await res.json()
+        alert(error.detail || "Greška pri kreiranju lige!")
+        return
+      }
+      
+      const createdLeague = await res.json()
+      setLeagueName("")
+      setShowCreateLeagueModal(false)
+      
+      // Osveži listu liga
+      const leaguesRes = await fetch(`${apiUrl}/fantasy/leagues/my-leagues?user_id=${user.id}`)
+      if (leaguesRes.ok) {
+        const data = await leaguesRes.json()
+        setLeagues(data)
+      }
+    } catch (err) {
+      console.error("Greška pri kreiranju lige:", err)
+      alert("Greška pri kreiranju lige!")
+    }
   }
 
-  const handleJoinLeague = (e) => {
+  const handleJoinLeague = async (e) => {
     e.preventDefault()
-    // Ovdje bi se implementirala logika za pridruživanje ligi
-    alert(`Uspješno ste se pridružili ligi sa kodom: ${leagueCode}`)
-    setLeagueCode("")
-    setShowJoinLeagueModal(false)
+    if (!user) return
+    
+    try {
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"
+      const res = await fetch(`${apiUrl}/fantasy/leagues/join?user_id=${user.id}`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          code: leagueCode.trim().toUpperCase()
+        })
+      })
+      
+      if (!res.ok) {
+        const error = await res.json()
+        alert(error.detail || "Greška pri pridruživanju ligi!")
+        return
+      }
+      
+      const joinedLeague = await res.json()
+      setLeagueCode("")
+      setShowJoinLeagueModal(false)
+      
+      // Osveži listu liga
+      const leaguesRes = await fetch(`${apiUrl}/fantasy/leagues/my-leagues?user_id=${user.id}`)
+      if (leaguesRes.ok) {
+        const data = await leaguesRes.json()
+        setLeagues(data)
+      }
+    } catch (err) {
+      console.error("Greška pri pridruživanju ligi:", err)
+      alert("Greška pri pridruživanju ligi!")
+    }
   }
 
   // Prikaži loading dok se provjerava tim
@@ -338,6 +429,26 @@ export default function FantasyDashboard() {
               </div>
             </div>
 
+            {/* Rank po klubu */}
+            {clubRank && clubRank.total_fans > 0 && (
+              <div className={styles.globalRanking} style={{ marginTop: '20px' }}>
+                <div className={styles.sectionHeader}>
+                  <h2>Rank u odnosu na fanove {clubRank.club_name}</h2>
+                </div>
+                <div style={{ padding: '1rem', textAlign: 'center' }}>
+                  <div style={{ fontSize: '2rem', fontWeight: 'bold', color: 'var(--primary-color)', marginBottom: '0.5rem' }}>
+                    #{clubRank.user_rank || '?'}
+                  </div>
+                  <div style={{ color: 'var(--text-light)', marginBottom: '1rem' }}>
+                    od {clubRank.total_fans} fanova
+                  </div>
+                  <div style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>
+                    {clubRank.user_points} bodova
+                  </div>
+                </div>
+              </div>
+            )}
+
             {/* Favorite Clubs Stats - mala sekcija */}
             {favoriteClubsStats.length > 0 && (
               <div className={styles.globalRanking} style={{ marginTop: '20px' }}>
@@ -357,6 +468,61 @@ export default function FantasyDashboard() {
                 </div>
               </div>
             )}
+
+            {/* Lige sekcija */}
+            <div className={styles.globalRanking} style={{ marginTop: '20px' }}>
+              <div className={styles.sectionHeader}>
+                <h2>Moje lige</h2>
+                <div className={styles.leagueActions}>
+                  <button 
+                    className={styles.createLeagueBtn}
+                    onClick={() => setShowCreateLeagueModal(true)}
+                  >
+                    <FaTrophy /> Kreiraj
+                  </button>
+                  <button 
+                    className={styles.joinLeagueBtn}
+                    onClick={() => setShowJoinLeagueModal(true)}
+                  >
+                    <FaUsers /> Pridruži se
+                  </button>
+                </div>
+              </div>
+              {loadingLeagues ? (
+                <div style={{ padding: '1rem', textAlign: 'center', color: 'var(--text-light)' }}>
+                  Učitavanje liga...
+                </div>
+              ) : leagues.length === 0 ? (
+                <div style={{ padding: '1rem', textAlign: 'center', color: 'var(--text-light)' }}>
+                  Niste član nijedne lige. Kreirajte novu ili se pridružite postojećoj!
+                </div>
+              ) : (
+                <div className={styles.leaguesList}>
+                  {leagues.map((league) => (
+                    <Link 
+                      key={league.id} 
+                      href={`/fantasy/league/${league.id}`}
+                      className={styles.leagueCard}
+                    >
+                      <div>
+                        <div className={styles.leagueName}>{league.name}</div>
+                        <div className={styles.leagueStats}>
+                          <span className={styles.leagueStat}>
+                            <FaUsers /> {league.member_count} članova
+                          </span>
+                          <span className={styles.leagueStat}>
+                            Kod: {league.code}
+                          </span>
+                        </div>
+                      </div>
+                      <div style={{ color: 'var(--primary-color)', fontSize: '1.5rem' }}>
+                        →
+                      </div>
+                    </Link>
+                  ))}
+                </div>
+              )}
+            </div>
 
           </div>
         </div>

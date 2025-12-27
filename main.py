@@ -118,7 +118,9 @@ from controllers import poll_controller
 app.include_router(poll_controller.router)
 app.include_router(poll_controller.public_router)
 from controllers import match_prediction_controller
+from controllers import fantasy_league_controller
 app.include_router(match_prediction_controller.router)
+app.include_router(fantasy_league_controller.router)
 from controllers import gameweek_team_controller
 app.include_router(gameweek_team_controller.router)
 app.include_router(gameweek_team_controller.public_router)
