@@ -68,7 +68,7 @@ export default function BestTeam() {
   };
 
   // Helper za cijenu
-  const formatPrice = (price) => `${Number(price).toFixed(1)}M`;
+  const formatPrice = (price) => `${Number(price).toFixed(2)}M`;
 
   // Helper za bodove
   const pointsColor = (points) => points > 0 ? '#22c55e' : points < 0 ? '#ef4444' : '#222';

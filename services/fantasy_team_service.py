@@ -530,6 +530,20 @@ def get_team_current_gameweek_points_service(session: Session, fantasy_team_id: 
         select(FantasyTeamPlayer).where(FantasyTeamPlayer.fantasy_team_id == fantasy_team_id)
     ).all()
     
+    # Provjeri da li je kapiten igrao (ima minute > 0) - jednom za sve igrače
+    captain_id = None
+    captain_played = True
+    for tp in team_players:
+        if tp.is_captain:
+            captain_id = tp.player_id
+            break
+    
+    if captain_id and current_gameweek:
+        from services.gameweek_team_service import GameweekTeamService
+        team_service = GameweekTeamService(session)
+        captain_minutes = team_service._calculate_player_minutes_for_gameweek(captain_id, current_gameweek.id)
+        captain_played = captain_minutes > 0
+    
     players_with_points = []
     
     for team_player in team_players:
@@ -573,10 +587,19 @@ def get_team_current_gameweek_points_service(session: Session, fantasy_team_id: 
         # Igrači sa klupe ne doprinose bodovima tima
         is_bench = "_BENCH" in (team_player.formation_position or "")
         
-        # Izračunaj poene sa bonusom samo za kapiten (vice-kapiten ostaje normalno)
-        final_points = total_points
+        # Izračunaj poene sa bonusom
         if team_player.is_captain:
-            final_points = total_points * 2
+            if captain_played:
+                final_points = total_points * 2  # Kapiten igrao → ×2
+            else:
+                final_points = total_points  # Kapiten nije igrao → ×1
+        elif team_player.is_vice_captain:
+            if captain_played:
+                final_points = total_points  # Kapiten igrao → vice-kapiten ×1
+            else:
+                final_points = total_points * 2  # Kapiten nije igrao → vice-kapiten ×2
+        else:
+            final_points = total_points  # Ostali ×1
         
         players_with_points.append({
             "player_id": player.id,

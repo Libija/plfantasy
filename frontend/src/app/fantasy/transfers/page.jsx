@@ -87,12 +87,7 @@ export default function FantasyTransfers() {
       }
       
       const data = await res.json()
-      console.log('DEBUG fetchTransfersData - podaci dohvaćeni:', {
-        fantasy_team: data.fantasy_team?.formation,
-        team_players_count: data.team_players?.length,
-        transfer_window: data.transfer_window?.is_open,
-        is_draft_mode: data.is_draft_mode
-      })
+      
       
 
       
@@ -107,10 +102,10 @@ export default function FantasyTransfers() {
       setSelectedFormation(data.fantasy_team.formation)
       setTransferWindow(data.transfer_window)
       setTransfersInfo(data.transfers_info)
-      console.log('DEBUG fetchTransfersData - transfersInfo:', JSON.stringify(data.transfers_info, null, 2))
+      
       setIsDraftMode(data.is_draft_mode)
       setAllPlayers(data.all_players)
-      console.log('DEBUG ALL PLAYERS LOGO:', data.all_players.golmani?.[0]?.club_logo ? 'IMA LOGO' : 'NEMA LOGO')
+      
       
       // Ako nije draft mode i transfer window je zatvoren, dohvati fantasy poene
       if (!data.is_draft_mode && data.transfer_window && !data.transfer_window.is_open && data.fantasy_team) {
@@ -140,7 +135,6 @@ export default function FantasyTransfers() {
           if (tp.is_vice_captain) setViceCaptainId(tp.player_id)
         })
 
-        console.log('DEBUG POSTOJI IGRAC LOGO:', existingPlayers[Object.keys(existingPlayers)[0]]?.club_logo ? 'IMA LOGO' : 'NEMA LOGO')
         setSelectedPlayers(existingPlayers)
       }
       
@@ -1395,7 +1389,7 @@ export default function FantasyTransfers() {
                 <div className={styles.statItem}>
                   <span className={styles.statLabel}>Vrijednost tima:</span>
                   <span className={styles.statValue}>
-                    {Object.values(selectedPlayers).reduce((acc, p) => acc + (p?.price || 0), 0).toFixed(1)} M
+                    {Object.values(selectedPlayers).reduce((acc, p) => acc + (p?.price || 0), 0).toFixed(2)} M
                   </span>
                 </div>
               )}

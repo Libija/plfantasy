@@ -88,31 +88,31 @@ export default function FantasyResults() {
   const getTeamName = (player) => player.team_name || '-';
 
   // Helper za cijenu
-  const formatPrice = (price) => `${Number(price).toFixed(1)}M`;
+  const formatPrice = (price) => `${Number(price).toFixed(2)}M`;
 
   // Helper za bodove
   const pointsColor = (points) => points > 0 ? '#22c55e' : points < 0 ? '#ef4444' : '#222';
 
-  // Helper za računanje poena sa bonus-ima
-  const getPlayerDisplayPoints = (player) => {
-    if (player.is_captain) {
-      return player.points * 2; // Kapiten ×2
-    } else if (player.is_vice_captain) {
-      return player.points; // Vice-kapiten ×1
-    } else {
-      return player.points; // Ostali ×1
-    }
-  };
-
   // Helper za prikaz poena sa objašnjenjem
+  // Koristi final_points iz backend-a koji već uključuje bonus za kapitena/vice-kapitena
   const getPlayerPointsDisplay = (player) => {
-    const displayPoints = getPlayerDisplayPoints(player);
+    const displayPoints = player.final_points !== undefined ? player.final_points : player.points;
     let explanation = '';
     
     if (player.is_captain) {
-      explanation = ` (${player.points} × 2)`;
+      // Ako je kapiten, provjeri da li je dobio ×2 ili ×1 (na osnovu minuta)
+      if (displayPoints === player.points * 2) {
+        explanation = ` (${player.points} × 2)`;
+      } else {
+        explanation = ` (${player.points} × 1, kapiten nije igrao)`;
+      }
     } else if (player.is_vice_captain) {
-      explanation = ` (${player.points} × 1)`;
+      // Ako je vice-kapiten, provjeri da li je dobio ×2 ili ×1
+      if (displayPoints === player.points * 2) {
+        explanation = ` (${player.points} × 2, kapiten nije igrao)`;
+      } else {
+        explanation = ` (${player.points} × 1)`;
+      }
     }
     
     return { displayPoints, explanation };
