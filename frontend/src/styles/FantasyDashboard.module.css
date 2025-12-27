@@ -237,8 +237,7 @@
   display: flex;
   flex-direction: column;
   gap: 1rem;
-  animation: slideUp 0.5s ease 0.2s forwards;
-  opacity: 0;
+  opacity: 1;
 }
 
 .leagueCard {
@@ -250,6 +249,8 @@
   align-items: center;
   box-shadow: var(--shadow-md);
   transition: all var(--transition-normal);
+  text-decoration: none;
+  color: inherit;
 }
 
 .leagueCard:hover {
@@ -533,6 +534,83 @@
   background: var(--primary-hover);
   transform: translateY(-3px);
   box-shadow: var(--shadow-lg);
+}
+
+.modalForm {
+  padding: 1.5rem;
+}
+
+.modalActions {
+  display: flex;
+  gap: 1rem;
+  justify-content: flex-end;
+  margin-top: 1.5rem;
+}
+
+.cancelButton,
+.createButton,
+.joinButton {
+  padding: 0.75rem 1.5rem;
+  border-radius: var(--border-radius-md);
+  font-size: 1rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all var(--transition-normal);
+  border: none;
+}
+
+.cancelButton {
+  background-color: var(--card-bg-secondary);
+  color: var(--text-light);
+  border: 1px solid var(--border-color);
+}
+
+.cancelButton:hover {
+  background-color: var(--card-bg);
+  color: white;
+}
+
+.createButton {
+  background: var(--gradient-primary);
+  color: white;
+  box-shadow: var(--shadow-md);
+}
+
+.createButton:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-lg);
+}
+
+.joinButton {
+  background: var(--gradient-secondary);
+  color: white;
+  box-shadow: var(--shadow-md);
+}
+
+.joinButton:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-lg);
+}
+
+.closeButton {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  font-size: 1.5rem;
+  cursor: pointer;
+  transition: color var(--transition-fast);
+  padding: 0;
+  width: 2rem;
+  height: 2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.closeButton:hover {
+  color: white;
+  background-color: rgba(255, 255, 255, 0.1);
+  border-radius: var(--border-radius-sm);
 }
 
 /* Responsive */

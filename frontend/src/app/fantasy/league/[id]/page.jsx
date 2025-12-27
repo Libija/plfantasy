@@ -1,94 +1,92 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useParams } from "next/navigation"
 import Head from "next/head"
 import Link from "next/link"
 import { FaTrophy, FaArrowLeft, FaCopy, FaCheck, FaUsers, FaChartLine } from "react-icons/fa"
 import styles from "../../../../styles/FantasyLeague.module.css"
+import useAuth from "../../../../hooks/use-auth"
 
 export default function FantasyLeague() {
   const params = useParams()
   const leagueId = params.id
   const [copiedCode, setCopiedCode] = useState(false)
+  const { user, isLoggedIn, loading: authLoading } = useAuth()
+  const [loading, setLoading] = useState(true)
+  const [league, setLeague] = useState(null)
+  const [leagueRanking, setLeagueRanking] = useState([])
 
-  // Simulirani podaci za ligu
-  const [league, setLeague] = useState({
-    id: leagueId,
-    name: "Prijatelji iz Sarajeva",
-    code: "SAR2024",
-    members: 8,
-    created: "15. Maj 2024",
-    creator: "Emir H.",
-  })
+  useEffect(() => {
+    if (authLoading) return
+    
+    const fetchLeagueData = async () => {
+      try {
+        setLoading(true)
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"
+        
+        // Dohvati detalje lige
+        const leagueRes = await fetch(`${apiUrl}/fantasy/leagues/${leagueId}`)
+        if (!leagueRes.ok) {
+          throw new Error("Liga nije pronađena")
+        }
+        const leagueData = await leagueRes.json()
+        setLeague(leagueData)
+        
+        // Dohvati ranking lige
+        const user_id = user?.id || null
+        const rankingUrl = user_id 
+          ? `${apiUrl}/fantasy/leagues/${leagueId}/ranking?user_id=${user_id}`
+          : `${apiUrl}/fantasy/leagues/${leagueId}/ranking`
+        const rankingRes = await fetch(rankingUrl)
+        if (rankingRes.ok) {
+          const rankingData = await rankingRes.json()
+          setLeagueRanking(rankingData.ranking || [])
+        }
+      } catch (err) {
+        console.error("Greška pri dohvatu podataka lige:", err)
+      } finally {
+        setLoading(false)
+      }
+    }
+    
+    fetchLeagueData()
+  }, [leagueId, authLoading, user])
 
-  // Simulirani podaci za ranking u ligi
-  const [leagueRanking, setLeagueRanking] = useState([
-    {
-      rank: 1,
-      name: "Emir H.",
-      teamName: "Sarajevo Legenda",
-      points: 1356,
-      lastWeekPoints: 89,
-      isMe: false,
-    },
-    {
-      rank: 2,
-      name: "Adnan M.",
-      teamName: "Zmajevi Bosne",
-      points: 1298,
-      lastWeekPoints: 76,
-      isMe: false,
-    },
-    {
-      rank: 3,
-      name: "Vi",
-      teamName: "Bordo Mašina",
-      points: 1245,
-      lastWeekPoints: 78,
-      isMe: true,
-    },
-    {
-      rank: 4,
-      name: "Mirza K.",
-      teamName: "Željo Navijač",
-      points: 1198,
-      lastWeekPoints: 65,
-      isMe: false,
-    },
-    {
-      rank: 5,
-      name: "Haris D.",
-      teamName: "Tuzla United",
-      points: 1156,
-      lastWeekPoints: 82,
-      isMe: false,
-    },
-    {
-      rank: 6,
-      name: "Kenan P.",
-      teamName: "Borac Fans",
-      points: 1134,
-      lastWeekPoints: 71,
-      isMe: false,
-    },
-    {
-      rank: 7,
-      name: "Amar S.",
-      teamName: "Zrinjski Tim",
-      points: 1089,
-      lastWeekPoints: 58,
-      isMe: false,
-    },
-    {
-      rank: 8,
-      name: "Dino M.",
-      teamName: "Široki Brijeg FC",
-      points: 1045,
-      lastWeekPoints: 63,
-      isMe: false,
-    },
-  ])
+  if (loading || authLoading) {
+    return (
+      <div className={styles.container}>
+        <div style={{ textAlign: "center", padding: "2rem" }}>
+          <p>Učitavanje...</p>
+        </div>
+      </div>
+    )
+  }
+
+  if (!league) {
+    return (
+      <div className={styles.container}>
+        <div style={{ textAlign: "center", padding: "2rem" }}>
+          <p style={{ color: "red" }}>Liga nije pronađena</p>
+          <Link href="/fantasy" className={styles.backButton}>
+            <FaArrowLeft /> Nazad na Dashboard
+          </Link>
+        </div>
+      </div>
+    )
+  }
+
+  const formatDate = (dateString) => {
+    if (!dateString) return "N/A"
+    const date = new Date(dateString)
+    return date.toLocaleDateString("bs-BA", { 
+      day: "numeric", 
+      month: "long", 
+      year: "numeric" 
+    })
+  }
+
+  const myRank = leagueRanking.find((p) => p.is_me)
 
   const copyToClipboard = (code) => {
     navigator.clipboard.writeText(code).then(() => {
@@ -132,25 +130,25 @@ export default function FantasyLeague() {
               </div>
               <div className={styles.leagueMeta}>
                 <span>
-                  <FaUsers /> {league.members} članova
+                  <FaUsers /> {league.member_count} članova
                 </span>
-                <span>Kreirana: {league.created}</span>
-                <span>Kreator: {league.creator}</span>
+                <span>Kreirana: {formatDate(league.created_at)}</span>
+                <span>Kreator: {league.creator_username || "N/A"}</span>
               </div>
             </div>
           </div>
 
           <div className={styles.leagueStats}>
             <div className={styles.statCard}>
-              <div className={styles.statValue}>{league.members}</div>
+              <div className={styles.statValue}>{league.member_count}</div>
               <div className={styles.statLabel}>Ukupno igrača</div>
             </div>
             <div className={styles.statCard}>
-              <div className={styles.statValue}>{leagueRanking.find((p) => p.isMe)?.rank || "-"}</div>
+              <div className={styles.statValue}>{myRank?.rank || "-"}</div>
               <div className={styles.statLabel}>Vaš rang</div>
             </div>
             <div className={styles.statCard}>
-              <div className={styles.statValue}>{leagueRanking.find((p) => p.isMe)?.points || 0}</div>
+              <div className={styles.statValue}>{myRank?.total_points || 0}</div>
               <div className={styles.statLabel}>Vaši bodovi</div>
             </div>
           </div>
@@ -162,7 +160,7 @@ export default function FantasyLeague() {
               <FaTrophy /> Ranking lige
             </h2>
             <div className={styles.weekInfo}>
-              <FaChartLine /> Kolo 24 - Završeno
+              <FaChartLine /> Ukupno {leagueRanking.length} igrača
             </div>
           </div>
 
@@ -176,33 +174,39 @@ export default function FantasyLeague() {
             </div>
 
             <div className={styles.tableBody}>
-              {leagueRanking.map((player) => (
-                <div key={player.rank} className={`${styles.tableRow} ${player.isMe ? styles.myRow : ""}`}>
-                  <div className={`${styles.rankColumn} ${getRankClass(player.rank)}`}>
-                    <div className={styles.rankBadge}>
-                      {player.rank === 1 && <FaTrophy />}
-                      {player.rank}
-                    </div>
-                  </div>
-                  <div className={styles.playerColumn}>
-                    <div className={styles.playerName}>
-                      {player.name}
-                      {player.isMe && <span className={styles.youBadge}>Vi</span>}
-                    </div>
-                  </div>
-                  <div className={styles.teamColumn}>
-                    <div className={styles.teamName}>{player.teamName}</div>
-                  </div>
-                  <div className={styles.pointsColumn}>
-                    <div className={styles.totalPoints}>{player.points}</div>
-                  </div>
-                  <div className={styles.weekPointsColumn}>
-                    <div className={styles.weekPoints}>
-                      {player.lastWeekPoints > 0 ? `+${player.lastWeekPoints}` : player.lastWeekPoints}
-                    </div>
-                  </div>
+              {leagueRanking.length === 0 ? (
+                <div style={{ padding: "2rem", textAlign: "center", color: "var(--text-light)" }}>
+                  Nema podataka za prikaz
                 </div>
-              ))}
+              ) : (
+                leagueRanking.map((player) => (
+                  <div key={player.user_id} className={`${styles.tableRow} ${player.is_me ? styles.myRow : ""}`}>
+                    <div className={`${styles.rankColumn} ${getRankClass(player.rank)}`}>
+                      <div className={styles.rankBadge}>
+                        {player.rank === 1 && <FaTrophy />}
+                        {player.rank}
+                      </div>
+                    </div>
+                    <div className={styles.playerColumn}>
+                      <div className={styles.playerName}>
+                        {player.username}
+                        {player.is_me && <span className={styles.youBadge}>Vi</span>}
+                      </div>
+                    </div>
+                    <div className={styles.teamColumn}>
+                      <div className={styles.teamName}>{player.team_name || "N/A"}</div>
+                    </div>
+                    <div className={styles.pointsColumn}>
+                      <div className={styles.totalPoints}>{player.total_points}</div>
+                    </div>
+                    <div className={styles.weekPointsColumn}>
+                      <div className={styles.weekPoints}>
+                        {player.last_week_points > 0 ? `+${player.last_week_points}` : player.last_week_points || 0}
+                      </div>
+                    </div>
+                  </div>
+                ))
+              )}
             </div>
           </div>
         </div>

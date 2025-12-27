@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, status, HTTPException
+from fastapi import APIRouter, Depends, status, HTTPException, Query
 from sqlmodel import Session, select
 from database import get_session
 from schemas.fantasy_team_schema import FantasyTeamCreate, FantasyTeamUpdate, FantasyTeamResponse
@@ -129,16 +129,19 @@ def get_favorite_clubs_stats(session: Session = Depends(get_session)):
     # Izračunaj postotke
     stats = []
     
-    # Dodaj fanove cijele lige
+    # Dodaj fanove cijele lige u listu za sortiranje
+    all_clubs = []
     if league_fans > 0:
-        stats.append({
-            "club_name": "🏆 Fan cijele lige",
-            "count": league_fans,
-            "percentage": round((league_fans / total_teams) * 100, 1)
-        })
+        all_clubs.append(("🏆 Fan cijele lige", league_fans))
     
     # Dodaj ostale klubove
-    for club_name, count in sorted_clubs:
+    all_clubs.extend(sorted_clubs)
+    
+    # Sortiraj sve po broju fanova (silazno)
+    all_clubs.sort(key=lambda x: x[1], reverse=True)
+    
+    # Kreiraj finalnu listu sa postocima
+    for club_name, count in all_clubs:
         stats.append({
             "club_name": club_name,
             "count": count,
@@ -148,6 +151,82 @@ def get_favorite_clubs_stats(session: Session = Depends(get_session)):
     return {
         "total_teams": total_teams,
         "stats": stats
+    }
+
+@public_router.get("/club-rank/{club_id}")
+def get_club_rank(
+    club_id: int,
+    user_id: int = Query(..., description="ID korisnika"),
+    session: Session = Depends(get_session)
+):
+    """Vraća rank korisnika u odnosu na fanove istog kluba"""
+    from models.gameweek_team_model import GameweekTeam
+    
+    # Provjeri da li je club_id null (fan lige)
+    if club_id == 0:  # 0 će biti koristeno za "fan lige"
+        # Dohvati sve korisnike sa favorite_club_id = null
+        statement = select(FantasyTeam).where(FantasyTeam.favorite_club_id.is_(None))
+    else:
+        # Dohvati sve korisnike sa favorite_club_id = club_id
+        statement = select(FantasyTeam).where(FantasyTeam.favorite_club_id == club_id)
+    
+    fantasy_teams = list(session.exec(statement).all())
+    fan_user_ids = [team.user_id for team in fantasy_teams]
+    
+    if not fan_user_ids:
+        return {
+            "club_id": club_id,
+            "club_name": "Fan cijele lige" if club_id == 0 else None,
+            "user_rank": None,
+            "total_fans": 0,
+            "user_points": 0,
+            "top_5": []
+        }
+    
+    # Dohvati naziv kluba (ako nije fan lige)
+    club_name = None
+    if club_id != 0:
+        from models.club_model import Club
+        club = session.get(Club, club_id)
+        club_name = club.name if club else None
+    
+    # Za svakog fan-a, sumiraj bodove iz GameweekTeam
+    fan_points = {}
+    for fan_user_id in fan_user_ids:
+        statement = select(GameweekTeam).where(GameweekTeam.user_id == fan_user_id)
+        gameweek_teams = list(session.exec(statement).all())
+        total_points = sum(gt.total_points for gt in gameweek_teams if gt.total_points)
+        fan_points[fan_user_id] = total_points
+    
+    # Sortiraj po bodovima (silazno)
+    sorted_fans = sorted(fan_points.items(), key=lambda x: x[1], reverse=True)
+    
+    # Pronađi rank korisnika
+    user_rank = None
+    user_points = fan_points.get(user_id, 0)
+    for idx, (uid, points) in enumerate(sorted_fans, 1):
+        if uid == user_id:
+            user_rank = idx
+            break
+    
+    # Dohvati top 5 fanova sa username-ima
+    top_5 = []
+    for idx, (uid, points) in enumerate(sorted_fans[:5], 1):
+        user = session.get(User, uid)
+        if user:
+            top_5.append({
+                "rank": idx,
+                "username": user.username,
+                "points": points
+            })
+    
+    return {
+        "club_id": club_id,
+        "club_name": club_name or ("Fan cijele lige" if club_id == 0 else None),
+        "user_rank": user_rank,
+        "total_fans": len(sorted_fans),
+        "user_points": user_points,
+        "top_5": top_5
     }
 
 # Admin endpointi
