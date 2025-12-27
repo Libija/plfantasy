@@ -248,7 +248,7 @@ export default function AdminPlayers() {
                       : player.position}
                   </span>
                 </div>
-                <div className={styles.tableCell}>{player.price}M</div>
+                <div className={styles.tableCell}>{Number(player.price).toFixed(2)}M</div>
                 <div className={styles.tableCell}>{player.shirt_number ? player.shirt_number : "-"}</div>
                 <div className={styles.tableCell}>
                   {nationalities[player.nationality]?.flag} {nationalities[player.nationality]?.label}

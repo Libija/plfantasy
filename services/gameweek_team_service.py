@@ -9,6 +9,8 @@ from models.playerfantasypoints_model import PlayerFantasyPoints
 from models.match_model import Match
 from models.user_model import User
 from models.club_model import Club
+from models.match_lineup_model import MatchLineup, LineupType
+from models.match_substitution_model import MatchSubstitution
 from repositories.gameweek_team_repository import (
     create_gameweek_team, get_gameweek_team_by_id, get_user_gameweek_teams,
     get_user_gameweek_team, get_completed_gameweek_teams, create_gameweek_player,
@@ -467,6 +469,12 @@ class GameweekTeamService:
             gameweek_statement = select(Gameweek).where(Gameweek.id == team.gameweek_id)
             gameweek = self.session.exec(gameweek_statement).first()
             
+            # Provjeri da li je kapiten igrao (ima minute > 0)
+            captain_played = True
+            if team.captain_id and team.captain_id > 0 and team.gameweek_id:
+                captain_minutes = self._calculate_player_minutes_for_gameweek(team.captain_id, team.gameweek_id)
+                captain_played = captain_minutes > 0
+            
             # Dohvati igrače tima
             if team.id is not None:
                 players = get_gameweek_team_players(self.session, team.id)
@@ -479,15 +487,34 @@ class GameweekTeamService:
                 player_statement = select(Player).where(Player.id == player.player_id)
                 player_details = self.session.exec(player_statement).first()
                 
+                is_captain = player.player_id == team.captain_id
+                is_vice_captain = player.player_id == team.vice_captain_id
+                base_points = player.points or 0.0
+                
+                # Izračunaj final_points sa bonusom
+                if is_captain:
+                    if captain_played:
+                        final_points = base_points * 2  # Kapiten igrao → ×2
+                    else:
+                        final_points = base_points  # Kapiten nije igrao → ×1
+                elif is_vice_captain:
+                    if captain_played:
+                        final_points = base_points  # Kapiten igrao → vice-kapiten ×1
+                    else:
+                        final_points = base_points * 2  # Kapiten nije igrao → vice-kapiten ×2
+                else:
+                    final_points = base_points  # Ostali ×1
+                
                 players_with_details.append({
                     "id": player.id,
                     "player_id": player.player_id,
                     "player_name": player_details.name if player_details else "Unknown",
                     "position": player.position,
                     "is_bench": player.is_bench,
-                    "points": player.points,
-                    "is_captain": player.player_id == team.captain_id,
-                    "is_vice_captain": player.player_id == team.vice_captain_id,
+                    "points": base_points,
+                    "final_points": final_points,
+                    "is_captain": is_captain,
+                    "is_vice_captain": is_vice_captain,
                     "price": player_details.price if player_details else 0.0
                 })
             
@@ -513,6 +540,12 @@ class GameweekTeamService:
         gameweek_statement = select(Gameweek).where(Gameweek.id == gameweek_id)
         gameweek = self.session.exec(gameweek_statement).first()
         
+        # Provjeri da li je kapiten igrao (ima minute > 0)
+        captain_played = True
+        if team.captain_id and team.captain_id > 0 and team.gameweek_id:
+            captain_minutes = self._calculate_player_minutes_for_gameweek(team.captain_id, team.gameweek_id)
+            captain_played = captain_minutes > 0
+        
         # Dohvati igrače tima
         if team.id is not None:
             players = get_gameweek_team_players(self.session, team.id)
@@ -525,15 +558,34 @@ class GameweekTeamService:
             player_statement = select(Player).where(Player.id == player.player_id)
             player_details = self.session.exec(player_statement).first()
             
+            is_captain = player.player_id == team.captain_id
+            is_vice_captain = player.player_id == team.vice_captain_id
+            base_points = player.points or 0.0
+            
+            # Izračunaj final_points sa bonusom
+            if is_captain:
+                if captain_played:
+                    final_points = base_points * 2  # Kapiten igrao → ×2
+                else:
+                    final_points = base_points  # Kapiten nije igrao → ×1
+            elif is_vice_captain:
+                if captain_played:
+                    final_points = base_points  # Kapiten igrao → vice-kapiten ×1
+                else:
+                    final_points = base_points * 2  # Kapiten nije igrao → vice-kapiten ×2
+            else:
+                final_points = base_points  # Ostali ×1
+            
             players_with_details.append({
                 "id": player.id,
                 "player_id": player.player_id,
                 "player_name": player_details.name if player_details else "Unknown",
                 "position": player.position,
                 "is_bench": player.is_bench,
-                "points": player.points,
-                "is_captain": player.player_id == team.captain_id,
-                "is_vice_captain": player.player_id == team.vice_captain_id
+                "points": base_points,
+                "final_points": final_points,
+                "is_captain": is_captain,
+                "is_vice_captain": is_vice_captain
             })
         
         return {
@@ -569,6 +621,28 @@ class GameweekTeamService:
         
         return sum(record.points for record in points_records)
     
+    def _calculate_player_minutes_for_gameweek(self, player_id: int, gameweek_id: int) -> int:
+        """Izračunava ukupne minute koje je igrač odigrao u svim utakmicama kola.
+        Koristi postojeću metodu _calculate_player_minutes iz FantasyPointsService."""
+        from services.fantasy_points_service import FantasyPointsService
+        
+        # Dohvati utakmice za ovo kolo
+        matches_statement = select(Match).where(Match.gameweek_id == gameweek_id)
+        matches = list(self.session.exec(matches_statement).all())
+        
+        if not matches:
+            return 0
+        
+        # Koristi FantasyPointsService za računanje minuta
+        points_service = FantasyPointsService(self.session)
+        total_minutes = 0
+        
+        for match in matches:
+            minutes = points_service._calculate_player_minutes(player_id, match.id)
+            total_minutes += minutes
+        
+        return total_minutes
+    
     def _calculate_total_points(self, team_id: int, captain_id: int, vice_captain_id: int) -> float:
         """Izračunava ukupne poene tima sa bonusima za kapiten i vice-kapiten i transfer penalty.
         Napomena: Bodovi igrača sa klupe (is_bench=True) se NE računaju u total points."""
@@ -585,6 +659,17 @@ class GameweekTeamService:
             total_points = 0.0
             bench_points = 0.0  # Bodovi igrača sa klupe (samo za debug)
             
+            # Dohvati gameweek_id za provjeru minuta kapitena
+            team = self.session.get(GameweekTeam, team_id)
+            gameweek_id = team.gameweek_id if team else None
+            
+            # Provjeri da li je kapiten igrao (ima minute > 0)
+            captain_played = True  # Default: pretpostavljamo da je igrao
+            if captain_id and captain_id > 0 and gameweek_id:
+                captain_minutes = self._calculate_player_minutes_for_gameweek(captain_id, gameweek_id)
+                captain_played = captain_minutes > 0
+                print(f"[DEBUG] _calculate_total_points: Kapiten (ID={captain_id}) ima {captain_minutes} minuta u kolu {gameweek_id}. Igrao: {captain_played}")
+            
             for player in players:
                 if not player:
                     continue
@@ -598,11 +683,23 @@ class GameweekTeamService:
                 
                 # Provjeri da li je captain_id validan (ne 0)
                 if captain_id and captain_id > 0 and player.player_id == captain_id:
-                    # Kapiten dobija duplo poene
-                    total_points += player_points * 2
+                    if captain_played:
+                        # Kapiten je igrao - dobija duplo poene
+                        total_points += player_points * 2
+                        print(f"[DEBUG] _calculate_total_points: Kapiten (ID={captain_id}) igrao - dobija duplo poene: {player_points * 2}")
+                    else:
+                        # Kapiten nije igrao - dobija normalne poene (ili 0 ako nema poena)
+                        total_points += player_points
+                        print(f"[DEBUG] _calculate_total_points: Kapiten (ID={captain_id}) NIJE igrao - dobija normalne poene: {player_points}")
                 elif vice_captain_id and vice_captain_id > 0 and player.player_id == vice_captain_id:
-                    # Vice-kapiten dobija normalne poene
-                    total_points += player_points
+                    if not captain_played:
+                        # Kapiten nije igrao - vice-kapiten dobija duplo poene
+                        total_points += player_points * 2
+                        print(f"[DEBUG] _calculate_total_points: Vice-kapiten (ID={vice_captain_id}) dobija duplo poene jer kapiten nije igrao: {player_points * 2}")
+                    else:
+                        # Kapiten je igrao - vice-kapiten dobija normalne poene
+                        total_points += player_points
+                        print(f"[DEBUG] _calculate_total_points: Vice-kapiten (ID={vice_captain_id}) dobija normalne poene: {player_points}")
                 else:
                     # Ostali igrači iz prvih 11 dobijaju normalne poene
                     total_points += player_points

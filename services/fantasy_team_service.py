@@ -378,43 +378,61 @@ def save_transfers_service(session: Session, user_id: int, transfer_data: dict) 
         print(f"DEBUG: Proveravam transfer log - is_draft_mode={is_draft_mode}, next_gameweek={next_gameweek}")
         if not is_draft_mode and next_gameweek:
             print(f"DEBUG: Beleženje transfera za kolo {next_gameweek.number}")
-            # Kreiraj mapu postojećih igrača po poziciji
-            existing_players_map = {}
+            
+            # Kreiraj mapu postojećih igrača po poziciji (za provjeru promjene pozicije)
+            existing_players_by_position = {}
+            # Kreiraj set svih postojećih igrača u timu (bez obzira na poziciju)
+            existing_players_set = set()
             for player in existing_players:
-                existing_players_map[player.formation_position] = player.player_id
+                existing_players_by_position[player.formation_position] = player.player_id
+                existing_players_set.add(player.player_id)
             
             print(f"DEBUG: Broj postojećih igrača: {len(existing_players)}")
-            print(f"DEBUG: Postojeći igrači: {existing_players_map}")
+            print(f"DEBUG: Postojeći igrači po poziciji: {existing_players_by_position}")
+            print(f"DEBUG: Postojeći igrači (set): {existing_players_set}")
             print(f"DEBUG: Broj novih igrača: {len([p for p in selected_players.values() if p])}")
+            
+            # Kreiraj set novih igrača
+            new_players_set = set()
+            for player_data in selected_players.values():
+                if player_data:
+                    new_players_set.add(player_data["id"])
             
             # Broj transfera koji će se napraviti
             transfer_count = 0
             
             # Uporedi sa novim igračima i beleži transfere
+            # Transfer se broji samo kada je RAZLIČIT igrač na poziciji
+            # Ako je isti igrač samo promijenio poziciju, to NIJE transfer
             for position, player_data in selected_players.items():
                 if player_data:
                     new_player_id = player_data["id"]
-                    old_player_id = existing_players_map.get(position)
+                    old_player_id_on_position = existing_players_by_position.get(position)
                     
-                    print(f"DEBUG: Pozicija {position}: stari={old_player_id}, novi={new_player_id}")
+                    print(f"DEBUG: Pozicija {position}: stari na poziciji={old_player_id_on_position}, novi={new_player_id}")
                     
-                    if old_player_id and old_player_id != new_player_id:
-                        print(f"DEBUG: TRANSFER DETEKTIRAN na poziciji {position}!")
-                    else:
-                        print(f"DEBUG: Nema transfera na poziciji {position} (stari={old_player_id}, novi={new_player_id})")
+                    # Provjeri da li je ovo pravi transfer:
+                    # 1. Na ovoj poziciji je bio neki igrač (old_player_id_on_position)
+                    # 2. Sada je na ovoj poziciji različit igrač (new_player_id != old_player_id_on_position)
+                    # 3. Novi igrač NIJE bio u timu prije (nije samo promijenio poziciju)
+                    is_real_transfer = (
+                        old_player_id_on_position is not None and  # Na poziciji je bio neki igrač
+                        old_player_id_on_position != new_player_id and  # Sada je različit igrač
+                        new_player_id not in existing_players_set  # Novi igrač NIJE bio u timu prije
+                    )
                     
-                    if old_player_id and old_player_id != new_player_id:
-                        # Transfer je napravljen
+                    if is_real_transfer:
+                        # Transfer je napravljen - različit igrač je došao na poziciju
                         transfer_count += 1
-                        print(f"DEBUG: Transfer napravljen na poziciji {position}")
-                        old_player = session.get(Player, old_player_id)
+                        print(f"DEBUG: TRANSFER DETEKTIRAN na poziciji {position}: {old_player_id_on_position} -> {new_player_id}")
+                        old_player = session.get(Player, old_player_id_on_position)
                         new_player = session.get(Player, new_player_id)
                         
                         if old_player and new_player:
                             # Beleži transfer OUT
                             transfer_out = TransferLog(
                                 fantasy_team_id=fantasy_team.id,
-                                player_out_id=old_player_id,
+                                player_out_id=old_player_id_on_position,
                                 transfer_type=TransferType.OUT,
                                 gameweek=next_gameweek.number,
                                 cost=0,  # Besplatan transfer
@@ -435,12 +453,19 @@ def save_transfers_service(session: Session, user_id: int, transfer_data: dict) 
                             )
                             session.add(transfer_in)
                             print(f"DEBUG: Transfer log zapisi dodani za {old_player.name} -> {new_player.name}")
+                    else:
+                        if old_player_id_on_position == new_player_id:
+                            print(f"DEBUG: Nema transfera na poziciji {position} - isti igrač ostaje")
+                        elif new_player_id in existing_players_set:
+                            print(f"DEBUG: Nema transfera na poziciji {position} - igrač {new_player_id} samo promijenio poziciju (bio je u timu)")
+                        else:
+                            print(f"DEBUG: Nema transfera na poziciji {position} - pozicija je bila prazna")
             
             # Ako su napravljeni transferi, dodaj informaciju u response
             if transfer_count > 0:
                 print(f"Napravljeno {transfer_count} transfera za tim {fantasy_team.id} u kolu {next_gameweek.number}")
             else:
-                print("DEBUG: Nema transfera za beleženje")
+                print("DEBUG: Nema transfera za beleženje (samo promjene formacije/pozicija)")
         else:
             print(f"DEBUG: Ne beleži se transfer log - draft_mode={is_draft_mode}, next_gameweek={next_gameweek}")
         
@@ -530,6 +555,20 @@ def get_team_current_gameweek_points_service(session: Session, fantasy_team_id: 
         select(FantasyTeamPlayer).where(FantasyTeamPlayer.fantasy_team_id == fantasy_team_id)
     ).all()
     
+    # Provjeri da li je kapiten igrao (ima minute > 0) - jednom za sve igrače
+    captain_id = None
+    captain_played = True
+    for tp in team_players:
+        if tp.is_captain:
+            captain_id = tp.player_id
+            break
+    
+    if captain_id and current_gameweek:
+        from services.gameweek_team_service import GameweekTeamService
+        team_service = GameweekTeamService(session)
+        captain_minutes = team_service._calculate_player_minutes_for_gameweek(captain_id, current_gameweek.id)
+        captain_played = captain_minutes > 0
+    
     players_with_points = []
     
     for team_player in team_players:
@@ -573,10 +612,19 @@ def get_team_current_gameweek_points_service(session: Session, fantasy_team_id: 
         # Igrači sa klupe ne doprinose bodovima tima
         is_bench = "_BENCH" in (team_player.formation_position or "")
         
-        # Izračunaj poene sa bonusom samo za kapiten (vice-kapiten ostaje normalno)
-        final_points = total_points
+        # Izračunaj poene sa bonusom
         if team_player.is_captain:
-            final_points = total_points * 2
+            if captain_played:
+                final_points = total_points * 2  # Kapiten igrao → ×2
+            else:
+                final_points = total_points  # Kapiten nije igrao → ×1
+        elif team_player.is_vice_captain:
+            if captain_played:
+                final_points = total_points  # Kapiten igrao → vice-kapiten ×1
+            else:
+                final_points = total_points * 2  # Kapiten nije igrao → vice-kapiten ×2
+        else:
+            final_points = total_points  # Ostali ×1
         
         players_with_points.append({
             "player_id": player.id,

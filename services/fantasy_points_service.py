@@ -139,9 +139,9 @@ class FantasyPointsService:
                 player = self.db.get(Player, player_id)
                 if player:
                     if points > 0:
-                        player.price += round(points / 10, 2)
+                        player.price += round(points / 20, 2)
                     elif points < 0:
-                        player.price -= round(abs(points) / 10, 2)
+                        player.price -= round(abs(points) / 20, 2)
                     # Ensure price doesn't go below a minimum (e.g., 0.1)
                     if player.price < 0.1:
                         player.price = 0.1
