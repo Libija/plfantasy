@@ -317,7 +317,8 @@ class GameweekTeamService:
                 formation=fantasy_team.formation or "4-4-2",  # Default formacija ako nije postavljena
                 captain_id=final_captain_id,
                 vice_captain_id=final_vice_captain_id,
-                total_points=0.0
+                total_points=0.0,
+                budget_snapshot=fantasy_team.budget  # Snimamo budžet u trenutku snapshot-a
             )
             
             print(f"[DEBUG] Pozivam create_gameweek_team sa commit={commit}")
@@ -397,7 +398,8 @@ class GameweekTeamService:
                             player_id=player.id,
                             position=position_str,
                             is_bench=is_bench,
-                            points=points
+                            points=points,
+                            price_at_snapshot=player.price  # Snimamo cijenu igrača u trenutku snapshot-a
                         )
                         print(f"[DEBUG] Kreiran GameweekPlayer objekt: team_id={created_team.id}, player_id={player.id}, points={points}")
                         
