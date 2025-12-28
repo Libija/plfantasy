@@ -11,3 +11,4 @@ class GameweekTeam(SQLModel, table=True):
     vice_captain_id: int = Field(foreign_key="player.id", description="ID vice-kapiten igrača")
     total_points: float = Field(default=0.0, description="Ukupni poeni tima")
     created_at: datetime = Field(default_factory=datetime.utcnow) 
+    budget_snapshot: Optional[float] = Field(default=None)

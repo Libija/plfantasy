@@ -10,3 +10,4 @@ class GameweekPlayer(SQLModel, table=True):
     is_bench: bool = Field(default=False, description="Da li je na klupi")
     points: float = Field(default=0.0, description="Poeni igrača")
     created_at: datetime = Field(default_factory=datetime.utcnow) 
+    price_at_snapshot: Optional[float] = Field(default=None)
