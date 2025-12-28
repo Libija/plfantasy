@@ -8,7 +8,7 @@ from services.match_prediction_service import (
 from schemas.match_prediction_schema import (
     MatchPredictionCreate, MatchPredictionResponse, GameweekPredictions
 )
-from controllers.user_controller import verify_access_token
+from services.jwt_service import verify_access_token
 
 router = APIRouter(prefix="/predictions", tags=["match-predictions"])
 
