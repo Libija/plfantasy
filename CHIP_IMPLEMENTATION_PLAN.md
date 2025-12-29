@@ -100,6 +100,24 @@ CREATE TABLE fantasychip (
   1. `GameweekTeam.chip_used` - za brzo provjeravanje
   2. `FantasyChip` - za historiju i validaciju
 
+**VAŽNO - Rješenje problema sa timing-om:**
+- `GameweekTeam` se normalno kreira tek kada se kolo završi (snapshot)
+- ALI chip se aktivira PRIJE početka kola (kada je kolo SCHEDULED)
+- **Rješenje:** Pri aktivaciji chip-a, kreirati `GameweekTeam` zapis ODMAH (ako ne postoji)
+- Kada se kolo završi, `create_team_snapshot()` će ažurirati postojeći `GameweekTeam` zapis sa snapshot podacima
+- Tako možemo provjeriti da li je chip aktivan i prije nego što se kolo završi
+
+**VAŽNO:** `GameweekTeam` se kreira tek kada se kolo završi (snapshot), ali chip se aktivira PRIJE početka kola. Zato:
+- **Pri aktivaciji chip-a:** Kreirati `GameweekTeam` zapis ODMAH (ako ne postoji) sa `chip_used` poljem
+- **Kada se kolo završi:** Ažurirati postojeći `GameweekTeam` zapis sa snapshot podacima (igrači, bodovi, itd.)
+
+**VAŽNO - Rješenje za rezultate i najbolji tim:**
+- `get_user_results()` već filtrira samo COMPLETED kola → **Nema problema** ✅
+- `get_best_team_for_gameweek()` treba ažurirati:
+  1. Provjeriti da je kolo COMPLETED
+  2. Filtriraj samo timove koji imaju igrače (len(players) > 0)
+  3. Tako se izbjegava problem sa `GameweekTeam` zapisima kreiranim pri aktivaciji chip-a (koji nemaju igrače)
+
 ---
 
 ## 🔧 2. WILDCARD
@@ -189,6 +207,7 @@ CREATE TABLE fantasychip (
 - **Fajl:** `services/gameweek_team_service.py`
 - **Funkcija:** `create_snapshots_for_completed_gameweek()`
 - Nakon kreiranja snapshot-a, provjeri Free Hit i vrati tim na prethodni snapshot
+- **NAPOMENA:** `GameweekTeam` zapis već postoji (kreiran pri aktivaciji chip-a), samo se ažurira sa snapshot podacima
 
 **C) Transfer logika**
 - **Fajl:** `services/transfer_service.py`
@@ -383,11 +402,64 @@ def validate_chip_activation(self, fantasy_team_id: int, chip_type: ChipType, ga
     return {"valid": True}
 ```
 
+**Primjer `activate_chip()` sa kreiranjem GameweekTeam:**
+```python
+def activate_chip(self, fantasy_team_id: int, chip_type: ChipType, gameweek_id: int) -> Dict[str, Any]:
+    """Aktivira chip - kreira GameweekTeam ako ne postoji"""
+    
+    # Validacija
+    validation = self.validate_chip_activation(fantasy_team_id, chip_type, gameweek_id)
+    if not validation["valid"]:
+        return {"success": False, "error": validation["error"]}
+    
+    fantasy_team = session.get(FantasyTeam, fantasy_team_id)
+    gameweek = session.get(Gameweek, gameweek_id)
+    
+    # Get or create GameweekTeam (VAŽNO: kreira se prije nego što se kolo završi!)
+    gameweek_team = get_user_gameweek_team(session, fantasy_team.user_id, gameweek_id)
+    
+    if not gameweek_team:
+        # Kreiraj GameweekTeam zapis (placeholder - bez igrača, samo chip info)
+        # Igrači će se dodati kada se kolo završi (snapshot)
+        gameweek_team = GameweekTeam(
+            user_id=fantasy_team.user_id,
+            gameweek_id=gameweek_id,
+            formation=fantasy_team.formation or "4-3-3",
+            captain_id=...,  # Može biti None ili prvi igrač
+            vice_captain_id=...,  # Može biti None ili drugi igrač
+            total_points=0.0,
+            chip_used=chip_type  # ← OVO JE KLJUČNO
+        )
+        session.add(gameweek_team)
+        session.flush()  # Da dobije ID
+    else:
+        # Ažuriraj postojeći zapis
+        gameweek_team.chip_used = chip_type
+        session.add(gameweek_team)
+    
+    # Spremi u FantasyChip (historija)
+    fantasy_chip = FantasyChip(
+        fantasy_team_id=fantasy_team_id,
+        chip_type=chip_type,
+        gameweek_used=gameweek.number,
+        season=gameweek.season
+    )
+    session.add(fantasy_chip)
+    
+    session.commit()
+    return {"success": True, "message": f"{chip_type} uspješno aktiviran"}
+```
+
 **U `services/gameweek_team_service.py`:**
 ```python
 def restore_team_from_snapshot(self, user_id: int, snapshot_gameweek_id: int) -> bool
 def _is_chip_active(self, fantasy_team_id: int, gameweek_id: int, chip_type: ChipType) -> bool
 ```
+
+**VAŽNO - Ažurirati `get_best_team_for_gameweek()`:**
+- Dodati provjeru da je kolo COMPLETED
+- Dodati provjeru da tim ima igrače (len(players) > 0)
+- Tako se izbjegava problem sa `GameweekTeam` zapisima kreiranim pri aktivaciji chip-a
 
 **U `services/fantasy_scoring_service.py`:**
 ```python
@@ -545,9 +617,12 @@ def _is_chip_active(self, fantasy_team_id: int, gameweek_id: int, chip_type: Chi
 
 - **Hibridni pristup:** Koristiti `GameweekTeam.chip_used` za brzo provjeravanje i `FantasyChip` za historiju
 - Kada se aktivira chip, spremi se u **OBA** mjesta (sinkronizacija)
+- **Pri aktivaciji chip-a:** Kreirati `GameweekTeam` zapis ODMAH (ako ne postoji) - placeholder
+- **Kada se kolo završi:** `create_team_snapshot()` ažurira postojeći `GameweekTeam` zapis sa snapshot podacima
 - Validirati aktivaciju prije početka kola
 - Provjeriti da li je chip već korišten iz `FantasyChip` tabele
 - Provjeriti da li je već neki chip aktivan u kolu iz `GameweekTeam.chip_used`
+- **Ažurirati `get_best_team_for_gameweek()`:** Filtriraj samo timove sa igračima (len(players) > 0) i samo za COMPLETED kola
 - **Frontend:** Disable-ati sve chip buttone kada je jedan chip aktivan u kolu
 - **Frontend:** Disable-ati chipove koji su već korišteni u sezoni
 - Prikazati chip status u UI-u
